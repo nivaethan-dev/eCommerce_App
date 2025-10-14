@@ -1,0 +1,16 @@
+# Core Framework & Database
+express
+mongoose
+
+# Authentication & Security
+bcryptjs
+jsonwebtoken
+
+# Security & Utilities
+dotenv
+helmet
+cors
+express-rate-limit
+
+# Email & Communication
+nodemailer
