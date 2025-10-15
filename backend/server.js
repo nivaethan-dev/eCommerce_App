@@ -1,11 +1,15 @@
-import dotenv from 'dotenv';
+import 'dotenv/config'; // automatically loads .env
+import connect from './config/dbConnection.js';
 import app from './app.js';
 
-dotenv.config(); // Load environment variables from .env file
-
+const HOST = process.env.HOST;
 const PORT = process.env.PORT || 3000;
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const startServer = async () => {
+  await connect(); // Connect to DB first
+  const server = app.listen(PORT, HOST, () => {
+    console.log(`🚀 Server running on ${HOST}:${server.address().port}`);
+  });
+};
+
+startServer();

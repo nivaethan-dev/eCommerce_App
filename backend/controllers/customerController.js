@@ -1,4 +1,4 @@
-import Customer from '../models/customer.js';
+import Customer from '../models/Customer.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -73,5 +73,3 @@ export const removeFromCart = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
-export default customerController;

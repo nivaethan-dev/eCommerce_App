@@ -1,5 +1,7 @@
 import express from 'express';
-import urlRoutes from './routes/urlRoutes.js';
+// import urlRoutes from './routes/urlRoutes.js';
+import customerRoutes from './routes/customerRoutes.js';
+//import adminRoutes from './routes/adminRoutes.js';
 
 const app = express();
 
@@ -8,7 +10,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/api/urls', urlRoutes);
+app.use('/api/customers', customerRoutes);
+//app.use('/api/admins', adminRoutes);
+//app.use('/api/urls', urlRoutes);
 
 // Centralized Error Handling middleware
 app.use((err, req, res, next) => {
