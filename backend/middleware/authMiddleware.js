@@ -5,20 +5,38 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const authMiddleware = async (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const { userType, id } = decoded;
+    // Get token from header or cookie
+    const token = req.headers.authorization?.split(' ')[1] || req.cookies.token;
+    if (!token) {
+      return res.status(401).json({ error: 'Access token required' });
+    }
 
-    if (userType === 'customer') req.user = await Customer.findById(id);
-    if (userType === 'admin') req.user = await Admin.findById(id);
+    // Try verification for each role
+    let decoded;
+    let userRole;
 
-    if (!req.user) return res.status(401).json({ error: 'User not found' });
+    try {
+      decoded = jwt.verify(token, process.env.CUSTOMER_JWT_SECRET);
+      userRole = 'customer';
+    } catch (err) {
+      try {
+        decoded = jwt.verify(token, process.env.ADMIN_JWT_SECRET);
+        userRole = 'admin';
+      } catch (err) {
+        return res.status(401).json({ error: 'Invalid or expired token' });
+      }
+    }
+
+    // Attach basic user info to request
+    req.user = {
+      id: decoded.id,
+      role: userRole
+    };
 
     next();
   } catch (err) {
-    return res.status(401).json({ error: 'Invalid token' });
+    console.error('Auth middleware error:', err);
+    return res.status(401).json({ error: 'Authentication failed' });
   }
 };

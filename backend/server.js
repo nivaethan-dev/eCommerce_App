@@ -1,3 +1,5 @@
+import fs from 'fs';
+import https from 'https';
 import 'dotenv/config'; // automatically loads .env
 import connect from './config/dbConnection.js';
 import app from './app.js';

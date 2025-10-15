@@ -11,6 +11,7 @@ dotenv
 helmet
 cors
 express-rate-limit
+validator # npm install validator@latest 
 
 # Email & Communication
 nodemailer

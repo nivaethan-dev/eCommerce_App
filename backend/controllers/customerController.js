@@ -1,26 +1,57 @@
 import Customer from '../models/Customer.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import validator from 'validator';
+import { generateAccessToken, generateRefreshToken, setAuthCookies } from '../utils/tokenUtils.js';
 
 // Register
 export const registerCustomer = async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
 
-    // Check if customer already exists
-    const existingCustomer = await Customer.findOne({ 
-      $or: [{ email }, { phone }] 
-    });
+    // Validate input
+    if (!name || !email || !phone || !password)
+      return res.status(400).json({ success: false, error: 'All fields are required' });
 
-    if (existingCustomer) {
-      return res.status(400).json({ error: 'Customer already exists' });
+    if (!validator.isEmail(email)) 
+      return res.status(400).json({ success: false, error: 'Invalid email' });
+
+    if (!validator.isMobilePhone(phone, 'si-LK')) 
+      return res.status(400).json({ success: false, error: 'Invalid phone number' });
+
+    let normalizedPhone = phone.startsWith('+94') ? phone : '+94' + phone.slice(1);
+
+    if (!validator.isStrongPassword(password, {
+      minLength: 12, 
+      minSymbols: 1,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1 
+    })) {
+      return res.status(400).json({ success: false, error: 'Weak password' });
     }
 
+    // Check if customer exists
+    const existingCustomer = await Customer.findOne({ $or: [{ email }, { phone }] });
+    if(existingCustomer){
+      return res.status(400).json({ success: false, error: 'Customer already exists' });
+    };
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-    const customer = await Customer.create({ name, email, phone, password: hashedPassword });
-    res.status(201).json({ message: 'Customer registered', id: customer._id });
+
+    // Create customer
+    const customer = await Customer.create({ name, email, phone: normalizedPhone, password: hashedPassword });
+
+    // Generate tokens & set cookies
+    const accessToken = generateAccessToken(customer._id);
+    const refreshToken = generateRefreshToken(customer._id);
+    setAuthCookies(res, accessToken, refreshToken);
+
+    res.status(201).json({ success: true, message: 'Customer registered' });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Registration failed' });
   }
 };
 
@@ -28,13 +59,19 @@ export const registerCustomer = async (req, res) => {
 export const loginCustomer = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     const customer = await Customer.findOne({ email });
     if (!customer) return res.status(400).json({ error: 'Invalid credentials' });
+
     const match = await bcrypt.compare(password, customer.password);
     if (!match) return res.status(400).json({ error: 'Invalid credentials' });
 
-    const token = jwt.sign({ id: customer._id, role: 'customer' }, process.env.JWT_SECRET, { expiresIn: '1d' });
-    res.json({ token });
+    // Generate tokens & set cookies
+    const accessToken = generateAccessToken(customer._id);
+    const refreshToken = generateRefreshToken(customer._id);
+    setAuthCookies(res, accessToken, refreshToken);
+
+    res.json({ message: 'Login successful' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
