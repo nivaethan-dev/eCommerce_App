@@ -1,5 +1,67 @@
 import jwt from 'jsonwebtoken';
+import Customer from '../models/Customer.js';
+import Admin from '../models/Admin.js';
+import bcrypt from 'bcryptjs';
+import { comparePasswords } from '../utils/securityUtils.js';
 import { generateAccessToken, generateRefreshToken, setAuthCookies } from '../utils/tokenUtils.js';
+
+// Unified login for both customers and admins
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and password are required'
+      });
+    }
+
+    // Try finding the user in Customer collection
+    const customer = await Customer.findOne({ email });
+    if (customer) {
+      const isMatch = await bcrypt.compare(password, customer.password);
+      if (!isMatch) return res.status(401).json({ success: false, error: 'Invalid credentials' });
+
+      // Generate tokens
+      const accessToken = generateAccessToken(customer._id, 'customer');
+      const refreshToken = generateRefreshToken(customer._id);
+      setAuthCookies(res, accessToken, refreshToken);
+
+      return res.status(200).json({
+        success: true,
+        message: `Login successful. Welcome back, ${customer.name}!`
+      });
+    }
+
+    // Try finding the user in Admin collection
+    const admin = await Admin.findOne({ email });
+    if (admin) {
+      const isMatch = await comparePasswords(password, admin.password);
+      if (!isMatch) return res.status(401).json({ success: false, error: 'Invalid credentials' });
+
+      const accessToken = generateAccessToken(admin._id, 'admin');
+      const refreshToken = generateRefreshToken(admin._id);
+      setAuthCookies(res, accessToken, refreshToken);
+
+      return res.status(200).json({
+        success: true,
+        message: `Login successful. Welcome back, ${admin.name}!`
+      });
+    }
+
+    // If not found in either collection
+    return res.status(401).json({ success: false, error: 'Invalid credentials' });
+
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+};
 
 // Logout
 export const logout = async (req, res) => {

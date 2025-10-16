@@ -55,28 +55,6 @@ export const registerCustomer = async (req, res) => {
   }
 };
 
-// Login
-export const loginCustomer = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const customer = await Customer.findOne({ email });
-    if (!customer) return res.status(400).json({ error: 'Invalid credentials' });
-
-    const match = await bcrypt.compare(password, customer.password);
-    if (!match) return res.status(400).json({ error: 'Invalid credentials' });
-
-    // Generate tokens & set cookies
-    const accessToken = generateAccessToken(customer._id);
-    const refreshToken = generateRefreshToken(customer._id);
-    setAuthCookies(res, accessToken, refreshToken);
-
-    res.json({ message: 'Login successful' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
 // Add to cart
 export const addToCart = async (req, res) => {
   try {

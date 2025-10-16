@@ -13,8 +13,8 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 const defaultAdmin = {
   name: 'Super Admin',
   email: 'admin@example.com',
-  phone: '+94123456789',
-  password: 'Admin@123', // This will be hashed before saving
+  phone: '+94773456789',
+  password: 'Admin@123FullySecure', // This will be hashed before saving
   role: 'admin'
 };
 
