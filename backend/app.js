@@ -1,7 +1,7 @@
 import express from 'express';
 // import urlRoutes from './routes/urlRoutes.js';
 import customerRoutes from './routes/customerRoutes.js';
-//import adminRoutes from './routes/adminRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -34,7 +34,7 @@ app.use(cors());
 // Routes
 app.use('/api/customers', customerRoutes); // customer-specific
 app.use('/api/auth', authRoutes);          // common auth (refresh, logout, etc.)
-//app.use('/api/admins', adminRoutes);
+app.use('/api/admins', adminRoutes);
 //app.use('/api/urls', urlRoutes);
 
 export default app;

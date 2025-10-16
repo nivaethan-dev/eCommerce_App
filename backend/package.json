@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "test": "jest"
+    "test": "jest",
+    "seed:admin": "NODE_ENV=development node database/seeds/adminSeeder.js"
   },
   "keywords": [],
   "author": "",
