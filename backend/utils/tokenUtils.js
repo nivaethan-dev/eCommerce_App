@@ -8,7 +8,7 @@ export const generateAccessToken = (userId, role = 'customer') => {
     { id: userId, role },
     process.env.CUSTOMER_JWT_SECRET,
     {
-      expiresIn: '1m',
+      expiresIn: '15m',
     }
   );
 };
@@ -34,7 +34,7 @@ export const setAuthCookies = (res, accessToken, refreshToken) => {
     httpOnly: true,
     secure: isProd,
     sameSite: 'strict',
-    maxAge: 1 * 60 * 1000 // 15 min
+    maxAge: 15 * 60 * 1000 // 15 min
   });
 
   res.cookie('refreshToken', refreshToken, {
