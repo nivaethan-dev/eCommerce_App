@@ -9,7 +9,7 @@ export const authMiddleware = async (req, res, next) => {
     // Get token from header or cookie
     const token = req.headers.authorization?.split(' ')[1] || req.cookies.token;
     if (!token) {
-      return res.status(401).json({ error: 'Access token required' });
+      return res.status(401).json({ success: false, error: 'Access token required' });
     }
 
     // Try verification for each role
