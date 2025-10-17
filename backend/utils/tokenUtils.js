@@ -4,12 +4,14 @@ import jwt from 'jsonwebtoken';
  * Generate short-lived access token
  */
 export const generateAccessToken = (userId, role = 'customer') => {
+  const secret = role === 'admin' ? 
+    process.env.ADMIN_JWT_SECRET : 
+    process.env.CUSTOMER_JWT_SECRET;
+    
   return jwt.sign(
     { id: userId, role },
-    process.env.CUSTOMER_JWT_SECRET,
-    {
-      expiresIn: '15m',
-    }
+    secret,
+    { expiresIn: '15m' }
   );
 };
 

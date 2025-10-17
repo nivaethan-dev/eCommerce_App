@@ -3,6 +3,7 @@ import express from 'express';
 import customerRoutes from './routes/customerRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import productRoutes from './routes/productRoutes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 
@@ -19,22 +20,25 @@ app.use((req, res, next) => {
 */
 
 // Middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// Static file serving
+app.use('/uploads', express.static('uploads'));
+
+// Routes
+app.use('/api/customers', customerRoutes); // customer-specific
+app.use('/api/auth', authRoutes);          // common auth (refresh, logout, etc.)
+app.use('/api/admins', adminRoutes);
+app.use('/api/products', productRoutes);
+//app.use('/api/urls', urlRoutes);
 
 // Centralized Error Handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
-
-app.use(cookieParser());
-app.use(cors());
-
-// Routes
-app.use('/api/customers', customerRoutes); // customer-specific
-app.use('/api/auth', authRoutes);          // common auth (refresh, logout, etc.)
-app.use('/api/admins', adminRoutes);
-//app.use('/api/urls', urlRoutes);
 
 export default app;
