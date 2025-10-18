@@ -11,13 +11,18 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Product description is required'],
     trim: true
   },
+  price: {
+    type: Number,
+    required: [true, 'Price is required'],
+    min: [0, 'Price cannot be negative']
+  },
   image: {
     type: String,
     required: [true, 'Product image is required'],
     validate: {
       validator: function(value) {
-        // Validate that image path starts with 'uploads/product_'
-        return value.startsWith('uploads/product_');
+        // Validate that image path starts with 'uploads/products/product_'
+        return value.startsWith('uploads/products/product_');
       },
       message: 'Invalid image path format'
     }
@@ -46,6 +51,9 @@ const productSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+// Compound unique index: title + category
+productSchema.index({ title: 1, category: 1 }, { unique: true });
 
 // Update timestamp on save
 productSchema.pre('save', function(next) {
