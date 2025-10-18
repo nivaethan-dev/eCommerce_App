@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 const startServer = async () => {
   await connect(); // Connect to DB first
   const server = app.listen(PORT, HOST, () => {
-    console.log(`🚀 Server running on ${HOST}:${server.address().port}`);
+    console.log(`🚀 Server running on ${HOST}:${PORT}`);
   });
 };
 
