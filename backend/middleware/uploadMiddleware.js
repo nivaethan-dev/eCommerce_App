@@ -3,11 +3,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import { dirname } from 'path';
+import fs from 'fs/promises';
+// Middleware to validate file mime type using file-type package
+import { fileTypeFromFile } from 'file-type';
 
-// ES Module fix for __dirname
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirPath = dirname(currentFilePath);
-const uploadDirectory = path.join(currentDirPath, '..', 'uploads');
+const uploadDirectory = path.join(currentDirPath, '..', 'uploads', 'products');
 
 // Allowed image types
 const MIME_TYPES = {
@@ -50,42 +52,42 @@ const upload = multer({
   }
 });
 
-// Middleware to validate file mime type using file-type package
-import { fileTypeFromFile } from 'file-type';
-
 export const validateImage = async (req, res, next) => {
+  // Check if a file was uploaded
   if (!req.file) {
-    return res.status(400).json({ 
-      success: false, 
-      error: 'No image file provided' 
+    return res.status(400).json({
+      success: false,
+      error: 'No image file provided'
     });
   }
 
   try {
+    // Detect actual file type
     const fileType = await fileTypeFromFile(req.file.path);
-    
-    // Verify if the file type matches the allowed MIME types
-    if (!fileType || !MIME_TYPES[`image/${fileType.ext}`]) {
-      // Remove the invalid file
-      await fs.unlink(req.file.path);
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid file type detected'
-      });
+
+    // Validate against allowed MIME types
+    if (!fileType || !Object.values(MIME_TYPES).includes(fileType.ext)) {
+        // Delete fake/invalid file
+        await fs.unlink(req.file.path);
+        return res.status(400).json({
+            success: false,
+            error: 'Invalid file type detected. Only JPG, JPEG, PNG, WEBP, and AVIF are allowed.'
+        });
     }
-    
     next();
-  } catch (error) {
-    // Clean up uploaded file if validation fails
-    try {
-      await fs.unlink(req.file.path);
-    } catch (unlinkError) {
-      console.error('Error deleting invalid file:', unlinkError);
+  } catch (err) {
+    // Catch unexpected errors and clean up
+    if (req.file) {
+      try {
+        await fs.unlink(req.file.path);
+      } catch (unlinkError) {
+        console.error('Error deleting invalid file:', unlinkError);
+      }
     }
-    
-    return res.status(400).json({ 
-      success: false, 
-      error: 'Invalid file format' 
+
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid file format or corrupted file'
     });
   }
 };
