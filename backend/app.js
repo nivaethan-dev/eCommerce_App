@@ -4,6 +4,7 @@ import customerRoutes from './routes/customerRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import productRoutes from './routes/productRoutes.js';
+import securityRoutes from './routes/securityRoutes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 
@@ -33,6 +34,7 @@ app.use('/api/customers', customerRoutes); // customer-specific
 app.use('/api/auth', authRoutes);          // common auth (refresh, logout, etc.)
 app.use('/api/admins', adminRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/security', securityRoutes);  // security dashboard and monitoring
 //app.use('/api/urls', urlRoutes);
 
 // Centralized Error Handling middleware
