@@ -16,6 +16,9 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Price is required'],
     min: [0, 'Price cannot be negative']
   },
+  // Single image field - designed for simple product display
+  // Future scalability: To support multiple images, change this to:
+  // images: [{ type: String, required: true, validate: { ... } }]
   image: {
     type: String,
     required: [true, 'Product image is required'],
