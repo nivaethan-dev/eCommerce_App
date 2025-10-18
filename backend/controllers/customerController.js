@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import validator from 'validator';
 import { generateAccessToken, generateRefreshToken, setAuthCookies } from '../utils/tokenUtils.js';
+import { getCustomers } from '../services/customerService.js';
 
 // Register
 export const registerCustomer = async (req, res) => {
@@ -86,5 +87,15 @@ export const removeFromCart = async (req, res) => {
     res.json({ cart: customer.cart });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+// Fetch customers (Admin only)
+export const fetchCustomers = async (req, res) => {
+  try {
+    const customers = await getCustomers(req.user.role, req.user.id, req.query);
+    res.status(200).json({ success: true, customers });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 };

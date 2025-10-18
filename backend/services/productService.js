@@ -1,6 +1,7 @@
 import Product from '../models/Product.js';
 import fs from 'fs/promises';
 import path from 'path';
+import { fetchDocuments } from '../utils/queryHelper.js';
 
 // Predefined categories list
 const VALID_CATEGORIES = [
@@ -97,3 +98,11 @@ export class ProductService {
     return VALID_CATEGORIES;
   }
 }
+
+export const getProducts = async (role, userId, queryParams) => {
+  return await fetchDocuments(Product, {
+    search: queryParams.search, // search string
+    searchFields: ['title', 'description', 'category'], // searchable fields
+    query: {} // additional filters if needed
+  }, { role, userId });
+};

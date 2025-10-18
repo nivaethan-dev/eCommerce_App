@@ -1,4 +1,4 @@
-import { ProductService } from '../services/productService.js';
+import { ProductService, getProducts } from '../services/productService.js';
 import fs from 'fs/promises';
 
 export const createProduct = async (req, res) => {
@@ -45,5 +45,17 @@ export const createProduct = async (req, res) => {
       success: false,
       error: 'Error creating product'
     });
+  }
+};
+
+export const fetchProducts = async (req, res) => {
+  try {
+    // Allow public access for product search - no authentication required
+    const role = req.user ? req.user.role : 'public';
+    const userId = req.user ? req.user.id : null;
+    const products = await getProducts(role, userId, req.query);
+    res.status(200).json({ success: true, products });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 };

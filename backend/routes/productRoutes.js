@@ -1,5 +1,5 @@
 import express from 'express';
-import { createProduct } from '../controllers/productController.js';
+import { createProduct, fetchProducts } from '../controllers/productController.js';
 import { uploadProductImage, processImage, validateImage, handleUploadError } from '../middleware/uploadMiddleware.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { roleMiddleware } from '../middleware/roleMiddleware.js';
@@ -17,5 +17,8 @@ router.post(
   validateImage,
   createProduct
 );
+
+// Fetch products 
+router.get('/', fetchProducts);
 
 export default router;
