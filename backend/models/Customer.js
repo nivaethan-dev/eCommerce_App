@@ -4,7 +4,8 @@ const { Schema } = mongoose;
 
 const cartItemSchema = new mongoose.Schema({
   productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-  quantity: { type: Number, default: 1 }
+  quantity: { type: Number, default: 1 },
+  addedAt: { type: Date, default: Date.now } // When item was added to cart
 });
 
 const customerSchema = new Schema({
