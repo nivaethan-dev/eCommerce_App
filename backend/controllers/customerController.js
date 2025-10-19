@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import validator from 'validator';
 import { generateAccessToken, generateRefreshToken, setAuthCookies } from '../utils/tokenUtils.js';
-import { getCustomers } from '../services/customerService.js';
+import { getCustomers, addToCart as addToCartService, removeFromCart as removeFromCartService, getCart as getCartService, updateCartQuantity as updateCartItemService } from '../services/customerService.js';
 
 // Register
 export const registerCustomer = async (req, res) => {
@@ -56,37 +56,159 @@ export const registerCustomer = async (req, res) => {
   }
 };
 
-// Add to cart
-export const addToCart = async (req, res) => {
+// Add item to cart
+export const addCartItem = async (req, res) => {
   try {
     const { productId, quantity } = req.body;
 
-    // Validate quantity
-    if (quantity < 1) {
-      return res.status(400).json({ error: 'Quantity must be at least 1' });
+    // Validate input
+    if (!productId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Product ID is required' 
+      });
     }
 
-    const customer = await Customer.findById(req.user.id);
-    const index = customer.cart.findIndex(item => item.productId.toString() === productId);
-    if (index > -1) customer.cart[index].quantity += quantity;
-    else customer.cart.push({ productId, quantity });
-    await customer.save();
-    res.json({ cart: customer.cart });
+    if (!quantity || quantity < 1) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Quantity must be at least 1' 
+      });
+    }
+
+    const cart = await addToCartService(req.user.id, productId, quantity);
+    res.status(201).json({ 
+      success: true, 
+      message: 'Product added to cart successfully',
+      cart 
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Add to cart error:', err);
+    
+    // Handle specific error cases
+    if (err.message.includes('not found') || err.message.includes('out of stock') || err.message.includes('Only')) {
+      return res.status(400).json({ 
+        success: false, 
+        error: err.message 
+      });
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to add product to cart' 
+    });
   }
 };
 
-// Remove from cart
-export const removeFromCart = async (req, res) => {
+// Get cart
+export const getCart = async (req, res) => {
   try {
-    const { productId } = req.body;
-    const customer = await Customer.findById(req.user.id);
-    customer.cart = customer.cart.filter(item => item.productId.toString() !== productId);
-    await customer.save();
-    res.json({ cart: customer.cart });
+    const cart = await getCartService(req.user.id);
+    res.status(200).json({ 
+      success: true, 
+      message: 'Cart retrieved successfully',
+      cart 
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Get cart error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to retrieve cart' 
+    });
+  }
+};
+
+// Update cart item
+export const updateCartItem = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { quantity } = req.body;
+
+    // Validate input
+    if (!productId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Product ID is required' 
+      });
+    }
+
+    if (quantity === undefined || quantity === null) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Quantity is required' 
+      });
+    }
+
+    if (quantity < 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Quantity cannot be negative' 
+      });
+    }
+
+    const result = await updateCartItemService(req.user.id, productId, quantity);
+    res.status(200).json({ 
+      success: true, 
+      message: result.wasRemoved ? 'Product removed from cart successfully' : 'Cart quantity updated successfully',
+      cart: result.cart
+    });
+  } catch (err) {
+    console.error('Update cart item error:', err);
+    
+    // Handle specific error cases
+    if (err.message.includes('Product not found in cart')) {
+      return res.status(404).json({ 
+        success: false, 
+        error: err.message 
+      });
+    }
+    
+    if (err.message.includes('Product not found')) {
+      return res.status(400).json({ 
+        success: false, 
+        error: err.message 
+      });
+    }
+    
+    if (err.message.includes('Only') || err.message.includes('cannot be negative')) {
+      return res.status(400).json({ 
+        success: false, 
+        error: err.message 
+      });
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to update cart item' 
+    });
+  }
+};
+
+// Remove item from cart
+export const removeCartItem = async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    // Validate input
+    if (!productId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Product ID is required' 
+      });
+    }
+
+    const cart = await removeFromCartService(req.user.id, productId);
+    res.status(200).json({ 
+      success: true, 
+      message: 'Product removed from cart successfully',
+      cart 
+    });
+  } catch (err) {
+    console.error('Remove from cart error:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to remove product from cart' 
+    });
   }
 };
 
