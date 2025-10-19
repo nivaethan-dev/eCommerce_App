@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken';
 import validator from 'validator';
 import { generateAccessToken, generateRefreshToken, setAuthCookies } from '../utils/tokenUtils.js';
 import { getCustomers, addToCart as addToCartService, removeFromCart as removeFromCartService, getCart as getCartService, updateCartQuantity as updateCartItemService } from '../services/customerService.js';
+import { isUserError, getErrorStatusCode } from '../utils/cartErrors.js';
+import { CART_MESSAGES } from '../utils/cartMessages.js';
 
 // Register
 export const registerCustomer = async (req, res) => {
@@ -65,37 +67,32 @@ export const addCartItem = async (req, res) => {
     if (!productId) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Product ID is required' 
+        error: CART_MESSAGES.PRODUCT_ID_REQUIRED 
       });
     }
 
     if (!quantity || quantity < 1) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Quantity must be at least 1' 
+        error: CART_MESSAGES.QUANTITY_MINIMUM 
       });
     }
 
     const cart = await addToCartService(req.user.id, productId, quantity);
     res.status(201).json({ 
       success: true, 
-      message: 'Product added to cart successfully',
+      message: CART_MESSAGES.ITEM_ADDED,
       cart 
     });
   } catch (err) {
     console.error('Add to cart error:', err);
     
-    // Handle specific error cases
-    if (err.message.includes('not found') || err.message.includes('out of stock') || err.message.includes('Only')) {
-      return res.status(400).json({ 
-        success: false, 
-        error: err.message 
-      });
-    }
+    const statusCode = getErrorStatusCode(err);
+    const isUserFacing = isUserError(err);
     
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to add product to cart' 
+    return res.status(statusCode).json({
+      success: false,
+      error: isUserFacing ? err.message : CART_MESSAGES.ADD_TO_CART_FAILED
     });
   }
 };
@@ -106,14 +103,18 @@ export const getCart = async (req, res) => {
     const cart = await getCartService(req.user.id);
     res.status(200).json({ 
       success: true, 
-      message: 'Cart retrieved successfully',
+      message: CART_MESSAGES.CART_RETRIEVED,
       cart 
     });
   } catch (err) {
     console.error('Get cart error:', err);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to retrieve cart' 
+    
+    const statusCode = getErrorStatusCode(err);
+    const isUserFacing = isUserError(err);
+    
+    return res.status(statusCode).json({
+      success: false,
+      error: isUserFacing ? err.message : CART_MESSAGES.GET_CART_FAILED
     });
   }
 };
@@ -128,58 +129,39 @@ export const updateCartItem = async (req, res) => {
     if (!productId) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Product ID is required' 
+        error: CART_MESSAGES.PRODUCT_ID_REQUIRED 
       });
     }
 
     if (quantity === undefined || quantity === null) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Quantity is required' 
+        error: CART_MESSAGES.QUANTITY_REQUIRED 
       });
     }
 
     if (quantity < 0) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Quantity cannot be negative' 
+        error: CART_MESSAGES.QUANTITY_NON_NEGATIVE 
       });
     }
 
     const result = await updateCartItemService(req.user.id, productId, quantity);
     res.status(200).json({ 
       success: true, 
-      message: result.wasRemoved ? 'Product removed from cart successfully' : 'Cart quantity updated successfully',
+      message: result.wasRemoved ? CART_MESSAGES.ITEM_REMOVED : CART_MESSAGES.ITEM_UPDATED,
       cart: result.cart
     });
   } catch (err) {
     console.error('Update cart item error:', err);
     
-    // Handle specific error cases
-    if (err.message.includes('Product not found in cart')) {
-      return res.status(404).json({ 
-        success: false, 
-        error: err.message 
-      });
-    }
+    const statusCode = getErrorStatusCode(err);
+    const isUserFacing = isUserError(err);
     
-    if (err.message.includes('Product not found')) {
-      return res.status(400).json({ 
-        success: false, 
-        error: err.message 
-      });
-    }
-    
-    if (err.message.includes('Only') || err.message.includes('cannot be negative')) {
-      return res.status(400).json({ 
-        success: false, 
-        error: err.message 
-      });
-    }
-    
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to update cart item' 
+    return res.status(statusCode).json({
+      success: false,
+      error: isUserFacing ? err.message : CART_MESSAGES.UPDATE_CART_FAILED
     });
   }
 };
@@ -193,21 +175,25 @@ export const removeCartItem = async (req, res) => {
     if (!productId) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Product ID is required' 
+        error: CART_MESSAGES.PRODUCT_ID_REQUIRED 
       });
     }
 
     const cart = await removeFromCartService(req.user.id, productId);
     res.status(200).json({ 
       success: true, 
-      message: 'Product removed from cart successfully',
+      message: CART_MESSAGES.ITEM_REMOVED,
       cart 
     });
   } catch (err) {
     console.error('Remove from cart error:', err);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to remove product from cart' 
+    
+    const statusCode = getErrorStatusCode(err);
+    const isUserFacing = isUserError(err);
+    
+    return res.status(statusCode).json({
+      success: false,
+      error: isUserFacing ? err.message : CART_MESSAGES.REMOVE_FROM_CART_FAILED
     });
   }
 };

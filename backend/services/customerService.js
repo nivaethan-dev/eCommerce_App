@@ -1,6 +1,39 @@
 import Customer from '../models/Customer.js';
 import Product from '../models/Product.js';
+import mongoose from 'mongoose';
 import { fetchDocuments } from '../utils/queryHelper.js';
+import { 
+  CartError, 
+  StockError, 
+  ProductError, 
+  CartItemError, 
+  ValidationError, 
+  DatabaseError 
+} from '../utils/cartErrors.js';
+import { CART_MESSAGES, getStockErrorMessage } from '../utils/cartMessages.js';
+
+// Helper function to validate stock and prevent overselling
+const validateStockAvailability = async (productId, requestedQuantity, currentCartQuantity = 0, session) => {
+  const product = await Product.findById(productId).session(session);
+  if (!product) {
+    throw new ProductError(CART_MESSAGES.PRODUCT_NOT_FOUND, productId);
+  }
+  
+  if (product.stock <= 0) {
+    throw new StockError(CART_MESSAGES.PRODUCT_OUT_OF_STOCK, product.stock, requestedQuantity);
+  }
+  
+  const totalQuantity = currentCartQuantity + requestedQuantity;
+  if (totalQuantity > product.stock) {
+    throw new StockError(
+      getStockErrorMessage(product.stock, currentCartQuantity),
+      product.stock,
+      totalQuantity
+    );
+  }
+  
+  return product;
+};
 
 // Exclude sensitive fields in the service
 export const getCustomers = async (role, userId, queryParams) => {
@@ -18,112 +51,179 @@ export const getCustomers = async (role, userId, queryParams) => {
 
 // Add product to customer's cart
 export const addToCart = async (customerId, productId, quantity) => {
-  const customer = await Customer.findById(customerId);
-  if (!customer) {
-    throw new Error('Customer not found');
-  }
-
-  // Validate product exists
-  const product = await Product.findById(productId);
-  if (!product) {
-    throw new Error('Product not found');
-  }
-
-  // Check if product is in stock
-  if (product.stock <= 0) {
-    throw new Error('Product is out of stock');
-  }
-
-  const index = customer.cart.findIndex(item => item.productId.toString() === productId.toString());
+  const session = await mongoose.startSession();
   
-  if (index > -1) {
-    // Product already in cart - check if adding more would exceed stock
-    const newQuantity = customer.cart[index].quantity + quantity;
-    if (newQuantity > product.stock) {
-      throw new Error(`Only ${product.stock} items available in stock. You already have ${customer.cart[index].quantity} in your cart.`);
+  try {
+    await session.withTransaction(async () => {
+      // Find customer and product within transaction
+      const customer = await Customer.findById(customerId).session(session);
+      if (!customer) {
+        throw new CartError(CART_MESSAGES.CUSTOMER_NOT_FOUND, 404, true);
+      }
+
+      const index = customer.cart.findIndex(item => item.productId.toString() === productId.toString());
+      
+      if (index > -1) {
+        // Product already in cart - validate stock with current quantity
+        const currentQuantity = customer.cart[index].quantity;
+        await validateStockAvailability(productId, quantity, currentQuantity, session);
+        customer.cart[index].quantity = currentQuantity + quantity;
+      } else {
+        // New product - validate stock
+        await validateStockAvailability(productId, quantity, 0, session);
+        customer.cart.push({ productId, quantity });
+      }
+      
+      // Save customer within transaction
+      await customer.save({ session });
+    });
+    
+    // Return updated cart after successful transaction
+    const customer = await Customer.findById(customerId);
+    return customer.cart;
+  } catch (error) {
+    // Re-throw custom errors as-is
+    if (error instanceof CartError) {
+      throw error;
     }
-    customer.cart[index].quantity = newQuantity;
-  } else {
-    // New product - check if requested quantity exceeds stock
-    if (quantity > product.stock) {
-      throw new Error(`Only ${product.stock} items available in stock`);
-    }
-    customer.cart.push({ productId, quantity });
+    // Wrap unexpected errors
+    throw new DatabaseError(CART_MESSAGES.ADD_TO_CART_FAILED, error);
+  } finally {
+    await session.endSession();
   }
-  
-  await customer.save();
-  return customer.cart;
 };
 
 // Get customer's cart with product details
 export const getCart = async (customerId) => {
-  const customer = await Customer.findById(customerId).populate('cart.productId');
-  if (!customer) {
-    throw new Error('Customer not found');
-  }
+  try {
+    const customer = await Customer.findById(customerId).populate('cart.productId');
+    if (!customer) {
+      throw new CartError(CART_MESSAGES.CUSTOMER_NOT_FOUND, 404, true);
+    }
 
-  // Filter out products that no longer exist
-  const validCartItems = customer.cart.filter(item => item.productId !== null);
-  
-  // Update cart if any products were removed
-  if (validCartItems.length !== customer.cart.length) {
-    customer.cart = validCartItems;
-    await customer.save();
-  }
+    // Filter out products that no longer exist and validate stock
+    const validCartItems = [];
+    let cartModified = false;
 
-  return customer.cart;
+    for (const item of customer.cart) {
+      if (item.productId === null) {
+        // Product no longer exists
+        cartModified = true;
+        continue;
+      }
+
+      // Check current stock availability
+      if (item.productId.stock <= 0) {
+        // Product out of stock
+        cartModified = true;
+        continue;
+      }
+
+      // Adjust quantity if it exceeds current stock
+      if (item.quantity > item.productId.stock) {
+        item.quantity = item.productId.stock;
+        cartModified = true;
+      }
+
+      validCartItems.push(item);
+    }
+
+    // Update cart if any modifications were made
+    if (cartModified) {
+      customer.cart = validCartItems;
+      await customer.save();
+    }
+
+    return customer.cart;
+  } catch (error) {
+    // Re-throw custom errors as-is
+    if (error instanceof CartError) {
+      throw error;
+    }
+    // Wrap unexpected errors
+    throw new DatabaseError(CART_MESSAGES.GET_CART_FAILED, error);
+  }
 };
 
 // Update cart item quantity
 export const updateCartQuantity = async (customerId, productId, quantity) => {
-  const customer = await Customer.findById(customerId);
-  if (!customer) {
-    throw new Error('Customer not found');
-  }
+  const session = await mongoose.startSession();
+  
+  try {
+    let result;
+    await session.withTransaction(async () => {
+      // Find customer and product within transaction
+      const customer = await Customer.findById(customerId).session(session);
+      if (!customer) {
+        throw new CartError(CART_MESSAGES.CUSTOMER_NOT_FOUND, 404, true);
+      }
 
-  // Validate product exists
-  const product = await Product.findById(productId);
-  if (!product) {
-    throw new Error('Product not found');
-  }
+      // Validate quantity
+      if (quantity < 0) {
+        throw new ValidationError(CART_MESSAGES.QUANTITY_NON_NEGATIVE, 'quantity');
+      }
 
-  // Validate quantity
-  if (quantity < 0) {
-    throw new Error('Quantity cannot be negative');
-  }
+      // Check if item exists in cart first
+      const index = customer.cart.findIndex(item => item.productId.toString() === productId.toString());
+      if (index === -1) {
+        throw new CartItemError(CART_MESSAGES.PRODUCT_NOT_IN_CART, productId);
+      }
 
-  // Check if item exists in cart first
-  const index = customer.cart.findIndex(item => item.productId.toString() === productId.toString());
-  if (index === -1) {
-    throw new Error('Product not found in cart');
-  }
+      if (quantity === 0) {
+        // Remove item from cart if quantity is 0
+        customer.cart = customer.cart.filter(item => item.productId.toString() !== productId.toString());
+        await customer.save({ session });
+        result = { cart: customer.cart, wasRemoved: true };
+      } else {
+        // Validate stock availability for the new quantity
+        await validateStockAvailability(productId, quantity, 0, session);
 
-  if (quantity === 0) {
-    // Remove item from cart if quantity is 0
-    customer.cart = customer.cart.filter(item => item.productId.toString() !== productId.toString());
-    await customer.save();
-    return { cart: customer.cart, wasRemoved: true };
-  } else {
-    // Check stock availability
-    if (quantity > product.stock) {
-      throw new Error(`Only ${product.stock} items available in stock`);
+        // Update quantity
+        customer.cart[index].quantity = quantity;
+        await customer.save({ session });
+        result = { cart: customer.cart, wasRemoved: false };
+      }
+    });
+    
+    return result;
+  } catch (error) {
+    // Re-throw custom errors as-is
+    if (error instanceof CartError) {
+      throw error;
     }
-
-    // Update quantity
-    customer.cart[index].quantity = quantity;
-    await customer.save();
-    return { cart: customer.cart, wasRemoved: false };
+    // Wrap unexpected errors
+    throw new DatabaseError(CART_MESSAGES.UPDATE_CART_FAILED, error);
+  } finally {
+    await session.endSession();
   }
 };
 
 // Remove product from customer's cart
 export const removeFromCart = async (customerId, productId) => {
-  const customer = await Customer.findById(customerId);
-  if (!customer) {
-    throw new Error('Customer not found');
-  }
+  const session = await mongoose.startSession();
+  
+  try {
+    await session.withTransaction(async () => {
+      const customer = await Customer.findById(customerId).session(session);
+      if (!customer) {
+        throw new CartError(CART_MESSAGES.CUSTOMER_NOT_FOUND, 404, true);
+      }
 
-  customer.cart = customer.cart.filter(item => item.productId.toString() !== productId.toString());
-  await customer.save();
-  return customer.cart;
+      customer.cart = customer.cart.filter(item => item.productId.toString() !== productId.toString());
+      await customer.save({ session });
+    });
+    
+    // Return updated cart after successful transaction
+    const customer = await Customer.findById(customerId);
+    return customer.cart;
+  } catch (error) {
+    // Re-throw custom errors as-is
+    if (error instanceof CartError) {
+      throw error;
+    }
+    // Wrap unexpected errors
+    throw new DatabaseError(CART_MESSAGES.REMOVE_FROM_CART_FAILED, error);
+  } finally {
+    await session.endSession();
+  }
 };
