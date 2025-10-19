@@ -11,6 +11,7 @@ import {
   DatabaseError 
 } from '../utils/cartErrors.js';
 import { CART_MESSAGES, getStockErrorMessage } from '../utils/cartMessages.js';
+import { calculateCartSummary } from '../utils/cartSummaryUtils.js';
 
 // Helper function to validate stock and prevent overselling
 const validateStockAvailability = async (productId, requestedQuantity, currentCartQuantity = 0, session) => {
@@ -78,9 +79,14 @@ export const addToCart = async (customerId, productId, quantity) => {
       await customer.save({ session });
     });
     
-    // Return updated cart after successful transaction
-    const customer = await Customer.findById(customerId);
-    return customer.cart;
+    // Return updated cart after successful transaction with populated product data
+    const customer = await Customer.findById(customerId).populate('cart.productId');
+    const summary = calculateCartSummary(customer.cart);
+    
+    return {
+      items: customer.cart,
+      summary: summary
+    };
   } catch (error) {
     // Re-throw custom errors as-is
     if (error instanceof CartError) {
@@ -134,7 +140,13 @@ export const getCart = async (customerId) => {
       await customer.save();
     }
 
-    return customer.cart;
+    // Calculate cart summary
+    const summary = calculateCartSummary(customer.cart);
+    
+    return {
+      items: customer.cart,
+      summary: summary
+    };
   } catch (error) {
     // Re-throw custom errors as-is
     if (error instanceof CartError) {
@@ -173,7 +185,9 @@ export const updateCartQuantity = async (customerId, productId, quantity) => {
         // Remove item from cart if quantity is 0
         customer.cart = customer.cart.filter(item => item.productId.toString() !== productId.toString());
         await customer.save({ session });
-        result = { cart: customer.cart, wasRemoved: true };
+        result = { 
+          wasRemoved: true 
+        };
       } else {
         // Validate stock availability for the new quantity
         await validateStockAvailability(productId, quantity, 0, session);
@@ -181,11 +195,21 @@ export const updateCartQuantity = async (customerId, productId, quantity) => {
         // Update quantity
         customer.cart[index].quantity = quantity;
         await customer.save({ session });
-        result = { cart: customer.cart, wasRemoved: false };
+        result = { 
+          wasRemoved: false 
+        };
       }
     });
     
-    return result;
+    // Populate product data for the returned cart
+    const customer = await Customer.findById(customerId).populate('cart.productId');
+    const summary = calculateCartSummary(customer.cart);
+    
+    return {
+      items: customer.cart,
+      summary: summary,
+      wasRemoved: result.wasRemoved
+    };
   } catch (error) {
     // Re-throw custom errors as-is
     if (error instanceof CartError) {
@@ -213,9 +237,14 @@ export const removeFromCart = async (customerId, productId) => {
       await customer.save({ session });
     });
     
-    // Return updated cart after successful transaction
-    const customer = await Customer.findById(customerId);
-    return customer.cart;
+    // Return updated cart after successful transaction with populated product data
+    const customer = await Customer.findById(customerId).populate('cart.productId');
+    const summary = calculateCartSummary(customer.cart);
+    
+    return {
+      items: customer.cart,
+      summary: summary
+    };
   } catch (error) {
     // Re-throw custom errors as-is
     if (error instanceof CartError) {

@@ -25,7 +25,11 @@ export const CART_MESSAGES = {
   ADD_TO_CART_FAILED: 'Failed to add product to cart',
   UPDATE_CART_FAILED: 'Failed to update cart item',
   REMOVE_FROM_CART_FAILED: 'Failed to remove product from cart',
-  GET_CART_FAILED: 'Failed to retrieve cart'
+  GET_CART_FAILED: 'Failed to retrieve cart',
+  
+  // Cart summary messages
+  CART_SUMMARY_CALCULATED: 'Cart summary calculated successfully',
+  TAX_RATE_MESSAGE: 'Tax rate: 8%'
 };
 
 // Helper function to format messages with placeholders
@@ -47,3 +51,4 @@ export const getStockErrorMessage = (currentStock, cartQuantity) => {
     cartQuantity: cartQuantity
   });
 };
+

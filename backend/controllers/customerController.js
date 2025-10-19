@@ -78,11 +78,12 @@ export const addCartItem = async (req, res) => {
       });
     }
 
-    const cart = await addToCartService(req.user.id, productId, quantity);
+    const cartData = await addToCartService(req.user.id, productId, quantity);
     res.status(201).json({ 
       success: true, 
       message: CART_MESSAGES.ITEM_ADDED,
-      cart 
+      cart: cartData.items,
+      summary: cartData.summary
     });
   } catch (err) {
     console.error('Add to cart error:', err);
@@ -100,11 +101,12 @@ export const addCartItem = async (req, res) => {
 // Get cart
 export const getCart = async (req, res) => {
   try {
-    const cart = await getCartService(req.user.id);
+    const cartData = await getCartService(req.user.id);
     res.status(200).json({ 
       success: true, 
       message: CART_MESSAGES.CART_RETRIEVED,
-      cart 
+      cart: cartData.items,
+      summary: cartData.summary
     });
   } catch (err) {
     console.error('Get cart error:', err);
@@ -151,7 +153,8 @@ export const updateCartItem = async (req, res) => {
     res.status(200).json({ 
       success: true, 
       message: result.wasRemoved ? CART_MESSAGES.ITEM_REMOVED : CART_MESSAGES.ITEM_UPDATED,
-      cart: result.cart
+      cart: result.items,
+      summary: result.summary
     });
   } catch (err) {
     console.error('Update cart item error:', err);
@@ -179,11 +182,12 @@ export const removeCartItem = async (req, res) => {
       });
     }
 
-    const cart = await removeFromCartService(req.user.id, productId);
+    const cartData = await removeFromCartService(req.user.id, productId);
     res.status(200).json({ 
       success: true, 
       message: CART_MESSAGES.ITEM_REMOVED,
-      cart 
+      cart: cartData.items,
+      summary: cartData.summary
     });
   } catch (err) {
     console.error('Remove from cart error:', err);
