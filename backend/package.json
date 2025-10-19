@@ -7,7 +7,12 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
     "test": "jest",
-    "seed:admin": "NODE_ENV=development node database/seeds/adminSeeder.js"
+    "seed:admin": "NODE_ENV=development node database/seeds/index.js admin",
+    "seed:customers": "NODE_ENV=development node database/seeds/index.js customers",
+    "seed:all": "NODE_ENV=development node database/seeds/index.js all",
+    "seed:reset": "NODE_ENV=development node database/seeds/index.js reset",
+    "seed:clear": "NODE_ENV=development node database/seeds/index.js clear",
+    "seed:clear:model": "NODE_ENV=development node database/seeds/index.js clear:model"
   },
   "keywords": [],
   "author": "",
