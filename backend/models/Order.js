@@ -2,16 +2,20 @@ import mongoose from 'mongoose';
 
 const orderSchema = new mongoose.Schema({
   customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
-  products: [
+  items: [
     {
       productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-      quantity: { type: Number, default: 1 },
-      price: { type: Number, required: true } // snapshot of price at purchase
-    }
+      name: String,
+      quantity: Number,
+      price: Number,      // unit price
+      subtotal: Number,   // price * quantity
+    },
   ],
-  totalPrice: { type: Number, required: true },
-  status: { type: String, enum: ['pending', 'cancelled'], default: 'pending' },
-  createdAt: { type: Date, default: Date.now }
+  subTotal: Number,       // sum of all item subtotals
+  tax: { type: Number, default: 0 },
+  totalAmount: Number,    // subTotal + tax
+  status: { type: String, default: 'Pending' },
+  createdAt: { type: Date, default: Date.now },
 });
 
 const Order = mongoose.model('Order', orderSchema);
