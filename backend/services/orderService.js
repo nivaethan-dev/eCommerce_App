@@ -16,9 +16,14 @@ export const createOrderFromCart = async (customerId) => {
   try {
     let order;
     
+    // MongoDB transaction ensures atomicity:
+    // - All stock updates are temporary until transaction commits
+    // - If any operation fails (stock insufficient, order creation fails, etc.),
+    //   MongoDB automatically rolls back ALL changes including stock decrements
+    // - Multiple concurrent orders are isolated - no overselling possible
     await session.withTransaction(async () => {
-      // Get customer with populated cart within transaction
-      const customer = await Customer.findById(customerId).populate('cart.productId').session(session);
+      // Get customer with cart (no population - we'll fetch products within transaction)
+      const customer = await Customer.findById(customerId).session(session);
       
       if (!customer) {
         throw new Error(ORDER_MESSAGES.CUSTOMER_NOT_FOUND);
@@ -34,35 +39,60 @@ export const createOrderFromCart = async (customerId) => {
       
       for (const cartItem of customer.cart) {
         if (!cartItem.productId) {
-          // Skip if product no longer exists
+          // Skip if product reference is missing
           continue;
         }
         
-        const product = cartItem.productId;
         const quantity = cartItem.quantity;
-        const price = product.price; // Snapshot of price at purchase time
-        const itemSubtotal = price * quantity;
         
-        // Validate stock availability
-        if (product.stock < quantity) {
+        // Fetch product directly within transaction with session
+        // This ensures we get the latest stock value and it's part of the transaction
+        const product = await Product.findById(cartItem.productId).session(session);
+        
+        if (!product) {
+          // Product no longer exists - skip this item
+          continue;
+        }
+        
+        // Use atomic operation to validate and decrement stock
+        // This prevents race conditions by checking and updating in a single atomic operation
+        const updateResult = await Product.findOneAndUpdate(
+          {
+            _id: product._id,
+            stock: { $gte: quantity }  // Only match if stock is sufficient
+          },
+          {
+            $inc: { stock: -quantity }  // Atomic decrement
+          },
+          {
+            session,
+            new: true,
+            runValidators: true
+          }
+        );
+        
+        // If updateResult is null, stock was insufficient or product was deleted
+        if (!updateResult) {
+          // Re-fetch product to get current stock for error message
+          const currentProduct = await Product.findById(cartItem.productId).session(session);
           throw new Error(formatOrderMessage(ORDER_MESSAGES.INSUFFICIENT_STOCK, {
-            productTitle: product.title,
-            stock: product.stock,
+            productTitle: currentProduct?.title || 'Unknown Product',
+            stock: currentProduct?.stock || 0,
             quantity: quantity
           }));
         }
         
+        // Use the updated product for order item snapshot
+        const price = updateResult.price;
+        const itemSubtotal = price * quantity;
+        
         items.push({
           productId: product._id,
-          name: product.title, // Store product name as snapshot
+          name: updateResult.title, // Store product name as snapshot
           quantity: quantity,
-          price: price, // Unit price
+          price: price, // Unit price snapshot at purchase time
           subtotal: Math.round(itemSubtotal * 100) / 100 // Round to 2 decimal places
         });
-        
-        // Update product stock
-        product.stock -= quantity;
-        await product.save({ session });
       }
       
       if (items.length === 0) {
