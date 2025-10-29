@@ -1,5 +1,6 @@
 import express from 'express';
 import { registerCustomer, addCartItem, removeCartItem, getCart, updateCartItem } from '../controllers/customerController.js';
+import { placeOrder, getOrders } from '../controllers/orderController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { registerLimiter } from '../middleware/rateLimitMiddleware.js';
 
@@ -12,5 +13,9 @@ router.get('/cart', authMiddleware, getCart);                           // GET /
 router.post('/cart/items', authMiddleware, addCartItem);                // POST /cart/items - Add item to cart
 router.put('/cart/items/:productId', authMiddleware, updateCartItem);  // PUT /cart/items/:productId - Update item quantity
 router.delete('/cart/items/:productId', authMiddleware, removeCartItem); // DELETE /cart/items/:productId - Remove item from cart
+
+// Order endpoints
+router.post('/orders', authMiddleware, placeOrder);                     // POST /orders - Place order (simulated checkout)
+router.get('/orders', authMiddleware, getOrders);                      // GET /orders - Get customer order history
 
 export default router;
