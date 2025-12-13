@@ -1,30 +1,40 @@
 import { useState, useEffect, useRef } from 'react';
-import { get } from '../utils/api';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { get, post } from '../utils/api';
 import { API_ENDPOINTS, PRODUCT_CATEGORIES } from '../utils/constants';
 import './Header.css';
 
 const Header = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [cartItemCount, setCartItemCount] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const profileDropdownRef = useRef(null);
+  const notificationDropdownRef = useRef(null);
 
-  // Check authentication status on mount
+  // Check authentication status whenever location changes
   useEffect(() => {
-    const checkAuth = () => {
-      // TODO: Replace with actual authentication check (e.g., checking token in localStorage)
-      const token = localStorage.getItem('authToken');
-      setIsAuthenticated(!!token);
-      
-      // For demo purposes, you can simulate logged-in state
-      // Uncomment the line below to test authenticated view
-      // setIsAuthenticated(true);
-    };
+    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+    setIsAuthenticated(isAuth);
+  }, [location]);
 
-    checkAuth();
+  // Listen for auth change events (login/logout)
+  useEffect(() => {
+    const handleAuthChange = () => {
+      const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+      setIsAuthenticated(isAuth);
+    };
+    
+    window.addEventListener('authChange', handleAuthChange);
+    
+    return () => {
+      window.removeEventListener('authChange', handleAuthChange);
+    };
   }, []);
 
   // Fetch cart data to get item count
@@ -50,26 +60,32 @@ const Header = () => {
     if (isAuthenticated) {
       const fetchNotifications = async () => {
         try {
-          // TODO: Replace with actual API call
+          // TODO: Replace with actual API call when backend implements notifications
           // const notifications = await get(API_ENDPOINTS.NOTIFICATIONS);
           // setNotificationCount(notifications.unreadCount || 0);
           
-          // For demo purposes, set a sample count
-          setNotificationCount(3);
+          // For now, no notifications
+          setNotificationCount(0);
         } catch (error) {
           console.error('Failed to fetch notifications:', error);
+          setNotificationCount(0);
         }
       };
 
       fetchNotifications();
+    } else {
+      setNotificationCount(0);
     }
   }, [isAuthenticated]);
 
-  // Close profile dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
         setShowProfileDropdown(false);
+      }
+      if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(event.target)) {
+        setShowNotificationDropdown(false);
       }
     };
 
@@ -86,33 +102,40 @@ const Header = () => {
   };
 
   const handleCartClick = () => {
-    // TODO: Navigate to cart page
-    window.location.href = '/cart';
+    navigate('/cart');
   };
 
   const handleLoginClick = () => {
-    // TODO: Navigate to login page
-    window.location.href = '/login';
+    navigate('/login');
   };
 
   const handleNotificationsClick = () => {
-    // TODO: Navigate to notifications page or show dropdown
-    window.location.href = '/notifications';
+    setShowNotificationDropdown(!showNotificationDropdown);
   };
 
   const handleProfileClick = () => {
     setShowProfileDropdown(!showProfileDropdown);
   };
 
-  const handleLogout = () => {
-    // Clear authentication token
-    localStorage.removeItem('authToken');
+  const handleLogout = async () => {
+    try {
+      // Call backend logout endpoint to clear httpOnly cookies
+      await post(API_ENDPOINTS.LOGOUT, {});
+    } catch (error) {
+      console.error('Logout API call failed:', error);
+    }
+    
+    // Clear authentication flag
+    localStorage.removeItem('isAuthenticated');
     setIsAuthenticated(false);
     setShowProfileDropdown(false);
     setNotificationCount(0);
     
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new Event('authChange'));
+    
     // Redirect to home page
-    window.location.href = '/';
+    navigate('/');
   };
 
   return (
@@ -120,10 +143,10 @@ const Header = () => {
       <div className="header-container">
         {/* Logo/Brand Section */}
         <div className="header-logo">
-          <a href="/" className="logo-link">
+          <Link to="/" className="logo-link">
             <span className="logo-icon">🛒</span>
             <span className="logo-text">CloudCart</span>
-          </a>
+          </Link>
         </div>
 
         {/* Search Bar Section */}
@@ -173,18 +196,18 @@ const Header = () => {
 
         {/* Navigation Section */}
         <nav className="header-nav">
-          <a href="/" className="nav-link active">
+          <Link to="/" className="nav-link">
             Home
-          </a>
-          <a href="/products" className="nav-link">
+          </Link>
+          <Link to="/products" className="nav-link">
             Products
-          </a>
-          <a href="/about" className="nav-link">
+          </Link>
+          <Link to="/about" className="nav-link">
             About Us
-          </a>
-          <a href="/contact" className="nav-link">
+          </Link>
+          <Link to="/contact" className="nav-link">
             Contact
-          </a>
+          </Link>
           
           {/* Guest View - Login/Signup Button */}
           {!isAuthenticated && (
@@ -195,29 +218,65 @@ const Header = () => {
           
           {/* Authenticated View - Notifications Icon */}
           {isAuthenticated && (
-            <button 
-              onClick={handleNotificationsClick} 
-              className="notification-button"
-              aria-label={`Notifications - ${notificationCount} unread`}
-            >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="24" 
-                height="24" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
+            <div className="notification-container" ref={notificationDropdownRef}>
+              <button 
+                onClick={handleNotificationsClick} 
+                className="notification-button"
+                aria-label={`Notifications - ${notificationCount} unread`}
               >
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-              {notificationCount > 0 && (
-                <span className="notification-badge">{notificationCount > 99 ? '99+' : notificationCount}</span>
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  width="24" 
+                  height="24" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                {notificationCount > 0 && (
+                  <span className="notification-badge">{notificationCount > 99 ? '99+' : notificationCount}</span>
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {showNotificationDropdown && (
+                <div className="notification-dropdown">
+                  {notificationCount === 0 ? (
+                    <div className="notification-empty">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="48" 
+                        height="48" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="1.5"
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                        className="empty-icon"
+                      >
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                      </svg>
+                      <p className="empty-text">No new notifications</p>
+                      <p className="empty-subtext">You're all caught up!</p>
+                    </div>
+                  ) : (
+                    <div className="notification-list">
+                      {/* TODO: Map through actual notifications from backend */}
+                      <div className="notification-item">
+                        <p>Sample notification</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
-            </button>
+            </div>
           )}
           
           {/* Cart Icon with Badge - Always Visible */}
@@ -273,7 +332,7 @@ const Header = () => {
               {/* Profile Dropdown Menu */}
               {showProfileDropdown && (
                 <div className="profile-dropdown">
-                  <a href="/profile" className="dropdown-item">
+                  <Link to="/profile" className="dropdown-item">
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" 
                       width="18" 
@@ -287,8 +346,8 @@ const Header = () => {
                       <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                     <span>View Profile</span>
-                  </a>
-                  <a href="/settings" className="dropdown-item">
+                  </Link>
+                  <Link to="/settings" className="dropdown-item">
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" 
                       width="18" 
@@ -302,8 +361,8 @@ const Header = () => {
                       <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3"></path>
                     </svg>
                     <span>Account Settings</span>
-                  </a>
-                  <a href="/orders" className="dropdown-item">
+                  </Link>
+                  <Link to="/orders" className="dropdown-item">
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" 
                       width="18" 
@@ -317,7 +376,7 @@ const Header = () => {
                       <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
                     </svg>
                     <span>Order History</span>
-                  </a>
+                  </Link>
                   <div className="dropdown-divider"></div>
                   <button onClick={handleLogout} className="dropdown-item logout-item">
                     <svg 
