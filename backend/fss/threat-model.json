@@ -1,0 +1,4090 @@
+{
+    "version": "2.5.0",
+    "summary": {
+      "title": "Threat Model for our e-Commerce System",
+      "owner": "Group 10",
+      "description": "STRIDE-based threat model for the e-commerce application with clearly defined process boundaries for penetration testing"
+    },
+    "detail": {
+      "contributors": [
+        {
+          "name": "R. Nivaethan (FC222008)"
+        },
+        {
+          "name": "W.D.C.S. Gunathunga (FC222017)"
+        },
+        {
+          "name": "M.N.F Afrina (FC222001)"
+        },
+        {
+          "name": "K.G.A.K.S. Sathsarani (FC222015)"
+        }
+      ],
+      "diagrams": [
+        {
+          "id": 0,
+          "title": "E-Commerce System DFD",
+          "diagramType": "STRIDE",
+          "placeholder": "New STRIDE diagram description",
+          "thumbnail": "./public/content/images/thumbnail.stride.jpg",
+          "version": "2.5.0",
+          "cells": [
+            {
+              "position": {
+                "x": -50,
+                "y": 20
+              },
+              "size": {
+                "width": 350,
+                "height": 1100
+              },
+              "attrs": {
+                "text": {
+                  "text": "Internet Trust Boundary"
+                },
+                "body": {
+                  "strokeWidth": 2,
+                  "strokeDasharray": "8 4",
+                  "stroke": "#FF0000"
+                }
+              },
+              "visible": true,
+              "shape": "trust-boundary-box",
+              "zIndex": 0,
+              "id": "internet-boundary",
+              "data": {
+                "type": "tm.BoundaryBox",
+                "name": "Internet Trust Boundary",
+                "description": "External users accessing the system from the internet - untrusted zone",
+                "isTrustBoundary": true,
+                "threats": [],
+                "hasOpenThreats": false
+              }
+            },
+            {
+              "position": {
+                "x": 320,
+                "y": 20
+              },
+              "size": {
+                "width": 1400,
+                "height": 1100
+              },
+              "attrs": {
+                "text": {
+                  "text": "Application Trust Boundary"
+                },
+                "body": {
+                  "strokeWidth": 2,
+                  "strokeDasharray": "8 4",
+                  "stroke": "#0000FF"
+                }
+              },
+              "visible": true,
+              "shape": "trust-boundary-box",
+              "zIndex": 0,
+              "id": "application-boundary",
+              "data": {
+                "type": "tm.BoundaryBox",
+                "name": "Application Trust Boundary",
+                "description": "Protected backend services and databases - trusted internal zone",
+                "isTrustBoundary": true,
+                "threats": [],
+                "hasOpenThreats": false
+              }
+            },
+            {
+              "position": {
+                "x": 50,
+                "y": 150
+              },
+              "size": {
+                "width": 120,
+                "height": 80
+              },
+              "attrs": {
+                "text": {
+                  "text": "Customer"
+                },
+                "body": {
+                  "stroke": "red",
+                  "strokeWidth": 2.5,
+                  "strokeDasharray": null
+                }
+              },
+              "visible": true,
+              "shape": "actor",
+              "zIndex": 1,
+              "ports": {
+                "groups": {
+                  "top": {
+                    "position": "top",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "position": "right",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "bottom": {
+                    "position": "bottom",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "left": {
+                    "position": "left",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "group": "top",
+                    "id": "0a368dab-8cf5-457a-baad-5bbdc5c2efab"
+                  },
+                  {
+                    "group": "right",
+                    "id": "4bb9de8f-fe24-464a-a48d-705fc231b35d"
+                  },
+                  {
+                    "group": "bottom",
+                    "id": "793141f2-d110-4391-be84-06a2712abd0f"
+                  },
+                  {
+                    "group": "left",
+                    "id": "312d2c30-96fd-468b-a47a-a54626d60771"
+                  }
+                ]
+              },
+              "id": "customer",
+              "data": {
+                "type": "tm.Actor",
+                "name": "Customer",
+                "description": "Authenticated customer using the e-commerce platform",
+                "outOfScope": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": true,
+                "providesAuthentication": false,
+                "threats": [
+                  {
+                    "id": "725884de-a21b-445a-b104-f849a0241fe1",
+                    "title": "Customer Spoofing",
+                    "status": "Open",
+                    "severity": "Medium",
+                    "type": "Spoofing",
+                    "description": "Provide a description for this threat. A customer could attempt to impersonate another registered customer to gain unauthorized access to their account or personal data.",
+                    "mitigation": "Enforce strong authentication (passwords, MFA)\n\nMonitor unusual login activity\n\nLock accounts after multiple failed login attempts",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 102,
+                    "score": ""
+                  },
+                  {
+                    "id": "c7d88dfa-c19e-4c77-99d0-c25487770ca4",
+                    "title": "Customer Repudiation",
+                    "status": "Open",
+                    "severity": "Medium",
+                    "type": "Repudiation",
+                    "description": "A customer could deny performing actions like placing an order or updating account details.",
+                    "mitigation": "Maintain tamper-proof audit logs\n\nTimestamp all transactions",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 103,
+                    "score": ""
+                  }
+                ],
+                "threatFrequency": {
+                  "spoofing": 1,
+                  "repudiation": 1
+                }
+              }
+            },
+            {
+              "position": {
+                "x": 50,
+                "y": 500
+              },
+              "size": {
+                "width": 120,
+                "height": 80
+              },
+              "attrs": {
+                "text": {
+                  "text": "Guest"
+                },
+                "body": {
+                  "stroke": "red",
+                  "strokeWidth": 2.5,
+                  "strokeDasharray": null
+                }
+              },
+              "visible": true,
+              "shape": "actor",
+              "zIndex": 2,
+              "ports": {
+                "groups": {
+                  "top": {
+                    "position": "top",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "position": "right",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "bottom": {
+                    "position": "bottom",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "left": {
+                    "position": "left",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "group": "top",
+                    "id": "ed6b2bd1-58ce-4bab-a0f6-7e80e31073f2"
+                  },
+                  {
+                    "group": "right",
+                    "id": "c271ca99-435d-4407-ba49-7670a8823d69"
+                  },
+                  {
+                    "group": "bottom",
+                    "id": "364b5771-640e-4cf7-9a2f-162fefe39a53"
+                  },
+                  {
+                    "group": "left",
+                    "id": "0ab147cb-3647-418a-958d-847aa5220fac"
+                  }
+                ]
+              },
+              "id": "guest",
+              "data": {
+                "type": "tm.Actor",
+                "name": "Guest",
+                "description": "Unauthenticated user browsing products",
+                "outOfScope": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": true,
+                "providesAuthentication": false,
+                "threats": [
+                  {
+                    "id": "87b1e922-9838-437e-9992-1960d52922bf",
+                    "title": "Guest Spoofing",
+                    "status": "Open",
+                    "severity": "Medium",
+                    "type": "Spoofing",
+                    "description": " A guest (unauthenticated user) could attempt to impersonate another user or manipulate session identifiers to gain unauthorized access to system functionality or view restricted information.",
+                    "mitigation": "- Validate all session tokens\n- Rate-limit API requests\n- Monitor unusual access patterns",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 104,
+                    "score": ""
+                  },
+                  {
+                    "id": "e5b1d5f3-dcbc-4c78-97ce-49e7d78d8ef5",
+                    "title": "Guest Repudiation",
+                    "status": "Open",
+                    "severity": "Medium",
+                    "type": "Repudiation",
+                    "description": "A guest could deny sending requests or accessing certain APIs, making it difficult to track malicious activity or abuse.",
+                    "mitigation": "Log all guest requests with IP, user agent, and timestamps\n\nUse server-side request validation\n\nImplement anomaly detection for unusual traffic",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 105,
+                    "score": ""
+                  }
+                ],
+                "threatFrequency": {
+                  "spoofing": 1,
+                  "repudiation": 1
+                }
+              }
+            },
+            {
+              "position": {
+                "x": 50,
+                "y": 850
+              },
+              "size": {
+                "width": 120,
+                "height": 80
+              },
+              "attrs": {
+                "text": {
+                  "text": "Admin"
+                },
+                "body": {
+                  "stroke": "red",
+                  "strokeWidth": 2.5,
+                  "strokeDasharray": null
+                }
+              },
+              "visible": true,
+              "shape": "actor",
+              "zIndex": 3,
+              "ports": {
+                "groups": {
+                  "top": {
+                    "position": "top",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "position": "right",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "bottom": {
+                    "position": "bottom",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "left": {
+                    "position": "left",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "group": "top",
+                    "id": "9ba57a70-b971-4729-87e3-496f07de9e28"
+                  },
+                  {
+                    "group": "right",
+                    "id": "93ab7cb2-72ce-483a-823a-73064031e675"
+                  },
+                  {
+                    "group": "bottom",
+                    "id": "3a736297-073b-4920-86e5-c61e85c39402"
+                  },
+                  {
+                    "group": "left",
+                    "id": "16aedfc6-ff5c-479b-a0f4-ffd303d4c713"
+                  }
+                ]
+              },
+              "id": "admin",
+              "data": {
+                "type": "tm.Actor",
+                "name": "Admin",
+                "description": "Administrative user managing the platform",
+                "outOfScope": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": true,
+                "providesAuthentication": false,
+                "threats": [
+                  {
+                    "id": "122a9b26-3a53-415f-8f92-0cdd5562d16f",
+                    "title": "Admin Spoofing",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Spoofing",
+                    "description": " An attacker could attempt to impersonate an admin to gain unauthorized access to backend functionality, modify critical data, or manage other users.",
+                    "mitigation": "- Enforce strong authentication (password + MFA)\n- Restrict admin access via IP whitelisting\n- Monitor and alert on suspicious admin logins\n- Use role-based access controls to limit privileges",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 106,
+                    "score": ""
+                  },
+                  {
+                    "id": "4c70dbeb-df11-4457-ad47-922bee8f29e4",
+                    "title": "Admin Repudiation",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Repudiation",
+                    "description": "An admin could deny performing actions such as modifying user accounts, updating products, or deleting orders, potentially hiding malicious or erroneous activities.",
+                    "mitigation": "- Maintain detailed audit logs with timestamps and user IDs\n- Require digital signatures or confirmation for critical actions\n- Implement immutable logging where possible",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 107,
+                    "score": ""
+                  }
+                ],
+                "threatFrequency": {
+                  "spoofing": 1,
+                  "repudiation": 1
+                }
+              }
+            },
+            {
+              "position": {
+                "x": 400,
+                "y": 70
+              },
+              "size": {
+                "width": 140,
+                "height": 100
+              },
+              "attrs": {
+                "text": {
+                  "text": "Auth Service"
+                },
+                "body": {
+                  "stroke": "red",
+                  "strokeWidth": 2.5,
+                  "strokeDasharray": null
+                }
+              },
+              "visible": true,
+              "shape": "process",
+              "zIndex": 4,
+              "ports": {
+                "groups": {
+                  "top": {
+                    "position": "top",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "position": "right",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "bottom": {
+                    "position": "bottom",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "left": {
+                    "position": "left",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "group": "top",
+                    "id": "b94f6285-8070-4142-86ac-27ff63e330d2"
+                  },
+                  {
+                    "group": "right",
+                    "id": "f65f2ec9-8f75-4df7-8a76-269a6b5e55bb"
+                  },
+                  {
+                    "group": "bottom",
+                    "id": "e8ab5fcf-a16c-4869-9064-4693a7d7746d"
+                  },
+                  {
+                    "group": "left",
+                    "id": "250f73c4-cd79-4934-80d4-bb1e491ff65b"
+                  }
+                ]
+              },
+              "id": "auth-service",
+              "data": {
+                "type": "tm.Process",
+                "name": "Auth Service",
+                "description": "Authentication and authorization service - maps to auth controller/service",
+                "outOfScope": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": true,
+                "privilegeLevel": "",
+                "threats": [
+                  {
+                    "id": "d4c35179-86ce-4ad1-a1e2-f958986aa070",
+                    "title": "Auth Service Spoofing: Impersonation of Users or Admins",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Spoofing",
+                    "description": "An attacker could attempt to log in as another user or admin by using stolen credentials, session tokens, or exploiting flaws in login mechanisms. Successful spoofing allows unauthorized access to protected areas, including the Customer Service, Order Service, Product Service, and Admin Service endpoints.",
+                    "mitigation": "Use strong password policies and secure password storage (hashing + salting).\n\nMonitor login patterns and alert on anomalous activity.\n\nLock accounts temporarily after repeated failed login attempts.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 108,
+                    "score": ""
+                  },
+                  {
+                    "id": "0f9b5e92-5ab1-4f03-b866-ac45fb42bcdd",
+                    "title": "Auth Service Tampering: Modification of Authentication Requests or Responses",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Tampering",
+                    "description": "An attacker could modify authentication traffic or payloads to bypass security controls, elevate privileges, or manipulate session data. Examples include changing JSON fields in API requests, replaying or altering JWT tokens, or tampering with login challenge responses.",
+                    "mitigation": "Use HTTPS for all communication to prevent in-transit tampering.\n\nValidate all inputs server-side, including token and session data.\n\nImplement integrity checks (e.g., HMAC for tokens).\n\nReject malformed or replayed requests.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 109,
+                    "score": ""
+                  },
+                  {
+                    "id": "0bc1d48b-d6e0-4538-b97f-43d4d972f304",
+                    "title": "Auth Service Repudiation: Denial of Authentication Actions",
+                    "status": "Open",
+                    "severity": "Medium",
+                    "type": "Repudiation",
+                    "description": "A user could deny having attempted a login, logged out, or performed other authentication-related actions. Without tamper-proof logging, it becomes difficult to verify whether authentication requests originated from the legitimate user or were malicious.",
+                    "mitigation": "Maintain tamper-proof audit logs of authentication attempts, timestamp all actions.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 110,
+                    "score": ""
+                  },
+                  {
+                    "id": "f1122da2-b3f3-48d9-a5b4-d7fc32cf3e5c",
+                    "title": "Auth Service Information Disclosure: Exposure of Credentials or Tokens",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Information disclosure",
+                    "description": "An attacker could gain access to passwords, session tokens, or secret keys due to insecure storage, transmission, or verbose error messages. Exposure can lead to account takeover or unauthorized system access.",
+                    "mitigation": "Hash and salt all passwords before storage.\n\nEncrypt tokens and sensitive authentication data at rest and in transit.\n\nLimit error messages to avoid revealing whether a username or password was correct.\n\nRotate and expire tokens regularly.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 111,
+                    "score": ""
+                  },
+                  {
+                    "id": "f2e4fb9a-71df-4457-924d-94ad8b8a7c1c",
+                    "title": "Auth Service Denial of Service: Disruption of Authentication endpoints",
+                    "status": "Open",
+                    "severity": "Medium",
+                    "type": "Denial of service",
+                    "description": "Attackers may flood the authentication endpoints with repeated login attempts, API requests, or malformed payloads, preventing legitimate users from logging in and potentially impacting downstream services that rely on authentication.",
+                    "mitigation": "Rate limiting, autoscaling, monitor traffic anomalies.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 112,
+                    "score": ""
+                  },
+                  {
+                    "id": "499b80ad-f02a-474e-8098-136edf34c513",
+                    "title": "Auth Service Elevation of Privilege: Privilege Escalation via Authentication Flaws",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Elevation of privilege",
+                    "description": "An attacker could exploit weaknesses in the authentication logic such as predictable session tokens, improper role assignment, or bypassing login checks to escalate from a regular user account to an administrative account. This could allow the attacker to access all system data, modify other users’ accounts, and perform restricted admin operations.",
+                    "mitigation": "Enforce strict server-side role validation for every request\n\nSecurely generate, validate, and expire session tokens\n\nRegularly review and patch authentication-related vulnerabilities\n\nImplement least-privilege access controls and logging for all privilege changes",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 113,
+                    "score": ""
+                  }
+                ],
+                "threatFrequency": {
+                  "spoofing": 2,
+                  "tampering": 2,
+                  "repudiation": 2,
+                  "informationDisclosure": 2,
+                  "denialOfService": 3,
+                  "elevationOfPrivilege": 3
+                },
+                "isWebApplication": null
+              }
+            },
+            {
+              "position": {
+                "x": 400,
+                "y": 240
+              },
+              "size": {
+                "width": 140,
+                "height": 100
+              },
+              "attrs": {
+                "text": {
+                  "text": "Customer Service"
+                },
+                "body": {
+                  "stroke": "red",
+                  "strokeWidth": 2.5,
+                  "strokeDasharray": null
+                }
+              },
+              "visible": true,
+              "shape": "process",
+              "zIndex": 5,
+              "ports": {
+                "groups": {
+                  "top": {
+                    "position": "top",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "position": "right",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "bottom": {
+                    "position": "bottom",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "left": {
+                    "position": "left",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "group": "top",
+                    "id": "4162afde-0ce7-4b04-94eb-cc01f17e4fed"
+                  },
+                  {
+                    "group": "right",
+                    "id": "f9204cd9-a2dc-4912-bbc2-4be06c6015e8"
+                  },
+                  {
+                    "group": "bottom",
+                    "id": "5cef0f13-8124-4661-8def-89df673c77ec"
+                  },
+                  {
+                    "group": "left",
+                    "id": "c0563e19-1f79-40ba-ae36-85b5a25f88f9"
+                  }
+                ]
+              },
+              "id": "customer-service",
+              "data": {
+                "type": "tm.Process",
+                "name": "Customer Service",
+                "description": "Customer profile and account management - maps to customer controller/service",
+                "outOfScope": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": true,
+                "privilegeLevel": "",
+                "threats": [
+                  {
+                    "id": "44495265-8922-4772-905d-4af0661d4724",
+                    "title": "Customer Service Spoofing: Unauthorized Access via Customer Identity Spoofing",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Spoofing",
+                    "description": "An attacker could impersonate another customer by reusing stolen session tokens, forging authentication credentials, or manipulating cookies. This allows them to access or modify another customer’s account data, including profile information, addresses, and preferences.",
+                    "mitigation": "Authentication tokens, session validation, access control checks.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 114,
+                    "score": ""
+                  },
+                  {
+                    "id": "3de56f2b-725d-4a92-a9b7-3f6811de6f29",
+                    "title": "Customer Service Tampering: Unauthorized Modification of Customer Data",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Tampering",
+                    "description": "An attacker could exploit weaknesses in the Customer Service API to alter customer profile data without authorization. This includes changing names, addresses, phone numbers, or account preferences. Vulnerabilities such as missing server‑side validation, insecure direct object references (IDOR), or weak session handling could allow modification of another user’s profile data.",
+                    "mitigation": "Enforce strict authorization (user can only modify their own profile)\n\nValidate and sanitize all incoming profile update requests\n\nUse non‑guessable customer identifiers internally\n\nMaintain audit logs of all profile‑related changes",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 115,
+                    "score": ""
+                  },
+                  {
+                    "id": "0fbd1ab2-5d00-4236-9123-c8ab1742a091",
+                    "title": "Customer Service Repudiation: Denial of Customer Actions",
+                    "status": "Open",
+                    "severity": "Medium",
+                    "type": "Repudiation",
+                    "description": "Customers could deny performing actions such as updating profiles or submitting orders. Without proper tracking, it becomes difficult to prove the legitimacy of customer actions, leading to potential disputes or financial loss.",
+                    "mitigation": "Maintain immutable audit logs with timestamps, implement digital signatures for critical operations, and store logs securely for dispute resolution.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 116,
+                    "score": ""
+                  },
+                  {
+                    "id": "1387b6e3-15d9-41b4-a498-32182f65b898",
+                    "title": "Customer Service Information Disclosure: Unauthorized Access to Customer Personal Data",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Information disclosure",
+                    "description": "Sensitive customer data including emails, addresses, phone numbers, payment details, and order history could be exposed due to insufficient access controls, insecure APIs, or unencrypted storage, leading to privacy breaches or identity theft.",
+                    "mitigation": "Enforce role-based access control (customers can only access their own data).\n\nEncrypt sensitive data both at rest and in transit.\n\nAudit and log all access to personal data.\n\nLimit data returned in API responses to only necessary fields.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 117,
+                    "score": ""
+                  },
+                  {
+                    "id": "0f9c9c86-eb5f-4494-98be-c9614dc64bd4",
+                    "title": "Customer Service Denial of Service: Disruption of Customer Account Access",
+                    "status": "Open",
+                    "severity": "Medium",
+                    "type": "Denial of service",
+                    "description": "Attackers could overwhelm customer service endpoints such as APIs, forms, or chat systems with excessive requests, causing slow response times or complete service outages, which prevents legitimate customers from accessing services.",
+                    "mitigation": "Implement rate limiting and request throttling per user/IP.\n\nUse load balancing and autoscaling to handle legitimate traffic spikes.\n\nMonitor traffic patterns and detect anomalies for early mitigation.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 118,
+                    "score": ""
+                  },
+                  {
+                    "id": "d457bce4-9738-4c6f-a212-b8e617354c3c",
+                    "title": "Customer Service Elevation of Privilege: Unauthorized Access to Admin or Restricted Functions or Other Users",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Elevation of privilege",
+                    "description": "An attacker could exploit flaws in the business logic of Customer Service such as missing authorization checks, insecure APIs, or predictable user identifiers to access or modify other customers’ data. For example, the attacker could change another user’s profile, view order history, or update personal information without permission.",
+                    "mitigation": "Enforce strict server-side authorization for every API call.\n\nImplement ownership checks (users can only modify their own data).\n\nBlock guest access to any account-specific endpoints.\n\nConduct security-focused code reviews to identify logic flaws.\n\nLog and monitor all sensitive operations.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 119,
+                    "score": ""
+                  }
+                ],
+                "threatFrequency": {
+                  "spoofing": 3,
+                  "tampering": 4,
+                  "repudiation": 2,
+                  "informationDisclosure": 3,
+                  "denialOfService": 2,
+                  "elevationOfPrivilege": 3
+                }
+              }
+            },
+            {
+              "position": {
+                "x": 400,
+                "y": 410
+              },
+              "size": {
+                "width": 140,
+                "height": 100
+              },
+              "attrs": {
+                "text": {
+                  "text": "Order Service"
+                },
+                "body": {
+                  "stroke": "red",
+                  "strokeWidth": 2.5,
+                  "strokeDasharray": null
+                }
+              },
+              "visible": true,
+              "shape": "process",
+              "zIndex": 6,
+              "ports": {
+                "groups": {
+                  "top": {
+                    "position": "top",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "position": "right",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "bottom": {
+                    "position": "bottom",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "left": {
+                    "position": "left",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "group": "top",
+                    "id": "4dbc411a-f22e-4d0a-bfd1-093c088ac254"
+                  },
+                  {
+                    "group": "right",
+                    "id": "3be664d9-310c-435d-bba0-a6c4943504f0"
+                  },
+                  {
+                    "group": "bottom",
+                    "id": "e4b54cf8-d041-46ce-85f3-194bc841984b"
+                  },
+                  {
+                    "group": "left",
+                    "id": "0b1ac271-59c3-4012-8e9f-010533f39968"
+                  }
+                ]
+              },
+              "id": "order-service",
+              "data": {
+                "type": "tm.Process",
+                "name": "Order Service",
+                "description": "Order processing and management - maps to order controller/service",
+                "outOfScope": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": true,
+                "privilegeLevel": "",
+                "threats": [
+                  {
+                    "id": "f0e62074-6304-4415-804f-df5707183152",
+                    "title": "Order Service Spoofing: Unauthorized Order Action via Identity Spoofing",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Spoofing",
+                    "description": "An attacker may attempt to impersonate another customer by submitting forged authentication tokens or replaying stolen session IDs to access the Order Service. Successful spoofing would allow the attacker to place orders using another user’s account, cancel legitimate orders, or retrieve order histories belonging to other customers.",
+                    "mitigation": "Enforce strict token validation (expiration, signature, issuer).\n\nImplement session binding to device/IP where appropriate.\n\nDetect and block session replay attempts.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 120,
+                    "score": ""
+                  },
+                  {
+                    "id": "eff3bbc5-5953-460a-b864-6507a1d98ae2",
+                    "title": "Order Service Tampering: Manipulation of Order Data and Transaction Values",
+                    "status": "Open",
+                    "severity": "Critical",
+                    "type": "Tampering",
+                    "description": "An attacker could intercept or forge requests to alter order attributes, such as product quantity, order totals, or applied discounts. Business logic flaws (e.g., client‑side price calculation, insecure state transitions, or IDOR) may enable attackers to reduce prices, change order status, or assign orders to a different customer.",
+                    "mitigation": "Perform all pricing and total calculations server-side.\n\nEnforce strict order‑state validation (user cannot arbitrarily set “Paid,” “Shipped,” etc.).\n\nValidate all request payloads for integrity.\n\nUse non‑guessable order identifiers.\n\nApply HMAC or server-side recomputation for critical fields.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 121,
+                    "score": ""
+                  },
+                  {
+                    "id": "2ec90dbc-4639-4ee0-9d7c-7fc8b6bab1d7",
+                    "title": "Order Service Repudiation: Denial of Order-Related Actions",
+                    "status": "Open",
+                    "severity": "Medium",
+                    "type": "Repudiation",
+                    "description": "A customer or attacker may deny having placed, updated, or canceled an order. Without tamper‑proof logging, the system cannot reliably prove whether an order action originated from the authenticated user, creating audit gaps and enabling fraudulent refund or cancellation claims.",
+                    "mitigation": "Implement append‑only, tamper-resistant audit logs.\n\nCapture order events with timestamps, IP address, and hashed user identifiers.\n\nGenerate digital order confirmations and email receipts.\n\nUse log integrity verification (e.g., hashing, chain-link logs).",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 122,
+                    "score": ""
+                  },
+                  {
+                    "id": "e4fdc86e-bd1f-40e4-8fc2-bf36799700f8",
+                    "title": "Order Service Information Disclosure: Exposure of Order Details and Customer Data",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Information disclosure",
+                    "description": "Insufficient access control or insecure API design may expose order history, delivery addresses, payment references, or product lists belonging to other customers. This can occur via direct object reference attacks, verbose error messages, or insecure serialization of order objects.",
+                    "mitigation": "Enforce authorization checks on every order retrieval endpoint.\n\nEncrypt sensitive fields (addresses, contact numbers, payment tokens).\n\nAvoid returning unnecessary internal order attributes in API responses.\n\nLog access to sensitive data for monitoring and forensics.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 123,
+                    "score": ""
+                  },
+                  {
+                    "id": "78f439a0-7903-4539-a07d-485b26e4faac",
+                    "title": "Order Service Denial of Service: Disruption of Order Placement and Processing",
+                    "status": "Open",
+                    "severity": "Medium",
+                    "type": "Denial of service",
+                    "description": "Attackers may flood the Order Service API with excessive order creation attempts, payment callbacks, or order‑status polling requests. This can overwhelm the service, resulting in legitimate customers being unable to place or complete orders, and may disrupt downstream services (payment provider, product inventory).",
+                    "mitigation": "Apply rate limiting on all high‑cost endpoints.\n\nImplement request throttling and CAPTCHA for unauthenticated flows.\n\nUse autoscaling for peak load protection.\n\nMonitor for abnormal spikes in API usage and trigger alerts.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 124,
+                    "score": ""
+                  },
+                  {
+                    "id": "65d8a95f-d387-4f50-80cf-fb83008dab6e",
+                    "title": "Order Service Elevation of Privilege: Unauthorized Manipulation of Other Users’ Orders",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Elevation of privilege",
+                    "description": "An attacker may exploit authorization flaws in the Order Service to access or alter orders belonging to other users, or perform privileged workflow actions such as marking an order as “Paid,” “Shipped,” or “Cancelled.” Logic flaws, missing ownership checks, and improper use of user IDs in the API can enable cross‑user order control or unauthorized escalation to admin-level operations.",
+                    "mitigation": "Enforce ownership validation for every order operation (requesting user must match order owner).\n\nRestrict privileged actions (e.g., status transitions) to authorized roles.\n\nUse server‑side authorization frameworks and avoid client‑based role hints.\n\nConduct security-focused code reviews for workflow logic.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 125,
+                    "score": ""
+                  }
+                ],
+                "threatFrequency": {
+                  "spoofing": 2,
+                  "tampering": 3,
+                  "repudiation": 1,
+                  "informationDisclosure": 2,
+                  "denialOfService": 1,
+                  "elevationOfPrivilege": 1
+                }
+              }
+            },
+            {
+              "position": {
+                "x": 400,
+                "y": 580
+              },
+              "size": {
+                "width": 140,
+                "height": 100
+              },
+              "attrs": {
+                "text": {
+                  "text": "Product Service"
+                },
+                "body": {
+                  "stroke": "red",
+                  "strokeWidth": 2.5,
+                  "strokeDasharray": null
+                }
+              },
+              "visible": true,
+              "shape": "process",
+              "zIndex": 7,
+              "ports": {
+                "groups": {
+                  "top": {
+                    "position": "top",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "position": "right",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "bottom": {
+                    "position": "bottom",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "left": {
+                    "position": "left",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "group": "top",
+                    "id": "908ba658-82ea-4e33-9f4f-6fcb554602ef"
+                  },
+                  {
+                    "group": "right",
+                    "id": "b7143358-0f45-48e4-944f-11a6dca51ddd"
+                  },
+                  {
+                    "group": "bottom",
+                    "id": "6521c970-0d61-4b59-b4e1-3ada2dfdd49f"
+                  },
+                  {
+                    "group": "left",
+                    "id": "965e866b-7b4f-4d67-bbd3-a648a01a04cc"
+                  }
+                ]
+              },
+              "id": "product-service",
+              "data": {
+                "type": "tm.Process",
+                "name": "Product Service",
+                "description": "Product catalog and inventory management - maps to product controller/service",
+                "outOfScope": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": true,
+                "privilegeLevel": "",
+                "threats": [
+                  {
+                    "id": "cd691c19-3d99-4ddc-bb6c-df40b87208b3",
+                    "title": "Product Service Spoofing: Unauthorized Product Action via Identity Spoofing",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Spoofing",
+                    "description": "An attacker could impersonate an admin or authorized user by reusing stolen session tokens or forging authentication credentials. This could allow the attacker to create, modify, or delete product entries without proper authorization, potentially affecting pricing, stock, or product availability.",
+                    "mitigation": "Enforce MFA and strong authentication for admin users.\n\nValidate all tokens server-side and bind sessions to device/IP.\n\nMonitor login attempts and detect suspicious patterns.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 126,
+                    "score": ""
+                  },
+                  {
+                    "id": "33b7bc95-4ff3-46ed-83d0-2127730abb59",
+                    "title": "Product Service Tampering: Product Data Manipulation",
+                    "status": "Open",
+                    "severity": "Critical",
+                    "type": "Tampering",
+                    "description": "An attacker could tamper with product data in transit or at rest, such as prices, stock levels, or descriptions. This can occur through insecure APIs, lack of input validation, or client-side manipulation, enabling fraudulent price changes, inaccurate stock reporting, or misleading product descriptions.",
+                    "mitigation": "Validate all incoming requests server-side.\n\nEnforce admin-level access controls for product modifications.\n\nUse HTTPS and integrity checks for all API communications.\n\nMaintain audit logs for all product changes.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 127,
+                    "score": ""
+                  },
+                  {
+                    "id": "794a4a8d-194c-44dd-88fa-05eb6c9dacb5",
+                    "title": "Product Service Repudiation: Denial of Product Modifications",
+                    "status": "Open",
+                    "severity": "Medium",
+                    "type": "Repudiation",
+                    "description": "A malicious or careless admin could deny performing product-related actions (create, update, delete), making it difficult to verify accountability. Without tamper-proof logging, disputed changes could go untracked.",
+                    "mitigation": "Implement append-only audit logs with timestamps and user identifiers.\n\nUse digital signatures for critical product updates.\n\nKeep versioned records of product changes.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 128,
+                    "score": ""
+                  },
+                  {
+                    "id": "597fd97e-8472-4897-9fa0-2c8eac8bbe98",
+                    "title": "Product Service Information Disclosure: Unauthorized Access to Product Data",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Information disclosure",
+                    "description": "Flawed access control could allow attackers to view sensitive product information, including unpublished products, pricing, stock levels, or admin-only metadata. Exposure could lead to competitive leakage or inventory manipulation.",
+                    "mitigation": "Apply strict role-based access control for all endpoints.\n\nEncrypt sensitive data at rest and in transit.\n\nLog and monitor all product data accesses.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 129,
+                    "score": ""
+                  },
+                  {
+                    "id": "7721c6b2-1c9f-4c18-b30e-68adfab6f81f",
+                    "title": "Product Service Denial of Service: Disruption of Product Service Availability",
+                    "status": "Open",
+                    "severity": "Medium",
+                    "type": "Denial of service",
+                    "description": "Attackers could flood product service endpoints (e.g., bulk product requests, update spam), rendering the catalog or admin interfaces unavailable. This impacts both customers browsing products and admins managing inventory.",
+                    "mitigation": "Apply rate limiting and throttling on high-cost endpoints.\n\nUse autoscaling and load balancing to absorb spikes.\n\nDetect and alert on abnormal traffic patterns.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 130,
+                    "score": ""
+                  },
+                  {
+                    "id": "ffc22e07-8501-41f1-8a0f-23905938b9a9",
+                    "title": "Product Service Elevation of Privilege: Unauthorized Product Modification via Logic Flaws",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Elevation of privilege",
+                    "description": "An attacker could exploit business logic flaws or missing authorization checks to perform admin-only actions, such as altering product prices, stock levels, or visibility. Exploitation could allow non-admin users to manipulate critical product information.",
+                    "mitigation": "Enforce server-side authorization for all admin-level actions.\n\nValidate user roles and session integrity for every request.\n\nConduct regular code reviews to identify and fix logic vulnerabilities.\n\nMaintain audit trails of all privileged operations.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 131,
+                    "score": ""
+                  }
+                ],
+                "threatFrequency": {
+                  "spoofing": 1,
+                  "tampering": 1,
+                  "repudiation": 1,
+                  "informationDisclosure": 1,
+                  "denialOfService": 2,
+                  "elevationOfPrivilege": 2
+                },
+                "isWebApplication": null
+              }
+            },
+            {
+              "position": {
+                "x": 400,
+                "y": 950
+              },
+              "size": {
+                "width": 140,
+                "height": 100
+              },
+              "attrs": {
+                "text": {
+                  "text": "Admin Service"
+                },
+                "body": {
+                  "stroke": "red",
+                  "strokeWidth": 2.5,
+                  "strokeDasharray": null
+                }
+              },
+              "visible": true,
+              "shape": "process",
+              "zIndex": 8,
+              "ports": {
+                "groups": {
+                  "top": {
+                    "position": "top",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "position": "right",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "bottom": {
+                    "position": "bottom",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "left": {
+                    "position": "left",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "group": "top",
+                    "id": "448bb0f7-9f0a-497b-9193-6b2cfa65ebd2"
+                  },
+                  {
+                    "group": "right",
+                    "id": "73f2ef6c-794d-4763-98c4-161d60b5ab2b"
+                  },
+                  {
+                    "group": "bottom",
+                    "id": "be223639-115c-4128-ae2f-03e28c32101f"
+                  },
+                  {
+                    "group": "left",
+                    "id": "2377f926-e8c5-4e9c-a8fb-b43b6ebd47ef"
+                  }
+                ]
+              },
+              "id": "admin-service",
+              "data": {
+                "type": "tm.Process",
+                "name": "Admin Service",
+                "description": "Administrative operations and management - maps to admin controller/service",
+                "outOfScope": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": true,
+                "privilegeLevel": "",
+                "threats": [
+                  {
+                    "id": "7fe01f86-717f-420d-8ea6-5290fa3cc165",
+                    "title": "Admin Service Spoofing: Unauthorized Access via Admin Identity Spoofing",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Spoofing",
+                    "description": "An attacker may attempt to impersonate an admin account by replaying stolen tokens, forging cookies, or brute-forcing admin credentials. Successful impersonation grants full access to backend operations such as editing users, modifying products, adjusting orders, or accessing system dashboards.",
+                    "mitigation": "Enforce MFA for all admin accounts\n\nImplement IP allowlists or VPN-gated access for admin portal\n\nBind sessions to device/IP and detect token anomalies\n\nMonitor and alert on unusual admin login locations or patterns",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 132,
+                    "score": ""
+                  },
+                  {
+                    "id": "a771476b-5e1d-4052-a2b6-01450af5ba76",
+                    "title": "Admin Service Tampering: Unauthorized Modification of Administrative Data",
+                    "status": "Open",
+                    "severity": "Critical",
+                    "type": "Tampering",
+                    "description": "If authorization checks or API validation are weak, an attacker could alter critical backend data, such as changing product prices, editing order states, or injecting malicious configuration values. Such tampering can fully compromise the business workflow and data integrity.",
+                    "mitigation": "Enforce server-side validation for all admin actions\n\nProtect admin endpoints with RBAC and least-privilege\n\nRequire confirmation for high-impact operations\n\nMaintain immutable audit logs of administrative changes",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 133,
+                    "score": ""
+                  },
+                  {
+                    "id": "f8e2633f-527c-42a0-a725-c24bf291116a",
+                    "title": "Admin Service Repudiation: Denial of Critical Administrative Actions",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Repudiation",
+                    "description": "An admin may deny performing actions such as changing user roles, deleting products, adjusting stock, or modifying order statuses. Without reliable logging and event attribution, malicious or accidental admin actions cannot be traced, creating gaps in accountability.",
+                    "mitigation": "Implement tamper-proof, append-only audit logs\n\nRecord timestamps, admin ID, IP, and action details\n\nUse signed administrative actions or confirmation tokens\n\nStore logs in a secure, isolated audit database",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 134,
+                    "score": ""
+                  },
+                  {
+                    "id": "ebee1152-688a-465e-bdee-3346cc14b21b",
+                    "title": "Admin Service Information Disclosure: Exposure of Sensitive Administrative or System Data",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Information disclosure",
+                    "description": "Weak access controls or overly permissive endpoints may leak internal administrative data, including user role mappings, system configuration, order summaries, unpublished product data, or operational dashboards. Such disclosure gives attackers insights to plan targeted attacks or manipulate system behavior.",
+                    "mitigation": "Restrict all admin endpoints to authorized roles only\n\nHide internal fields from API responses\n\nEncrypt sensitive logs and configuration data\n\nMonitor for suspicious access to admin-only resources",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 135,
+                    "score": ""
+                  },
+                  {
+                    "id": "e54d0086-35b6-41a7-bac8-57099d8d2c53",
+                    "title": "Admin Service Denial of Service: Disruption of Administrative Operations",
+                    "status": "Open",
+                    "severity": "Medium",
+                    "type": "Denial of service",
+                    "description": "Attackers may spam admin endpoints (e.g., product update, user search, role assignment) or trigger expensive backend operations to overwhelm the Admin Service. This prevents legitimate administrators from performing essential tasks such as updating catalogs, responding to incidents, or managing customer issues.",
+                    "mitigation": "Apply rate limiting to administrative APIs\n\nIsolate admin workloads from public traffic\n\nMonitor and alert on abnormal request spikes\n\nDeploy redundancy and autoscaling for backend operations",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 136,
+                    "score": ""
+                  }
+                ],
+                "threatFrequency": {
+                  "spoofing": 1,
+                  "tampering": 2,
+                  "repudiation": 1,
+                  "informationDisclosure": 1,
+                  "denialOfService": 1,
+                  "elevationOfPrivilege": 0
+                },
+                "isWebApplication": false
+              }
+            },
+            {
+              "position": {
+                "x": 950,
+                "y": 200
+              },
+              "size": {
+                "width": 160,
+                "height": 80
+              },
+              "attrs": {
+                "text": {
+                  "text": "Customer Database"
+                },
+                "topLine": {
+                  "stroke": "red",
+                  "strokeWidth": 2.5,
+                  "strokeDasharray": null
+                },
+                "bottomLine": {
+                  "stroke": "red",
+                  "strokeWidth": 2.5,
+                  "strokeDasharray": null
+                },
+                "topline": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1.5,
+                  "strokeDasharray": null
+                },
+                "bottomline": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1.5,
+                  "strokeDasharray": null
+                }
+              },
+              "visible": true,
+              "shape": "store",
+              "zIndex": 9,
+              "ports": {
+                "groups": {
+                  "top": {
+                    "position": "top",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "position": "right",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "bottom": {
+                    "position": "bottom",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "left": {
+                    "position": "left",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "group": "top",
+                    "id": "64e72394-ee5e-4f89-a80e-607ab05fb351"
+                  },
+                  {
+                    "group": "right",
+                    "id": "37eb9b90-898a-4b4e-a377-4d423f38052c"
+                  },
+                  {
+                    "group": "bottom",
+                    "id": "94828a40-5bee-4adf-b056-595cb047cdbf"
+                  },
+                  {
+                    "group": "left",
+                    "id": "3042b593-ab28-4b69-818c-7e3daa191c8d"
+                  }
+                ]
+              },
+              "id": "customer-db",
+              "data": {
+                "type": "tm.Store",
+                "name": "Customer Database",
+                "description": "Stores customer account information, credentials, and profiles",
+                "outOfScope": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": true,
+                "isALog": false,
+                "isEncrypted": false,
+                "isSigned": false,
+                "storesCredentials": true,
+                "storesInventory": false,
+                "threats": [
+                  {
+                    "id": "4287fcb3-f945-472e-9c21-b0fc7301f519",
+                    "title": "Customer DB Tampering: Unauthorized Modification of Customer Data",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Tampering",
+                    "description": "Attackers could modify or corrupt customer records, including profiles, addresses, contact information, or preferences, by exploiting weak database permissions, injection attacks, or unvalidated API input. Such tampering can lead to data integrity issues, incorrect order processing, or financial loss.",
+                    "mitigation": "Implement role-based access control (RBAC) and least-privilege permissions for database users.\n\nUse parameterized queries or prepared statements to prevent injection attacks.\n\nValidate all inputs on the server side and enforce strict schema validation.\n\nMaintain versioned backups and implement database integrity checks.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 137,
+                    "score": ""
+                  },
+                  {
+                    "id": "f67cb383-ed6e-4701-a6a4-bd2854c6d8e9",
+                    "title": "Customer Database Repudiation: Denial of Customer Data Changes",
+                    "status": "Open",
+                    "severity": "Medium",
+                    "type": "Repudiation",
+                    "description": "Modifications to customer data could go untracked if audit logs are missing or tampered with, allowing attackers or insiders to deny having made changes. This prevents accountability and makes it difficult to investigate or resolve disputes.",
+                    "mitigation": "Implement append-only audit logs with timestamps, user IDs, and operation details.\n\nDigitally sign critical updates to ensure tamper-evidence.\n\nStore logs in a secure, isolated system separate from the main database.\n\nRegularly monitor and verify log integrity.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 138,
+                    "score": ""
+                  },
+                  {
+                    "id": "bef312f3-b1ff-4f51-9287-6c53a1a917c6",
+                    "title": "Customer Database Information Disclosure: Exposure of Sensitive Customer Data",
+                    "status": "Open",
+                    "severity": "High",
+                    "type": "Information disclosure",
+                    "description": "Unauthorized access could reveal sensitive customer information, such as emails, addresses, payment details, and purchase history. This can occur due to misconfigured permissions, insufficient encryption, or exploitation of vulnerabilities in APIs or database interfaces.",
+                    "mitigation": "Encrypt sensitive data at rest using industry-standard encryption (e.g., AES-256).\n\nUse TLS/HTTPS for all database and API communications to secure data in transit.\n\nApply fine-grained access controls so only authorized services or personnel can access sensitive data.\n\nAudit and log all access to sensitive fields and monitor for anomalous activity.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 139,
+                    "score": ""
+                  },
+                  {
+                    "id": "be98eb0a-d776-4dd8-8df9-c6c9daa173cb",
+                    "title": "Customer Database Denial of Service: Disruption of Customer Database Availability",
+                    "status": "Open",
+                    "severity": "Medium",
+                    "type": "Denial of service",
+                    "description": "The database could be rendered unavailable by flooding queries, exploiting locking mechanisms, resource exhaustion, or triggering expensive operations. This can block legitimate customers from accessing accounts or placing orders.",
+                    "mitigation": "Implement rate limiting and throttling for API calls to the database.\n\nUse connection pooling and query timeouts to protect resources.\n\nDeploy replication and failover clusters to maintain availability.\n\nMonitor database metrics (CPU, memory, query execution time) and alert on anomalies.",
+                    "modelType": "STRIDE",
+                    "new": false,
+                    "number": 140,
+                    "score": ""
+                  }
+                ],
+                "threatFrequency": {
+                  "tampering": 1,
+                  "repudiation": 1,
+                  "informationDisclosure": 1,
+                  "denialOfService": 1
+                }
+              }
+            },
+            {
+              "position": {
+                "x": 1200,
+                "y": 120
+              },
+              "size": {
+                "width": 160,
+                "height": 80
+              },
+              "attrs": {
+                "text": {
+                  "text": "Admin Database"
+                },
+                "topline": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1.5,
+                  "strokeDasharray": null
+                },
+                "bottomline": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1.5,
+                  "strokeDasharray": null
+                }
+              },
+              "visible": true,
+              "shape": "store",
+              "zIndex": 10,
+              "ports": {
+                "groups": {
+                  "top": {
+                    "position": "top",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "position": "right",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "bottom": {
+                    "position": "bottom",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "left": {
+                    "position": "left",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "group": "top",
+                    "id": "823feccf-14f7-40ba-80d5-4d42c5450ca6"
+                  },
+                  {
+                    "group": "right",
+                    "id": "1bdbc272-c9e3-40c4-9b5a-29842d107dc2"
+                  },
+                  {
+                    "group": "bottom",
+                    "id": "dbd3ba8f-4814-4373-9d9e-3a4cace64688"
+                  },
+                  {
+                    "group": "left",
+                    "id": "6f1f01e1-f5b5-4754-a4bd-36ad4c8fdf7d"
+                  }
+                ]
+              },
+              "id": "admin-db",
+              "data": {
+                "type": "tm.Store",
+                "name": "Admin Database",
+                "description": "Stores admin user accounts and permissions",
+                "outOfScope": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isALog": false,
+                "isEncrypted": false,
+                "isSigned": false,
+                "storesCredentials": true,
+                "storesInventory": false,
+                "threats": []
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Authentication Request",
+                "description": "Customer authentication request",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Authentication Request"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-customer-auth-1",
+              "source": {
+                "cell": "customer"
+              },
+              "target": {
+                "cell": "auth-service"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Authentication Response",
+                "description": "Authentication token/session response",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Authentication Response"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-auth-customer-1",
+              "source": {
+                "cell": "auth-service"
+              },
+              "target": {
+                "cell": "customer"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Customer Data Request",
+                "description": "Request for customer profile/account operations",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Customer Data Request"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-customer-customerservice-1",
+              "source": {
+                "cell": "customer"
+              },
+              "target": {
+                "cell": "customer-service"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Customer Data Response",
+                "description": "Customer profile/account data response",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Customer Data Response"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-customerservice-customer-1",
+              "source": {
+                "cell": "customer-service"
+              },
+              "target": {
+                "cell": "customer"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Order Request",
+                "description": "Customer order creation/management request",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Order Request"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-customer-orderservice-1",
+              "source": {
+                "cell": "customer"
+              },
+              "target": {
+                "cell": "order-service"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Order Response",
+                "description": "Order confirmation/status response",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Order Response"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-orderservice-customer-1",
+              "source": {
+                "cell": "order-service"
+              },
+              "target": {
+                "cell": "customer"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Product Browse Request",
+                "description": "Customer product catalog browsing request",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Product Browse Request"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-customer-productservice-1",
+              "source": {
+                "cell": "customer"
+              },
+              "target": {
+                "cell": "product-service"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Product Data Response",
+                "description": "Product catalog data response to customer",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Product Data Response"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-productservice-customer-1",
+              "source": {
+                "cell": "product-service"
+              },
+              "target": {
+                "cell": "customer"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Guest Product Request",
+                "description": "Guest user product browsing request",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Guest Product Request"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-guest-productservice-1",
+              "source": {
+                "cell": "guest"
+              },
+              "target": {
+                "cell": "product-service"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Guest Product Response",
+                "description": "Product catalog data response to guest",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Guest Product Response"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-productservice-guest-1",
+              "source": {
+                "cell": "product-service"
+              },
+              "target": {
+                "cell": "guest"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Admin Auth Request",
+                "description": "Admin authentication request",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Admin Auth Request"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-admin-auth-1",
+              "source": {
+                "cell": "admin"
+              },
+              "target": {
+                "cell": "auth-service"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Admin Auth Response",
+                "description": "Admin authentication token response",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Admin Auth Response"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-auth-admin-1",
+              "source": {
+                "cell": "auth-service"
+              },
+              "target": {
+                "cell": "admin"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Admin Management Request",
+                "description": "Administrative operations request",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Admin Management Request"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-admin-adminservice-1",
+              "source": {
+                "cell": "admin"
+              },
+              "target": {
+                "cell": "admin-service"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Admin Management Response",
+                "description": "Administrative operation results",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Admin Management Response"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-adminservice-admin-1",
+              "source": {
+                "cell": "admin-service"
+              },
+              "target": {
+                "cell": "admin"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Admin Product Management",
+                "description": "Admin product catalog management request",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Admin Product Management"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-admin-productservice-1",
+              "source": {
+                "cell": "admin"
+              },
+              "target": {
+                "cell": "product-service"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Admin Order Management",
+                "description": "Admin order management request",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Admin Order Management"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-admin-orderservice-1",
+              "source": {
+                "cell": "admin"
+              },
+              "target": {
+                "cell": "order-service"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Customer Auth Query",
+                "description": "Query customer credentials",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Customer Auth Query"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-authservice-customerdb-1",
+              "source": {
+                "cell": "auth-service"
+              },
+              "target": {
+                "cell": "customer-db"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Admin Auth Query",
+                "description": "Query admin credentials",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Admin Auth Query"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-authservice-admindb-1",
+              "source": {
+                "cell": "auth-service"
+              },
+              "target": {
+                "cell": "admin-db"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Customer Data Read",
+                "description": "Read customer profile data",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Customer Data Read"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-customerservice-customerdb-read",
+              "source": {
+                "cell": "customer-service"
+              },
+              "target": {
+                "cell": "customer-db"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Customer Data Write",
+                "description": "Write/update customer profile data",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Customer Data Write"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-customerdb-customerservice-write",
+              "source": {
+                "cell": "customer-db"
+              },
+              "target": {
+                "cell": "customer-service"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Order Customer Query",
+                "description": "Query customer data for order validation",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Order Customer Query"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-orderservice-customerdb-read",
+              "source": {
+                "cell": "order-service"
+              },
+              "target": {
+                "cell": "customer-db"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Order Customer Response",
+                "description": "Customer data response for order",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Order Customer Response"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-customerdb-orderservice-write",
+              "source": {
+                "cell": "customer-db"
+              },
+              "target": {
+                "cell": "order-service"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Order Product Query",
+                "description": "Query product availability and pricing",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Order Product Query"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-orderservice-productdb-read",
+              "source": {
+                "cell": "order-service"
+              },
+              "target": {
+                "cell": "product-db"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Order Product Response",
+                "description": "Product data response for order",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Order Product Response"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-productdb-orderservice-write",
+              "source": {
+                "cell": "product-db"
+              },
+              "target": {
+                "cell": "order-service"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Order Write",
+                "description": "Write order transaction data",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Order Write"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-orderservice-orderdb-read",
+              "source": {
+                "cell": "order-service"
+              },
+              "target": {
+                "cell": "order-db"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Order Read",
+                "description": "Read order history and status",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Order Read"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-orderdb-orderservice-write",
+              "source": {
+                "cell": "order-db"
+              },
+              "target": {
+                "cell": "order-service"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Product Query",
+                "description": "Query product catalog data",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Product Query"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-productservice-productdb-read",
+              "source": {
+                "cell": "product-service"
+              },
+              "target": {
+                "cell": "product-db"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Product Response",
+                "description": "Product catalog data response",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Product Response"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-productdb-productservice-write",
+              "source": {
+                "cell": "product-db"
+              },
+              "target": {
+                "cell": "product-service"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Admin Data Read",
+                "description": "Read admin user data",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Admin Data Read"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-adminservice-admindb-read",
+              "source": {
+                "cell": "admin-service"
+              },
+              "target": {
+                "cell": "admin-db"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Admin Data Write",
+                "description": "Write/update admin user data",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Admin Data Write"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-admindb-adminservice-write",
+              "source": {
+                "cell": "admin-db"
+              },
+              "target": {
+                "cell": "admin-service"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Admin Order View",
+                "description": "Admin view of order database",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Admin Order View"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-adminservice-orderdb",
+              "source": {
+                "cell": "admin-service"
+              },
+              "target": {
+                "cell": "order-db"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Admin Product View",
+                "description": "Admin view of product database",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Admin Product View"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-adminservice-productdb",
+              "source": {
+                "cell": "admin-service"
+              },
+              "target": {
+                "cell": "product-db"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Auth Service Audit Log",
+                "description": "Authentication events logging",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Auth Service Audit Log"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-authservice-auditlog",
+              "source": {
+                "cell": "auth-service"
+              },
+              "target": {
+                "cell": "audit-log-db"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Customer Service Audit Log",
+                "description": "Customer service events logging",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Customer Service Audit Log"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-customerservice-auditlog",
+              "source": {
+                "cell": "customer-service"
+              },
+              "target": {
+                "cell": "audit-log-db"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Order Service Audit Log",
+                "description": "Order service events logging",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Order Service Audit Log"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-orderservice-auditlog",
+              "source": {
+                "cell": "order-service"
+              },
+              "target": {
+                "cell": "audit-log-db"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Product Service Audit Log",
+                "description": "Product service events logging",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Product Service Audit Log"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-productservice-auditlog",
+              "source": {
+                "cell": "product-service"
+              },
+              "target": {
+                "cell": "audit-log-db"
+              }
+            },
+            {
+              "shape": "flow",
+              "attrs": {
+                "line": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1,
+                  "targetMarker": {
+                    "name": "block"
+                  },
+                  "sourceMarker": {
+                    "name": ""
+                  },
+                  "strokeDasharray": null
+                }
+              },
+              "width": 200,
+              "height": 100,
+              "zIndex": 10,
+              "connector": "smooth",
+              "data": {
+                "type": "tm.Flow",
+                "name": "Admin Service Audit Log",
+                "description": "Admin service events logging",
+                "outOfScope": false,
+                "isTrustBoundary": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isBidirectional": false,
+                "isEncrypted": false,
+                "isPublicNetwork": false,
+                "protocol": "",
+                "threats": []
+              },
+              "labels": [
+                {
+                  "attrs": {
+                    "label": {
+                      "text": "Admin Service Audit Log"
+                    }
+                  }
+                }
+              ],
+              "id": "flow-adminservice-auditlog",
+              "source": {
+                "cell": "admin-service"
+              },
+              "target": {
+                "cell": "audit-log-db"
+              }
+            },
+            {
+              "position": {
+                "x": 1080,
+                "y": 720
+              },
+              "size": {
+                "width": 160,
+                "height": 80
+              },
+              "attrs": {
+                "text": {
+                  "text": "Product Database"
+                },
+                "topline": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1.5,
+                  "strokeDasharray": null
+                },
+                "bottomline": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1.5,
+                  "strokeDasharray": null
+                }
+              },
+              "visible": true,
+              "shape": "store",
+              "zIndex": 11,
+              "ports": {
+                "groups": {
+                  "top": {
+                    "position": "top",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "position": "right",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "bottom": {
+                    "position": "bottom",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "left": {
+                    "position": "left",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "group": "top",
+                    "id": "98c9b83c-a5fc-4e79-8c80-693baea7ae85"
+                  },
+                  {
+                    "group": "right",
+                    "id": "91979fbf-2dd0-41a6-8a49-328974530153"
+                  },
+                  {
+                    "group": "bottom",
+                    "id": "c077afb7-cfde-449d-af8b-24d58ffe7180"
+                  },
+                  {
+                    "group": "left",
+                    "id": "9b1e6a90-5de7-4407-a99f-1206f7ca9e33"
+                  }
+                ]
+              },
+              "id": "product-db",
+              "data": {
+                "type": "tm.Store",
+                "name": "Product Database",
+                "description": "Stores product catalog, pricing, and inventory data",
+                "outOfScope": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isALog": false,
+                "isEncrypted": false,
+                "isSigned": false,
+                "storesCredentials": false,
+                "storesInventory": true,
+                "threats": []
+              }
+            },
+            {
+              "position": {
+                "x": 1050,
+                "y": 930
+              },
+              "size": {
+                "width": 160,
+                "height": 80
+              },
+              "attrs": {
+                "text": {
+                  "text": "Order Database"
+                },
+                "topline": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1.5,
+                  "strokeDasharray": null
+                },
+                "bottomline": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1.5,
+                  "strokeDasharray": null
+                }
+              },
+              "visible": true,
+              "shape": "store",
+              "zIndex": 12,
+              "ports": {
+                "groups": {
+                  "top": {
+                    "position": "top",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "position": "right",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "bottom": {
+                    "position": "bottom",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "left": {
+                    "position": "left",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "group": "top",
+                    "id": "0c697b61-6a21-4fcd-9c51-9216bf58ef40"
+                  },
+                  {
+                    "group": "right",
+                    "id": "7bffbb19-cf62-49fd-8d4f-d65bffaedb88"
+                  },
+                  {
+                    "group": "bottom",
+                    "id": "b355dad8-c3a4-44c3-afaa-3f371d81105c"
+                  },
+                  {
+                    "group": "left",
+                    "id": "410eda6e-38dc-4d64-b453-6acb0e45f099"
+                  }
+                ]
+              },
+              "id": "order-db",
+              "data": {
+                "type": "tm.Store",
+                "name": "Order Database",
+                "description": "Stores order transactions and order history",
+                "outOfScope": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isALog": false,
+                "isEncrypted": false,
+                "isSigned": false,
+                "storesCredentials": false,
+                "storesInventory": false,
+                "threats": []
+              }
+            },
+            {
+              "position": {
+                "x": 1240,
+                "y": 450
+              },
+              "size": {
+                "width": 160,
+                "height": 80
+              },
+              "attrs": {
+                "text": {
+                  "text": "Audit Log Database"
+                },
+                "topline": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1.5,
+                  "strokeDasharray": null
+                },
+                "bottomline": {
+                  "stroke": "#333333",
+                  "strokeWidth": 1.5,
+                  "strokeDasharray": null
+                }
+              },
+              "visible": true,
+              "shape": "store",
+              "zIndex": 13,
+              "ports": {
+                "groups": {
+                  "top": {
+                    "position": "top",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "position": "right",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "bottom": {
+                    "position": "bottom",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  },
+                  "left": {
+                    "position": "left",
+                    "attrs": {
+                      "circle": {
+                        "r": 4,
+                        "magnet": true,
+                        "stroke": "#5F95FF",
+                        "strokeWidth": 1,
+                        "fill": "#fff",
+                        "style": {
+                          "visibility": "hidden"
+                        }
+                      }
+                    }
+                  }
+                },
+                "items": [
+                  {
+                    "group": "top",
+                    "id": "f1cd0957-0530-49bb-9c6d-546dd53b6917"
+                  },
+                  {
+                    "group": "right",
+                    "id": "9b27eb62-f3b4-450f-b19f-0e639f2fc5bd"
+                  },
+                  {
+                    "group": "bottom",
+                    "id": "cf59801d-4dd5-4707-8d9c-66e31e7dec2b"
+                  },
+                  {
+                    "group": "left",
+                    "id": "75238033-8c4c-4f94-a30f-867ef7b4f8e9"
+                  }
+                ]
+              },
+              "id": "audit-log-db",
+              "data": {
+                "type": "tm.Store",
+                "name": "Audit Log Database",
+                "description": "Stores audit logs from all services for security and compliance",
+                "outOfScope": false,
+                "reasonOutOfScope": "",
+                "hasOpenThreats": false,
+                "isALog": true,
+                "isEncrypted": false,
+                "isSigned": false,
+                "storesCredentials": false,
+                "storesInventory": false,
+                "threats": []
+              }
+            }
+          ]
+        }
+      ],
+      "diagramTop": 10,
+      "threatTop": 140
+    }
+  }
