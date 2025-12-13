@@ -138,3 +138,4 @@ To fully implement the components, you may want to:
 5. **Add more navigation items** - Categories, Deals, etc.
 6. **Implement cart updates** - Real-time cart count updates when items are added/removed
 
+

@@ -206,3 +206,4 @@ The built files will be in `frontend/dist/`. You can serve them with any static 
 - Verify the API endpoint exists in the backend routes
 - Ensure authentication tokens are valid (if required)
 
+

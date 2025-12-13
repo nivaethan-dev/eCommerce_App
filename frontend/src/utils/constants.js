@@ -27,6 +27,9 @@ export const API_ENDPOINTS = {
   // Admins
   ADMINS: '/api/admins',
   ADMIN_REGISTER: '/api/admins/register',
+  
+  // Notifications (TODO: Backend to implement)
+  // NOTIFICATIONS: '/api/notifications',
 };
 
 // User roles

@@ -153,5 +153,5 @@ npm run build:frontend   # Build frontend
 3. API requests from frontend → Automatically proxied to backend
 4. Cookies/credentials → Automatically included in requests
 
-Happy coding! 🚀
+
 
