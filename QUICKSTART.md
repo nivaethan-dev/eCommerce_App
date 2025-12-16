@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-## First Time Setup
+## First Time Setup $
 
 1. **Install all dependencies** (from project root):
 ```bash
