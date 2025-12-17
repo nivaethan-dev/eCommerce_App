@@ -12,7 +12,7 @@ const Home = () => {
     { id: 5, name: 'Books', icon: '📚', color: '#fa709a', slug: 'books' },
     { id: 6, name: 'Toys', icon: '🎮', color: '#feca57', slug: 'toys' },
     { id: 7, name: 'Beauty', icon: '💄', color: '#ff6b6b', slug: 'beauty' },
-    { id: 8, name: 'Food & Beverage', icon: '🍔', color: '#ee5a6f', slug: 'food-beverage' }
+    { id: 8, name: 'Health', icon: '🏥', color: '#ee5a6f', slug: 'health' }
   ];
 
   const handleCategoryClick = (slug) => {
