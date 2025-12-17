@@ -205,9 +205,6 @@ const Header = () => {
           <Link to="/about" className="nav-link">
             About Us
           </Link>
-          <Link to="/contact" className="nav-link">
-            Contact
-          </Link>
           
           {/* Guest View - Login/Signup Button */}
           {!isAuthenticated && (
