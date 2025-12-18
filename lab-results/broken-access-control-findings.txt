@@ -1,0 +1,190 @@
+                    
+                    
+┌──────────────────┐
+│ 10 Code Findings │
+└──────────────────┘
+                                          
+    backend/routes/vulnerableTestRoutes.js
+    ❯❱ express-route-without-middleware
+          Express route defined without any middleware (like    
+          authMiddleware). This allows unauthenticated access to
+          potentially sensitive operations. CWE-862: Missing    
+          Authorization                                         
+                                                                
+            8┆ router.get('/user/:id', async (req, res) => {
+            9┆   try {
+           10┆     const user = await                    
+               Customer.findById(req.params.id).select('-
+               password');                               
+           11┆     res.json({ success: true, user });
+           12┆   } catch (err) {
+           13┆     res.status(500).json({ success: false, error:
+               err.message });                                  
+           14┆   }
+           15┆ });
+   
+   ❯❯❱ missing-auth-middleware-express
+          Route handler is missing authentication middleware. All     
+          sensitive endpoints should have authMiddleware to verify    
+          user identity. This is a Broken Access Control vulnerability
+          (OWASP A01:2021).                                           
+                                                                      
+            8┆ router.get('/user/:id', async (req, res) => {
+            9┆   try {
+           10┆     const user = await                    
+               Customer.findById(req.params.id).select('-
+               password');                               
+           11┆     res.json({ success: true, user });
+           12┆   } catch (err) {
+           13┆     res.status(500).json({ success: false, error:
+               err.message });                                  
+           14┆   }
+           15┆ });
+   
+    ❯❱ express-route-without-middleware
+          Express route defined without any middleware (like    
+          authMiddleware). This allows unauthenticated access to
+          potentially sensitive operations. CWE-862: Missing    
+          Authorization                                         
+                                                                
+           18┆ router.put('/user/:id', async (req, res) => {
+           19┆   try {
+           20┆     // No check if logged-in user matches the ID!
+           21┆     const updatedUser = await
+               Customer.findByIdAndUpdate(  
+           22┆       req.params.id,
+           23┆       req.body,
+           24┆       { new: true }
+           25┆     ).select('-password');
+           26┆
+           27┆     res.json({ success: true, user: updatedUser });
+             [hid 4 additional lines, adjust with --max-lines-per-finding] 
+   
+   ❯❯❱ missing-auth-middleware-express
+          Route handler is missing authentication middleware. All     
+          sensitive endpoints should have authMiddleware to verify    
+          user identity. This is a Broken Access Control vulnerability
+          (OWASP A01:2021).                                           
+                                                                      
+           18┆ router.put('/user/:id', async (req, res) => {
+           19┆   try {
+           20┆     // No check if logged-in user matches the ID!
+           21┆     const updatedUser = await
+               Customer.findByIdAndUpdate(  
+           22┆       req.params.id,
+           23┆       req.body,
+           24┆       { new: true }
+           25┆     ).select('-password');
+           26┆
+           27┆     res.json({ success: true, user: updatedUser });
+             [hid 4 additional lines, adjust with --max-lines-per-finding] 
+   
+    ❯❱ express-route-without-middleware
+          Express route defined without any middleware (like    
+          authMiddleware). This allows unauthenticated access to
+          potentially sensitive operations. CWE-862: Missing    
+          Authorization                                         
+                                                                
+           34┆ router.delete('/user/:id', async (req, res) => {
+           35┆   try {
+           36┆     await                                 
+               Customer.findByIdAndDelete(req.params.id);
+           37┆     res.json({ success: true, message: 'User
+               deleted' });                                
+           38┆   } catch (err) {
+           39┆     res.status(500).json({ success: false, error:
+               err.message });                                  
+           40┆   }
+           41┆ });
+   
+   ❯❯❱ missing-auth-middleware-express
+          Route handler is missing authentication middleware. All     
+          sensitive endpoints should have authMiddleware to verify    
+          user identity. This is a Broken Access Control vulnerability
+          (OWASP A01:2021).                                           
+                                                                      
+           34┆ router.delete('/user/:id', async (req, res) => {
+           35┆   try {
+           36┆     await                                 
+               Customer.findByIdAndDelete(req.params.id);
+           37┆     res.json({ success: true, message: 'User
+               deleted' });                                
+           38┆   } catch (err) {
+           39┆     res.status(500).json({ success: false, error:
+               err.message });                                  
+           40┆   }
+           41┆ });
+   
+    ❯❱ express-route-without-middleware
+          Express route defined without any middleware (like    
+          authMiddleware). This allows unauthenticated access to
+          potentially sensitive operations. CWE-862: Missing    
+          Authorization                                         
+                                                                
+           44┆ router.get('/users', async (req, res) => {
+           45┆   try {
+           46┆     const users = await             
+               Customer.find().select('-password');
+           47┆     res.json({ success: true, count: users.length,
+               users });                                         
+           48┆   } catch (err) {
+           49┆     res.status(500).json({ success: false, error:
+               err.message });                                  
+           50┆   }
+           51┆ });
+   
+   ❯❯❱ missing-auth-middleware-express
+          Route handler is missing authentication middleware. All     
+          sensitive endpoints should have authMiddleware to verify    
+          user identity. This is a Broken Access Control vulnerability
+          (OWASP A01:2021).                                           
+                                                                      
+           44┆ router.get('/users', async (req, res) => {
+           45┆   try {
+           46┆     const users = await             
+               Customer.find().select('-password');
+           47┆     res.json({ success: true, count: users.length,
+               users });                                         
+           48┆   } catch (err) {
+           49┆     res.status(500).json({ success: false, error:
+               err.message });                                  
+           50┆   }
+           51┆ });
+   
+    ❯❱ express-route-without-middleware
+          Express route defined without any middleware (like    
+          authMiddleware). This allows unauthenticated access to
+          potentially sensitive operations. CWE-862: Missing    
+          Authorization                                         
+                                                                
+           54┆ router.post('/admin/delete-product/:id', async
+               (req, res) => {                               
+           55┆   try {
+           56┆     // Anyone can delete products!
+           57┆     await Product.findByIdAndDelete(req.params.id);
+           58┆     res.json({ success: true, message: 'Product
+               deleted' });                                   
+           59┆   } catch (err) {
+           60┆     res.status(500).json({ success: false, error:
+               err.message });                                  
+           61┆   }
+           62┆ });
+   
+   ❯❯❱ missing-auth-middleware-express
+          Route handler is missing authentication middleware. All     
+          sensitive endpoints should have authMiddleware to verify    
+          user identity. This is a Broken Access Control vulnerability
+          (OWASP A01:2021).                                           
+                                                                      
+           54┆ router.post('/admin/delete-product/:id', async
+               (req, res) => {                               
+           55┆   try {
+           56┆     // Anyone can delete products!
+           57┆     await Product.findByIdAndDelete(req.params.id);
+           58┆     res.json({ success: true, message: 'Product
+               deleted' });                                   
+           59┆   } catch (err) {
+           60┆     res.status(500).json({ success: false, error:
+               err.message });                                  
+           61┆   }
+           62┆ });

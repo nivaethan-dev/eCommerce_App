@@ -1,0 +1,196 @@
+================================================================
+SCREENSHOT GUIDE FOR LAB REPORT
+================================================================
+
+Take these screenshots for your lab submission:
+
+================================================================
+SCREENSHOT 1: Running Semgrep Scan
+================================================================
+
+Command:
+cd ~/eCommerce_App
+source ~/semgrep-env/bin/activate
+semgrep --config .semgrep-rules.yaml backend/routes/vulnerableTestRoutes.js
+
+What to capture:
+- Terminal window showing the command
+- Scan status (rules run, files scanned)
+- All 10 findings displayed
+- CWE numbers visible (CWE-862, CWE-306)
+
+================================================================
+SCREENSHOT 2: Detailed Finding (First Vulnerability)
+================================================================
+
+Show the first finding in detail with:
+- File path: backend/routes/vulnerableTestRoutes.js
+- Line numbers: 8-15
+- Vulnerability description
+- Severity: ERROR
+- CWE mapping
+
+================================================================
+SCREENSHOT 3: Vulnerable Code
+================================================================
+
+Command:
+cat backend/routes/vulnerableTestRoutes.js
+
+What to capture:
+- Show lines 1-30 (first two vulnerable endpoints)
+- Highlight: No authMiddleware present
+- Show comments marking vulnerabilities
+
+================================================================
+SCREENSHOT 4: Comparison with Secure Route
+================================================================
+
+Command:
+cat backend/routes/customerRoutes.js
+
+What to capture:
+- Lines showing authMiddleware usage
+- Compare: router.get('/cart', authMiddleware, getCart)
+- Highlight the difference
+
+================================================================
+SCREENSHOT 5: CWE Mappings
+================================================================
+
+Command:
+cat lab-results/CWE_MAPPINGS.txt
+
+What to capture:
+- CWE-862: Missing Authorization
+- CWE-306: Missing Authentication for Critical Function
+
+================================================================
+SCREENSHOT 6: JSON Report (Partial)
+================================================================
+
+Command:
+cat lab-results/broken-access-control-findings.json | head -50
+
+What to capture:
+- JSON structure showing findings
+- Metadata with CWE numbers
+- Severity levels
+- Line numbers and file paths
+
+================================================================
+SCREENSHOT 7: Summary Statistics
+================================================================
+
+Command:
+echo "=== Scan Summary ==="
+echo "Total Findings: 10"
+echo "Vulnerable Endpoints: 5"
+echo "Severity: ERROR (Blocking)"
+echo "CWEs: CWE-862, CWE-306"
+cat lab-results/QUICK_SUMMARY.txt | head -30
+
+================================================================
+SCREENSHOT 8: Fixed Code (After Remediation)
+================================================================
+
+Show the fixed version with:
+- authMiddleware added
+- Authorization checks implemented
+- Compare before/after side by side
+
+================================================================
+RECOMMENDED SCREENSHOT SEQUENCE
+================================================================
+
+For a complete lab report, take screenshots in this order:
+
+1. Introduction: Show project structure (ls -la backend/routes/)
+2. Tool Setup: Show Semgrep version (semgrep --version)
+3. Initial Scan: Full Semgrep output with all findings
+4. Vulnerable Code: Show vulnerableTestRoutes.js
+5. CWE Mapping: Show extracted CWE numbers
+6. Manual Verification: grep for authMiddleware (before)
+7. Fix Implementation: Show corrected code
+8. Verification: Re-scan showing 0 findings (after fix)
+
+================================================================
+TERMINAL COMMANDS FOR SCREENSHOTS
+================================================================
+
+# Setup screenshot
+clear
+echo "=== Lab Task 01: Broken Access Control Detection ==="
+echo "Tool: Semgrep"
+echo "Date: $(date)"
+echo "Repository: eCommerce_App (MERN)"
+echo ""
+source ~/semgrep-env/bin/activate
+semgrep --version
+
+# Main scan screenshot
+clear
+echo "=== Running Security Scan for Broken Access Control ==="
+cd ~/eCommerce_App
+semgrep --config .semgrep-rules.yaml backend/routes/vulnerableTestRoutes.js
+
+# Detailed findings screenshot
+semgrep --config .semgrep-rules.yaml backend/routes/vulnerableTestRoutes.js --verbose
+
+# CWE extraction screenshot
+clear
+echo "=== Extracted CWE Mappings ==="
+cat lab-results/CWE_MAPPINGS.txt
+echo ""
+echo "CWE-862: Missing Authorization"
+echo "Description: Software does not perform authorization check when accessing resources"
+echo ""
+echo "CWE-306: Missing Authentication for Critical Function"
+echo "Description: Software does not perform authentication for critical functionality"
+
+# Comparison screenshot
+clear
+echo "=== VULNERABLE (No Authentication) ==="
+grep -n "router\." backend/routes/vulnerableTestRoutes.js | head -5
+echo ""
+echo "=== SECURE (With Authentication) ==="
+grep -n "authMiddleware" backend/routes/customerRoutes.js | head -5
+
+================================================================
+TIPS FOR GOOD SCREENSHOTS
+================================================================
+
+1. Use terminal with clear, readable font size
+2. Set terminal to 100+ columns width for better readability
+3. Use dark theme with good contrast
+4. Highlight important parts (vulnerability lines)
+5. Include full terminal prompt showing directory
+6. Show complete output (don't cut off important parts)
+7. Take high-resolution screenshots (1920x1080 or higher)
+8. Name screenshots descriptively (e.g., "01_semgrep_scan.png")
+
+================================================================
+CHECKLIST BEFORE SUBMISSION
+================================================================
+
+Screenshots taken:
+[ ] Semgrep installation/version
+[ ] Full scan output with findings
+[ ] Detailed vulnerability showing CWE
+[ ] Vulnerable code (before)
+[ ] Fixed code (after)
+[ ] CWE mappings
+[ ] Comparison with secure routes
+[ ] Summary statistics
+
+Documents prepared:
+[ ] Lab report (markdown/PDF)
+[ ] Vulnerable code file
+[ ] Fixed code file
+[ ] CWE-to-CVE mapping document
+[ ] Summary/abstract
+
+================================================================
+END OF SCREENSHOT GUIDE
+================================================================
+

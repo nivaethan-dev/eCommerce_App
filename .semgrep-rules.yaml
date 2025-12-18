@@ -1,0 +1,42 @@
+rules:
+  - id: missing-auth-middleware-express
+    pattern-either:
+      - pattern: |
+          router.get($ROUTE, async ($REQ, $RES) => { ... })
+      - pattern: |
+          router.post($ROUTE, async ($REQ, $RES) => { ... })
+      - pattern: |
+          router.put($ROUTE, async ($REQ, $RES) => { ... })
+      - pattern: |
+          router.delete($ROUTE, async ($REQ, $RES) => { ... })
+    message: |
+      Route handler is missing authentication middleware.
+      All sensitive endpoints should have authMiddleware to verify user identity.
+      This is a Broken Access Control vulnerability (OWASP A01:2021).
+    severity: ERROR
+    metadata:
+      category: security
+      owasp:
+        - A01:2021 - Broken Access Control
+      cwe:
+        - "CWE-862: Missing Authorization"
+        - "CWE-306: Missing Authentication for Critical Function"
+      confidence: HIGH
+    languages: [javascript, typescript]
+    
+  - id: express-route-without-middleware
+    pattern: router.$METHOD($PATH, async (...) => { ... })
+    pattern-not: router.$METHOD($PATH, $MIDDLEWARE, ..., async (...) => { ... })
+    message: |
+      Express route defined without any middleware (like authMiddleware).
+      This allows unauthenticated access to potentially sensitive operations.
+      CWE-862: Missing Authorization
+    severity: WARNING
+    metadata:
+      category: security
+      owasp:
+        - A01:2021 - Broken Access Control
+      cwe:
+        - "CWE-862"
+    languages: [javascript]
+

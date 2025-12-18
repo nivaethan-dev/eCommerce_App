@@ -6,6 +6,9 @@ import authRoutes from './routes/authRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+// Add this import at the top with other imports
+import vulnerableTestRoutes from './routes/vulnerableTestRoutes.js';
+
 
 const app = express();
 
@@ -39,6 +42,9 @@ app.use('/api/auth', authRoutes);          // common auth (refresh, logout, etc.
 app.use('/api/admins', adminRoutes);
 app.use('/api/products', productRoutes);
 //app.use('/api/urls', urlRoutes);
+
+// Add this route registration with other routes
+app.use('/api/vulnerable', vulnerableTestRoutes);
 
 // Centralized Error Handling middleware
 app.use((err, req, res, next) => {
