@@ -15,8 +15,12 @@ const Header = () => {
   const [notificationCount, setNotificationCount] = useState(0);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const [showCartDropdown, setShowCartDropdown] = useState(false);
   const profileDropdownRef = useRef(null);
   const notificationDropdownRef = useRef(null);
+  const cartDropdownRef = useRef(null);
+  const notificationTimeoutRef = useRef(null);
+  const cartTimeoutRef = useRef(null);
 
   // Check authentication status and user role whenever location changes
   useEffect(() => {
@@ -92,11 +96,21 @@ const Header = () => {
       if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(event.target)) {
         setShowNotificationDropdown(false);
       }
+      if (cartDropdownRef.current && !cartDropdownRef.current.contains(event.target)) {
+        setShowCartDropdown(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      // Cleanup timeouts on unmount
+      if (notificationTimeoutRef.current) {
+        clearTimeout(notificationTimeoutRef.current);
+      }
+      if (cartTimeoutRef.current) {
+        clearTimeout(cartTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -107,15 +121,47 @@ const Header = () => {
   };
 
   const handleCartClick = () => {
-    navigate('/cart');
+    // Cart now shows on hover - click does nothing
   };
 
   const handleLoginClick = () => {
     navigate('/login');
   };
 
-  const handleNotificationsClick = () => {
-    setShowNotificationDropdown(!showNotificationDropdown);
+  const handleCartHover = (show) => {
+    // Clear any existing timeout
+    if (cartTimeoutRef.current) {
+      clearTimeout(cartTimeoutRef.current);
+      cartTimeoutRef.current = null;
+    }
+
+    if (show) {
+      // Show immediately
+      setShowCartDropdown(true);
+    } else {
+      // Delay before hiding
+      cartTimeoutRef.current = setTimeout(() => {
+        setShowCartDropdown(false);
+      }, 200); // 200ms delay before closing
+    }
+  };
+
+  const handleNotificationsHover = (show) => {
+    // Clear any existing timeout
+    if (notificationTimeoutRef.current) {
+      clearTimeout(notificationTimeoutRef.current);
+      notificationTimeoutRef.current = null;
+    }
+
+    if (show) {
+      // Show immediately
+      setShowNotificationDropdown(true);
+    } else {
+      // Delay before hiding
+      notificationTimeoutRef.current = setTimeout(() => {
+        setShowNotificationDropdown(false);
+      }, 200); // 200ms delay before closing
+    }
   };
 
   const handleProfileClick = () => {
@@ -213,17 +259,14 @@ const Header = () => {
             About Us
           </Link>
           
-          {/* Guest View - Login/Signup Button */}
-          {!isAuthenticated && (
-            <button onClick={handleLoginClick} className="login-button">
-              Login
-            </button>
-          )}
-          
           {/* Notifications Icon - Available for everyone */}
-          <div className="notification-container" ref={notificationDropdownRef}>
+          <div 
+            className="notification-container" 
+            ref={notificationDropdownRef}
+            onMouseEnter={() => handleNotificationsHover(true)}
+            onMouseLeave={() => handleNotificationsHover(false)}
+          >
             <button 
-              onClick={handleNotificationsClick} 
               className="notification-button"
               aria-label={isAuthenticated ? `Notifications - ${notificationCount} unread` : 'Notifications'}
             >
@@ -303,30 +346,72 @@ const Header = () => {
           </div>
           
           {/* Cart Icon with Badge - Always Visible */}
-          <button 
-            onClick={handleCartClick} 
-            className="cart-button"
-            aria-label={`Shopping cart with ${cartItemCount} items`}
+          <div 
+            className="cart-container" 
+            ref={cartDropdownRef}
+            onMouseEnter={() => handleCartHover(true)}
+            onMouseLeave={() => handleCartHover(false)}
           >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              width="24" 
-              height="24" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
+            <button 
+              className="cart-button"
+              aria-label={`Shopping cart with ${cartItemCount} items`}
             >
-              <circle cx="9" cy="21" r="1"></circle>
-              <circle cx="20" cy="21" r="1"></circle>
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-            </svg>
-            {cartItemCount > 0 && (
-              <span className="cart-badge">{cartItemCount > 99 ? '99+' : cartItemCount}</span>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+              {cartItemCount > 0 && (
+                <span className="cart-badge">{cartItemCount > 99 ? '99+' : cartItemCount}</span>
+              )}
+            </button>
+
+            {/* Cart Dropdown */}
+            {showCartDropdown && (
+              <div className="cart-dropdown">
+                <div className="cart-empty">
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="64" 
+                    height="64" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="1.5"
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className="empty-cart-icon"
+                  >
+                    <circle cx="9" cy="21" r="1"></circle>
+                    <circle cx="20" cy="21" r="1"></circle>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                  </svg>
+                  <p className="empty-text">Your cart is empty</p>
+                  <p className="empty-subtext">Discover amazing products and start adding items to your cart!</p>
+                  <Link to="/products" className="browse-products-btn">
+                    Browse Products
+                  </Link>
+                </div>
+              </div>
             )}
-          </button>
+          </div>
+          
+          {/* Guest View - Login/Signup Button */}
+          {!isAuthenticated && (
+            <button onClick={handleLoginClick} className="login-button">
+              Login
+            </button>
+          )}
           
           {/* Authenticated View - Profile Icon with Dropdown */}
           {isAuthenticated && (
