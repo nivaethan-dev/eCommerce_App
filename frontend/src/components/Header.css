@@ -424,7 +424,6 @@
 }
 
 .browse-products-btn:hover {
-  background: #3d9ae8;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
 }
