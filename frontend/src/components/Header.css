@@ -41,11 +41,12 @@
 
 .logo-text {
   font-size: 1.5rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #646cff 0%, #535bf2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-weight: 800;
+  color: #4facfe;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.02em;
 }
 
 /* Search Section */
@@ -65,7 +66,7 @@
 }
 
 .search-form:focus-within {
-  border-color: #646cff;
+  border-color: #4facfe;
 }
 
 .search-category {
@@ -101,7 +102,7 @@
 .search-button {
   padding: 0.75rem 1.5rem;
   border: none;
-  background-color: #646cff;
+  background-color: #4facfe;
   color: white;
   cursor: pointer;
   transition: background-color 0.3s;
@@ -111,12 +112,12 @@
 }
 
 .search-button:hover {
-  background-color: #535bf2;
+  background-color: #3d9ae8;
 }
 
 .search-button:focus,
 .search-button:focus-visible {
-  outline: 2px solid #646cff;
+  outline: 2px solid #4facfe;
   outline-offset: -2px;
 }
 
@@ -140,11 +141,11 @@
 
 .nav-link:hover {
   background-color: #2a2a2a;
-  color: #646cff;
+  color: #4facfe;
 }
 
 .nav-link.active {
-  color: #646cff;
+  color: #4facfe;
 }
 
 .nav-link.active::after {
@@ -155,31 +156,33 @@
   transform: translateX(-50%);
   width: 70%;
   height: 2px;
-  background-color: #646cff;
+  background-color: #4facfe;
 }
 
 /* Login/Signup Button */
 .login-button {
   padding: 0.6rem 1.5rem;
-  background: linear-gradient(135deg, #646cff 0%, #535bf2 100%);
+  background: #4facfe;
   color: white;
   border: none;
   border-radius: 6px;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s;
   white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .login-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.4);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  background: #3d9ae8;
 }
 
 .login-button:focus,
 .login-button:focus-visible {
-  outline: 2px solid #646cff;
+  outline: 2px solid #4facfe;
   outline-offset: 2px;
 }
 
@@ -204,12 +207,12 @@
 
 .notification-button:hover {
   background-color: #2a2a2a;
-  color: #646cff;
+  color: #4facfe;
 }
 
 .notification-button:focus,
 .notification-button:focus-visible {
-  outline: 2px solid #646cff;
+  outline: 2px solid #4facfe;
   outline-offset: 2px;
 }
 
@@ -304,12 +307,12 @@
 
 .cart-button:hover {
   background-color: #2a2a2a;
-  color: #646cff;
+  color: #4facfe;
 }
 
 .cart-button:focus,
 .cart-button:focus-visible {
-  outline: 2px solid #646cff;
+  outline: 2px solid #4facfe;
   outline-offset: 2px;
 }
 
@@ -348,12 +351,12 @@
 
 .profile-button:hover {
   background-color: #2a2a2a;
-  color: #646cff;
+  color: #4facfe;
 }
 
 .profile-button:focus,
 .profile-button:focus-visible {
-  outline: 2px solid #646cff;
+  outline: 2px solid #4facfe;
   outline-offset: 2px;
 }
 
@@ -401,7 +404,7 @@
 
 .dropdown-item:hover {
   background-color: #333;
-  color: #646cff;
+  color: #4facfe;
 }
 
 .dropdown-item svg {
@@ -543,7 +546,7 @@
 
   .nav-link:hover {
     background-color: #f5f5f5;
-    color: #646cff;
+    color: #4facfe;
   }
 
   .notification-button,
@@ -556,7 +559,7 @@
   .cart-button:hover,
   .profile-button:hover {
     background-color: #f5f5f5;
-    color: #646cff;
+    color: #4facfe;
   }
 
   .profile-dropdown {
@@ -571,7 +574,7 @@
 
   .dropdown-item:hover {
     background-color: #f5f5f5;
-    color: #646cff;
+    color: #4facfe;
   }
 
   .dropdown-divider {
