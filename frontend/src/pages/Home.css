@@ -232,28 +232,3 @@
   }
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .categories-section {
-    background: #1a1a1a;
-  }
-
-  .section-title {
-    color: rgba(255, 255, 255, 0.95);
-  }
-
-  .category-card {
-    background: #2a2a2a;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  .category-card:hover {
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
-  }
-
-  .category-name {
-    color: rgba(255, 255, 255, 0.95);
-  }
-}
-
-
