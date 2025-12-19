@@ -286,6 +286,19 @@
   margin: 0;
 }
 
+.sign-in-link {
+  color: #4facfe;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.sign-in-link:hover {
+  color: #3d9ae8;
+  border-bottom: 1px solid #3d9ae8;
+}
+
 .notification-list {
   max-height: 400px;
   overflow-y: auto;

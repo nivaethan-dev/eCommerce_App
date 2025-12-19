@@ -220,68 +220,87 @@ const Header = () => {
             </button>
           )}
           
-          {/* Authenticated View - Notifications Icon */}
-          {isAuthenticated && (
-            <div className="notification-container" ref={notificationDropdownRef}>
-              <button 
-                onClick={handleNotificationsClick} 
-                className="notification-button"
-                aria-label={`Notifications - ${notificationCount} unread`}
+          {/* Notifications Icon - Available for everyone */}
+          <div className="notification-container" ref={notificationDropdownRef}>
+            <button 
+              onClick={handleNotificationsClick} 
+              className="notification-button"
+              aria-label={isAuthenticated ? `Notifications - ${notificationCount} unread` : 'Notifications'}
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
               >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  width="24" 
-                  height="24" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                >
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                </svg>
-                {notificationCount > 0 && (
-                  <span className="notification-badge">{notificationCount > 99 ? '99+' : notificationCount}</span>
-                )}
-              </button>
-
-              {/* Notification Dropdown */}
-              {showNotificationDropdown && (
-                <div className="notification-dropdown">
-                  {notificationCount === 0 ? (
-                    <div className="notification-empty">
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        width="48" 
-                        height="48" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="1.5"
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                        className="empty-icon"
-                      >
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                      </svg>
-                      <p className="empty-text">No new notifications</p>
-                      <p className="empty-subtext">You're all caught up!</p>
-                    </div>
-                  ) : (
-                    <div className="notification-list">
-                      {/* TODO: Map through actual notifications from backend */}
-                      <div className="notification-item">
-                        <p>Sample notification</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              {isAuthenticated && notificationCount > 0 && (
+                <span className="notification-badge">{notificationCount > 99 ? '99+' : notificationCount}</span>
               )}
-            </div>
-          )}
+            </button>
+
+            {/* Notification Dropdown */}
+            {showNotificationDropdown && (
+              <div className="notification-dropdown">
+                {!isAuthenticated ? (
+                  <div className="notification-empty">
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      width="48" 
+                      height="48" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="1.5"
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                      className="empty-icon"
+                    >
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <p className="empty-text">
+                      Please <Link to="/login" className="sign-in-link">sign-in</Link> to view notifications.
+                    </p>
+                  </div>
+                ) : notificationCount === 0 ? (
+                  <div className="notification-empty">
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      width="48" 
+                      height="48" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="1.5"
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                      className="empty-icon"
+                    >
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <p className="empty-text">No new notifications</p>
+                    <p className="empty-subtext">You're all caught up!</p>
+                  </div>
+                ) : (
+                  <div className="notification-list">
+                    {/* TODO: Map through actual notifications from backend */}
+                    <div className="notification-item">
+                      <p>Sample notification</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           
           {/* Cart Icon with Badge - Always Visible */}
           <button 
