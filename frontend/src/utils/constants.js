@@ -45,9 +45,6 @@ export const PRODUCT_CATEGORIES = [
   'Home & Garden',
   'Sports',
   'Books',
-  'Toys',
-  'Beauty',
-  'Health',
 ];
 
 // App configuration

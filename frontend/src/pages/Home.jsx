@@ -9,10 +9,7 @@ const Home = () => {
     { id: 2, name: 'Fashion', image: 'https://picsum.photos/seed/fashion/400/300', color: '#f093fb', slug: 'fashion' },
     { id: 3, name: 'Home & Garden', image: 'https://picsum.photos/seed/homegarden/400/300', color: '#4facfe', slug: 'home-garden' },
     { id: 4, name: 'Sports', image: 'https://picsum.photos/seed/sports/400/300', color: '#43e97b', slug: 'sports' },
-    { id: 5, name: 'Books', image: 'https://picsum.photos/seed/books/400/300', color: '#fa709a', slug: 'books' },
-    { id: 6, name: 'Toys', image: 'https://picsum.photos/seed/toys/400/300', color: '#feca57', slug: 'toys' },
-    { id: 7, name: 'Beauty', image: 'https://picsum.photos/seed/beauty/400/300', color: '#ff6b6b', slug: 'beauty' },
-    { id: 8, name: 'Health', image: 'https://picsum.photos/seed/health/400/300', color: '#ee5a6f', slug: 'health' }
+    { id: 5, name: 'Books', image: 'https://picsum.photos/seed/books/400/300', color: '#fa709a', slug: 'books' }
   ];
 
   const handleCategoryClick = (slug) => {
