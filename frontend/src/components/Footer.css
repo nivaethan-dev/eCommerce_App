@@ -1,6 +1,6 @@
 .footer {
-  background-color: #1a1a1a;
-  border-top: 1px solid #333;
+  background-color: #f5f5f5;
+  border-top: 1px solid #e0e0e0;
   margin-top: auto;
   width: 100%;
 }
@@ -25,13 +25,13 @@
 .footer-heading {
   font-size: 1.1rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
+  color: #213547;
   margin: 0 0 0.5rem 0;
   padding: 0;
 }
 
 .footer-text {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(33, 53, 71, 0.8);
   line-height: 1.6;
   margin: 0;
   padding: 0;
@@ -48,14 +48,14 @@
 }
 
 .footer-links a {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(33, 53, 71, 0.8);
   text-decoration: none;
   font-size: 0.95rem;
   transition: color 0.3s;
 }
 
 .footer-links a:hover {
-  color: #646cff;
+  color: #4facfe;
 }
 
 .footer-contact {
@@ -71,7 +71,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(33, 53, 71, 0.8);
   font-size: 0.95rem;
 }
 
@@ -81,8 +81,8 @@
 
 /* Bottom Bar */
 .footer-bottom {
-  border-top: 1px solid #333;
-  background-color: #161616;
+  border-top: 1px solid #e0e0e0;
+  background-color: #eeeeee;
 }
 
 .footer-bottom-container {
@@ -97,7 +97,7 @@
 }
 
 .copyright {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(33, 53, 71, 0.7);
   font-size: 0.9rem;
   margin: 0;
 }
@@ -109,18 +109,18 @@
 }
 
 .footer-bottom-links a {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(33, 53, 71, 0.7);
   text-decoration: none;
   font-size: 0.9rem;
   transition: color 0.3s;
 }
 
 .footer-bottom-links a:hover {
-  color: #646cff;
+  color: #4facfe;
 }
 
 .separator {
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(33, 53, 71, 0.3);
   font-size: 0.8rem;
 }
 
@@ -176,44 +176,3 @@
     font-size: 0.9rem;
   }
 }
-
-/* Light mode styles */
-@media (prefers-color-scheme: light) {
-  .footer {
-    background-color: #f5f5f5;
-    border-top: 1px solid #e0e0e0;
-  }
-
-  .footer-heading {
-    color: #213547;
-  }
-
-  .footer-text,
-  .footer-links a,
-  .footer-contact li {
-    color: rgba(33, 53, 71, 0.8);
-  }
-
-  .footer-links a:hover {
-    color: #646cff;
-  }
-
-  .footer-bottom {
-    background-color: #eeeeee;
-    border-top: 1px solid #e0e0e0;
-  }
-
-  .copyright,
-  .footer-bottom-links a {
-    color: rgba(33, 53, 71, 0.7);
-  }
-
-  .footer-bottom-links a:hover {
-    color: #646cff;
-  }
-
-  .separator {
-    color: rgba(33, 53, 71, 0.3);
-  }
-}
-
