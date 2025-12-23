@@ -1,9 +1,9 @@
 import jwt from 'jsonwebtoken';
 import Customer from '../models/Customer.js';
 import Admin from '../models/Admin.js';
-import bcrypt from 'bcryptjs';
 import { comparePasswords } from '../utils/securityUtils.js';
 import { generateAccessToken, generateRefreshToken, setAuthCookies } from '../utils/tokenUtils.js';
+import * as eventTriggers from '../eventTriggers/authenticationEvent.js';
 
 // Unified login for both customers and admins
 export const login = async (req, res) => {
@@ -21,12 +21,18 @@ export const login = async (req, res) => {
     // Try finding the user in Customer collection
     const customer = await Customer.findOne({ email });
     if (customer) {
-      const isMatch = await bcrypt.compare(password, customer.password);
-      if (!isMatch) return res.status(401).json({ success: false, error: 'Invalid credentials' });
+      const isMatch = await comparePasswords(password, customer.password);
+      if (!isMatch) {
+        await eventTriggers.triggerLoginFailed(email);
+        return res.status(401).json({ success: false, error: 'Invalid credentials' });
+      }
+
+      // Trigger customer login event
+      await eventTriggers.triggerCustomerLogin(customer._id, customer.name);
 
       // Generate tokens
       const accessToken = generateAccessToken(customer._id, 'customer');
-      const refreshToken = generateRefreshToken(customer._id);
+      const refreshToken = generateRefreshToken(customer._id, 'customer');
       setAuthCookies(res, accessToken, refreshToken);
 
       return res.status(200).json({
@@ -39,10 +45,16 @@ export const login = async (req, res) => {
     const admin = await Admin.findOne({ email });
     if (admin) {
       const isMatch = await comparePasswords(password, admin.password);
-      if (!isMatch) return res.status(401).json({ success: false, error: 'Invalid credentials' });
+      if (!isMatch) {
+        await eventTriggers.triggerLoginFailed(email);
+        return res.status(401).json({ success: false, error: 'Invalid credentials' });
+      }
+
+      // Trigger admin login event
+      await eventTriggers.triggerAdminLogin(admin._id, admin.name);
 
       const accessToken = generateAccessToken(admin._id, 'admin');
-      const refreshToken = generateRefreshToken(admin._id);
+      const refreshToken = generateRefreshToken(admin._id, 'admin');
       setAuthCookies(res, accessToken, refreshToken);
 
       return res.status(200).json({
@@ -52,6 +64,7 @@ export const login = async (req, res) => {
     }
 
     // If not found in either collection
+    await eventTriggers.triggerLoginFailed(email);
     return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
   } catch (error) {
@@ -99,12 +112,25 @@ export const refreshToken = async (req, res) => {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
-    // Verify the old refresh token
-    const decoded = jwt.verify(oldRefreshToken, process.env.CUSTOMER_REFRESH_JWT_SECRET);
+    // Try verifying with customer secret first, then admin secret
+    let decoded;
+    let userRole;
 
-    // Generate NEW tokens (both access AND refresh)
-    const newAccessToken = generateAccessToken(decoded.id);
-    const newRefreshToken = generateRefreshToken(decoded.id);
+    try {
+      decoded = jwt.verify(oldRefreshToken, process.env.CUSTOMER_REFRESH_JWT_SECRET);
+      userRole = decoded.role || 'customer';
+    } catch (err) {
+      try {
+        decoded = jwt.verify(oldRefreshToken, process.env.ADMIN_REFRESH_JWT_SECRET);
+        userRole = decoded.role || 'admin';
+      } catch (err) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+      }
+    }
+
+    // Generate NEW tokens (both access AND refresh) with the user's role
+    const newAccessToken = generateAccessToken(decoded.id, userRole);
+    const newRefreshToken = generateRefreshToken(decoded.id, userRole);
     
     // Set BOTH new tokens
     setAuthCookies(res, newAccessToken, newRefreshToken);
