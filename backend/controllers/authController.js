@@ -102,7 +102,7 @@ export const logout = async (req, res) => {
   }
 };
 
-// Refresh Token - WITH ROTATION
+// Refresh Token - WITH ROTATION (6-hour absolute session limit)
 export const refreshToken = async (req, res) => {
   try {
     const oldRefreshToken = req.cookies.refreshToken;
@@ -128,9 +128,22 @@ export const refreshToken = async (req, res) => {
       }
     }
 
-    // Generate NEW tokens (both access AND refresh) with the user's role
+    // Check absolute 6-hour session timeout
+    const loginTime = new Date(decoded.loginTime);
+    const now = new Date();
+    const sessionDuration = (now - loginTime) / 1000 / 60 / 60; // hours
+    
+    if (sessionDuration >= 6) {
+      return res.status(401).json({ 
+        success: false, 
+        error: 'Session expired. Please login again.',
+        sessionExpired: true 
+      });
+    }
+
+    // Generate NEW tokens (preserve original loginTime for absolute timeout)
     const newAccessToken = generateAccessToken(decoded.id, userRole);
-    const newRefreshToken = generateRefreshToken(decoded.id, userRole);
+    const newRefreshToken = generateRefreshToken(decoded.id, userRole, decoded.loginTime);
     
     // Set BOTH new tokens
     setAuthCookies(res, newAccessToken, newRefreshToken);

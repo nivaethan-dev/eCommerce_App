@@ -25,3 +25,16 @@ export const registerLimiter = rateLimit({
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     skipSuccessfulRequests: false // Count ALL attempts, including successful ones
 });
+
+// Refresh token rate limiter
+export const refreshTokenLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 5, // 5 requests per minute
+    message: {
+        success: false,
+        error: 'Too many refresh requests. Please try again in a moment'
+    },
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    skipSuccessfulRequests: false // Count all attempts
+});
