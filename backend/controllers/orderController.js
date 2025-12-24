@@ -18,7 +18,7 @@ export const placeOrder = async (req, res) => {
 
     const order = await createOrderFromCart(customerId);
 
-    // Trigger order placed event (notification + audit log)
+    // Trigger order placed event (customer & admin notifications + audit log)
     await orderTriggers.triggerOrderPlaced(
       order._id,
       customerId,

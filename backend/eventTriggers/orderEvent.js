@@ -1,15 +1,16 @@
 import * as notificationService from '../services/notificationService.js';
 import * as auditService from '../services/auditLogService.js';
 import { getGeolocation } from '../utils/geoipUtils.js';
+import Admin from '../models/Admin.js';
 
 // ============================================
 // ORDER PLACED TRIGGERS
 // ============================================
 
-// Customer Places Order - Notify customer and log
+// Customer Places Order - Notify customer, notify all admins, and log as NEW_ORDER
 export const triggerOrderPlaced = async (orderId, customerId, totalAmount, ipAddress) => {
     try {
-        // Create notification for customer
+        // 1. Create notification for customer (ORDER_PLACED)
         await notificationService.createNotification(
             customerId,
             'Customer',
@@ -22,12 +23,28 @@ export const triggerOrderPlaced = async (orderId, customerId, totalAmount, ipAdd
             }
         );
 
-        // Create audit log
+        // 2. Create notifications for all admins (NEW_ORDER)
+        const admins = await Admin.find({});
+        for (const admin of admins) {
+            await notificationService.createNotification(
+                admin._id,
+                'Admin',
+                {
+                    type: 'new_order',
+                    title: 'New Order Received',
+                    message: `New order #${orderId} received. Total: ₹${totalAmount}`,
+                    priority: 'high',
+                    metadata: { orderId, customerId, totalAmount }
+                }
+            );
+        }
+
+        // 3. Create audit log - Admin only views NEW_ORDER action
         const geolocation = getGeolocation(ipAddress);
         await auditService.createAuditLog({
             userId: customerId,
             userType: 'Customer',
-            action: 'ORDER_PLACED',
+            action: 'NEW_ORDER', // Labelled as NEW_ORDER for admin visibility
             resource: 'Order',
             resourceId: orderId,
             endpoint: '/api/orders',
@@ -39,42 +56,6 @@ export const triggerOrderPlaced = async (orderId, customerId, totalAmount, ipAdd
         });
     } catch (error) {
         console.error('Order placed trigger error:', error);
-    }
-};
-
-// Admin Receives New Order Notification
-export const triggerNewOrderForAdmin = async (orderId, customerId, totalAmount, adminId, ipAddress) => {
-    try {
-        // Create notification for admin
-        await notificationService.createNotification(
-            adminId,
-            'Admin',
-            {
-                type: 'new_order',
-                title: 'New Order Received',
-                message: `New order #${orderId} received. Total: ₹${totalAmount}`,
-                priority: 'high',
-                metadata: { orderId, customerId, totalAmount }
-            }
-        );
-
-        // Create audit log
-        const geolocation = getGeolocation(ipAddress);
-        await auditService.createAuditLog({
-            userId: adminId,
-            userType: 'Admin',
-            action: 'NEW_ORDER',
-            resource: 'Order',
-            resourceId: orderId,
-            endpoint: '/api/orders',
-            method: 'POST',
-            ipAddress,
-            geolocation,
-            status: 'success',
-            changes: { customerId, totalAmount }
-        });
-    } catch (error) {
-        console.error('New order admin trigger error:', error);
     }
 };
 
