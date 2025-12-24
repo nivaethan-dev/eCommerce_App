@@ -23,12 +23,12 @@ export const login = async (req, res) => {
     if (customer) {
       const isMatch = await comparePasswords(password, customer.password);
       if (!isMatch) {
-        await eventTriggers.triggerLoginFailed(email);
+        await eventTriggers.triggerLoginFailed(email, req.ip);
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
       }
 
       // Trigger customer login event
-      await eventTriggers.triggerCustomerLogin(customer._id, customer.name);
+      await eventTriggers.triggerCustomerLogin(customer._id, customer.name, req.ip);
 
       // Generate tokens
       const accessToken = generateAccessToken(customer._id, 'customer');
@@ -46,12 +46,12 @@ export const login = async (req, res) => {
     if (admin) {
       const isMatch = await comparePasswords(password, admin.password);
       if (!isMatch) {
-        await eventTriggers.triggerLoginFailed(email);
+        await eventTriggers.triggerLoginFailed(email, req.ip);
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
       }
 
       // Trigger admin login event
-      await eventTriggers.triggerAdminLogin(admin._id, admin.name);
+      await eventTriggers.triggerAdminLogin(admin._id, admin.name, req.ip);
 
       const accessToken = generateAccessToken(admin._id, 'admin');
       const refreshToken = generateRefreshToken(admin._id, 'admin');
@@ -64,7 +64,7 @@ export const login = async (req, res) => {
     }
 
     // If not found in either collection
-    await eventTriggers.triggerLoginFailed(email);
+    await eventTriggers.triggerLoginFailed(email, req.ip);
     return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
   } catch (error) {
@@ -89,7 +89,7 @@ export const logout = async (req, res) => {
     // Clear auth cookies with matching options
     res.clearCookie('token', cookieOptions);
     res.clearCookie('refreshToken', cookieOptions);
-    
+
     return res.status(200).json({
       success: true,
       message: 'Logged out successfully'
@@ -132,19 +132,19 @@ export const refreshToken = async (req, res) => {
     const loginTime = new Date(decoded.loginTime);
     const now = new Date();
     const sessionDuration = (now - loginTime) / 1000 / 60 / 60; // hours
-    
+
     if (sessionDuration >= 6) {
-      return res.status(401).json({ 
-        success: false, 
+      return res.status(401).json({
+        success: false,
         error: 'Session expired. Please login again.',
-        sessionExpired: true 
+        sessionExpired: true
       });
     }
 
     // Generate NEW tokens (preserve original loginTime for absolute timeout)
     const newAccessToken = generateAccessToken(decoded.id, userRole);
     const newRefreshToken = generateRefreshToken(decoded.id, userRole, decoded.loginTime);
-    
+
     // Set BOTH new tokens
     setAuthCookies(res, newAccessToken, newRefreshToken);
 

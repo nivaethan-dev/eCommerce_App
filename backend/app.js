@@ -11,6 +11,9 @@ import cors from 'cors';
 
 const app = express();
 
+// Trust proxy (required for correct IP behind load balancers/Render/Heroku/etc)
+app.set('trust proxy', true);
+
 /*
 // Force HTTPS in production
 app.use((req, res, next) => {

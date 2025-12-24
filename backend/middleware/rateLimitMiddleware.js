@@ -3,14 +3,17 @@ import rateLimit from 'express-rate-limit';
 // Login rate limiter
 export const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // 5 attempts per window
+    max: 100, // 100 attempts per window (TEMPORARY - for testing)
     message: {
         success: false,
         error: 'Too many login attempts. Please try again after 15 minutes'
     },
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    skipSuccessfulRequests: false // Count successful attempts too
+    skipSuccessfulRequests: false, // Count successful attempts too
+    // Trust the first proxy (Render, Heroku, Nginx, etc.)
+    // This reads the leftmost IP from X-Forwarded-For header
+    validate: { trustProxy: false } // Disable the validation error
 });
 
 // Registration rate limiter
@@ -23,7 +26,8 @@ export const registerLimiter = rateLimit({
     },
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    skipSuccessfulRequests: false // Count ALL attempts, including successful ones
+    skipSuccessfulRequests: false, // Count ALL attempts, including successful ones
+    validate: { trustProxy: false } // Disable the validation error
 });
 
 // Refresh token rate limiter
@@ -36,5 +40,6 @@ export const refreshTokenLimiter = rateLimit({
     },
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    skipSuccessfulRequests: false // Count all attempts
+    skipSuccessfulRequests: false, // Count all attempts
+    validate: { trustProxy: false } // Disable the validation error
 });

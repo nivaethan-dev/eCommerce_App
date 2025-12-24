@@ -1,11 +1,12 @@
 import * as notificationService from '../services/notificationService.js';
 import * as auditService from '../services/auditLogService.js';
+import { getGeolocation } from '../utils/geoipUtils.js';
 
 // ============================================
 // LOGIN TRIGGERS
 // ============================================
 
-export const triggerCustomerLogin = async (customerId, customerName) => {
+export const triggerCustomerLogin = async (customerId, customerName, ipAddress) => {
   console.log('🔔 Triggering customer login event for:', customerName);
   try {
     // Create notification
@@ -25,6 +26,7 @@ export const triggerCustomerLogin = async (customerId, customerName) => {
 
     // Create audit log
     console.log('Creating audit log...');
+    const geolocation = getGeolocation(ipAddress);
     const auditLog = await auditService.createAuditLog({
       userId: customerId,
       userType: 'Customer',
@@ -33,6 +35,8 @@ export const triggerCustomerLogin = async (customerId, customerName) => {
       resourceId: customerId,
       endpoint: '/api/auth/login',
       method: 'POST',
+      ipAddress,
+      geolocation,
       status: 'success'
     });
     console.log('✅ Audit log created:', auditLog._id);
@@ -43,7 +47,7 @@ export const triggerCustomerLogin = async (customerId, customerName) => {
   }
 };
 
-export const triggerAdminLogin = async (adminId, adminName) => {
+export const triggerAdminLogin = async (adminId, adminName, ipAddress) => {
   try {
     // Create notification
     await notificationService.createNotification(
@@ -59,6 +63,7 @@ export const triggerAdminLogin = async (adminId, adminName) => {
     );
 
     // Create audit log
+    const geolocation = getGeolocation(ipAddress);
     await auditService.createAuditLog({
       userId: adminId,
       userType: 'Admin',
@@ -67,6 +72,8 @@ export const triggerAdminLogin = async (adminId, adminName) => {
       resourceId: adminId,
       endpoint: '/api/auth/login',
       method: 'POST',
+      ipAddress,
+      geolocation,
       status: 'success'
     });
   } catch (error) {
@@ -74,10 +81,11 @@ export const triggerAdminLogin = async (adminId, adminName) => {
   }
 };
 
-export const triggerLoginFailed = async (email) => {
+export const triggerLoginFailed = async (email, ipAddress) => {
   try {
     // Only audit log for failed attempts (no notification)
     // Note: Using 'Customer' as default userType since we can't determine actual type for failed logins
+    const geolocation = getGeolocation(ipAddress);
     await auditService.createAuditLog({
       userId: null,
       userType: 'Customer',
@@ -86,6 +94,8 @@ export const triggerLoginFailed = async (email) => {
       resourceId: null,
       endpoint: '/api/auth/login',
       method: 'POST',
+      ipAddress,
+      geolocation,
       status: 'failure',
       changes: { attemptedEmail: email }
     });
