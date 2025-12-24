@@ -7,11 +7,9 @@ import { getGeolocation } from '../utils/geoipUtils.js';
 // ============================================
 
 export const triggerCustomerLogin = async (customerId, customerName, ipAddress) => {
-  console.log('🔔 Triggering customer login event for:', customerName);
   try {
-    // Create notification
-    console.log('Creating notification...');
-    const notification = await notificationService.createNotification(
+    // 1. Create notification for customer ONLY
+    await notificationService.createNotification(
       customerId,
       'Customer',
       {
@@ -22,12 +20,10 @@ export const triggerCustomerLogin = async (customerId, customerName, ipAddress) 
         metadata: {}
       }
     );
-    console.log('✅ Notification created:', notification._id);
 
-    // Create audit log
-    console.log('Creating audit log...');
+    // 2. Create audit log for admin review
     const geolocation = getGeolocation(ipAddress);
-    const auditLog = await auditService.createAuditLog({
+    await auditService.createAuditLog({
       userId: customerId,
       userType: 'Customer',
       action: 'LOGIN',
@@ -39,11 +35,8 @@ export const triggerCustomerLogin = async (customerId, customerName, ipAddress) 
       geolocation,
       status: 'success'
     });
-    console.log('✅ Audit log created:', auditLog._id);
   } catch (error) {
-    console.error('❌ Login trigger error:', error.message);
-    console.error('Full error:', error);
-    // Don't throw - login should succeed even if logging fails
+    console.error('Customer login trigger error:', error.message);
   }
 };
 
