@@ -1,6 +1,7 @@
 import * as notificationService from '../services/notificationService.js';
 import * as auditService from '../services/auditLogService.js';
 import { getGeolocation } from '../utils/geoipUtils.js';
+import Admin from '../models/Admin.js';
 
 // ============================================
 // LOGIN TRIGGERS
@@ -98,6 +99,7 @@ export const triggerLoginFailed = async (email, ipAddress, userType = 'Customer'
 
 export const triggerAccountLocked = async (userId, userType, email, ipAddress) => {
   try {
+    // 1. Audit Log (Always First)
     const geolocation = getGeolocation(ipAddress);
     await auditService.createAuditLog({
       userId,
@@ -112,6 +114,22 @@ export const triggerAccountLocked = async (userId, userType, email, ipAddress) =
       status: 'failure',
       changes: { email, message: 'Account locked for 15 minutes due to multiple failed attempts' }
     });
+
+    // 2. Notify ALL Admins about the lockout (Security Alert)
+    const admins = await Admin.find({});
+    for (const admin of admins) {
+      await notificationService.createNotification(
+        admin._id,
+        'Admin',
+        {
+          type: 'security_alert',
+          title: 'Security Alert: Account Locked',
+          message: `Account ${email} (${userType}) has been locked due to excessive failed login attempts. IP: ${ipAddress}`,
+          priority: 'high',
+          metadata: { affectedUserId: userId, affectedUserType: userType, email, ipAddress }
+        }
+      );
+    }
   } catch (error) {
     console.error('Account locked trigger error:', error);
   }
