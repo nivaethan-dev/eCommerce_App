@@ -23,7 +23,7 @@ export const login = async (req, res) => {
     if (customer) {
       const isMatch = await comparePasswords(password, customer.password);
       if (!isMatch) {
-        await eventTriggers.triggerLoginFailed(email, req.ip);
+        await eventTriggers.triggerLoginFailed(email, req.ip, 'Customer', customer._id);
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
       }
 
@@ -46,7 +46,7 @@ export const login = async (req, res) => {
     if (admin) {
       const isMatch = await comparePasswords(password, admin.password);
       if (!isMatch) {
-        await eventTriggers.triggerLoginFailed(email, req.ip);
+        await eventTriggers.triggerLoginFailed(email, req.ip, 'Admin', admin._id);
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
       }
 

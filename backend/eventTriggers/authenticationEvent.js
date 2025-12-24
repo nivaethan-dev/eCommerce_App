@@ -74,17 +74,16 @@ export const triggerAdminLogin = async (adminId, adminName, ipAddress) => {
   }
 };
 
-export const triggerLoginFailed = async (email, ipAddress) => {
+export const triggerLoginFailed = async (email, ipAddress, userType = 'Customer', userId = null) => {
   try {
     // Only audit log for failed attempts (no notification)
-    // Note: Using 'Customer' as default userType since we can't determine actual type for failed logins
     const geolocation = getGeolocation(ipAddress);
     await auditService.createAuditLog({
-      userId: null,
-      userType: 'Customer',
+      userId: userId,
+      userType: userType,
       action: 'LOGIN_FAILED',
       resource: 'Auth',
-      resourceId: null,
+      resourceId: userId,
       endpoint: '/api/auth/login',
       method: 'POST',
       ipAddress,
