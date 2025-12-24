@@ -95,3 +95,24 @@ export const triggerLoginFailed = async (email, ipAddress, userType = 'Customer'
     console.error('Failed login trigger error:', error);
   }
 };
+
+export const triggerAccountLocked = async (userId, userType, email, ipAddress) => {
+  try {
+    const geolocation = getGeolocation(ipAddress);
+    await auditService.createAuditLog({
+      userId,
+      userType,
+      action: 'ACCOUNT_LOCKED',
+      resource: 'Auth',
+      resourceId: userId,
+      endpoint: '/api/auth/login',
+      method: 'POST',
+      ipAddress,
+      geolocation,
+      status: 'failure',
+      changes: { email, message: 'Account locked for 15 minutes due to multiple failed attempts' }
+    });
+  } catch (error) {
+    console.error('Account locked trigger error:', error);
+  }
+};

@@ -31,13 +31,17 @@ const customerSchema = new Schema({
   resetOtp: { type: String, default: '' },
   resetOtpExpireAt: { type: Number, default: 0 },
 
+  // Account Locking
+  loginAttempts: { type: Number, default: 0 },
+  lockUntil: { type: Date },
+
   cart: [cartItemSchema], // Cart items
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
 
 // Update `updatedAt` automatically
-customerSchema.pre('save', function(next) {
+customerSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
   next();
 });

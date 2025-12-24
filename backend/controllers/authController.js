@@ -5,6 +5,26 @@ import { comparePasswords } from '../utils/securityUtils.js';
 import { generateAccessToken, generateRefreshToken, setAuthCookies } from '../utils/tokenUtils.js';
 import * as eventTriggers from '../eventTriggers/authenticationEvent.js';
 
+const MAX_ATTEMPTS = 5;
+const LOCK_TIME = 15 * 60 * 1000; // 15 minutes
+
+const handleFailedLogin = async (user, userType, ipAddress) => {
+  user.loginAttempts += 1;
+  if (user.loginAttempts >= MAX_ATTEMPTS) {
+    user.lockUntil = new Date(Date.now() + LOCK_TIME);
+    await eventTriggers.triggerAccountLocked(user._id, userType, user.email, ipAddress);
+  }
+  await user.save();
+};
+
+const resetLoginAttempts = async (user) => {
+  if (user.loginAttempts > 0 || user.lockUntil) {
+    user.loginAttempts = 0;
+    user.lockUntil = undefined;
+    await user.save();
+  }
+};
+
 // Unified login for both customers and admins
 export const login = async (req, res) => {
   try {
@@ -21,11 +41,24 @@ export const login = async (req, res) => {
     // Try finding the user in Customer collection
     const customer = await Customer.findOne({ email });
     if (customer) {
+      // Check if account is locked
+      if (customer.lockUntil && customer.lockUntil > Date.now()) {
+        const remainingMinutes = Math.ceil((customer.lockUntil - Date.now()) / 60000);
+        return res.status(401).json({
+          success: false,
+          error: `Account is locked due to multiple failed attempts. Please try again in ${remainingMinutes} minutes.`
+        });
+      }
+
       const isMatch = await comparePasswords(password, customer.password);
       if (!isMatch) {
+        await handleFailedLogin(customer, 'Customer', req.ip);
         await eventTriggers.triggerLoginFailed(email, req.ip, 'Customer', customer._id);
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
       }
+
+      // Reset login attempts on success
+      await resetLoginAttempts(customer);
 
       // Trigger customer login event
       await eventTriggers.triggerCustomerLogin(customer._id, customer.name, req.ip);
@@ -44,11 +77,24 @@ export const login = async (req, res) => {
     // Try finding the user in Admin collection
     const admin = await Admin.findOne({ email });
     if (admin) {
+      // Check if account is locked
+      if (admin.lockUntil && admin.lockUntil > Date.now()) {
+        const remainingMinutes = Math.ceil((admin.lockUntil - Date.now()) / 60000);
+        return res.status(401).json({
+          success: false,
+          error: `Account is locked due to multiple failed attempts. Please try again in ${remainingMinutes} minutes.`
+        });
+      }
+
       const isMatch = await comparePasswords(password, admin.password);
       if (!isMatch) {
+        await handleFailedLogin(admin, 'Admin', req.ip);
         await eventTriggers.triggerLoginFailed(email, req.ip, 'Admin', admin._id);
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
       }
+
+      // Reset login attempts on success
+      await resetLoginAttempts(admin);
 
       // Trigger admin login event
       await eventTriggers.triggerAdminLogin(admin._id, admin.name, req.ip);
