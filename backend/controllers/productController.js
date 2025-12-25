@@ -83,6 +83,19 @@ export const updateProduct = async (req, res) => {
       data: updatedProduct
     });
   } catch (error) {
+    if (req.file) {
+      try {
+        await fs.unlink(req.file.path);
+      } catch (_) { }
+    }
+
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        error: PRODUCT_MESSAGES.DUPLICATE_PRODUCT
+      });
+    }
+
     console.error('Update product error:', error);
     if (error.message === PRODUCT_MESSAGES.PRODUCT_NOT_FOUND) {
       return res.status(404).json({ success: false, error: error.message });

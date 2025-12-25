@@ -110,19 +110,10 @@ export class ProductService {
 
     // Capture old data before update for comparison
     const oldData = product.toObject();
+    const oldImagePath = product.image;
 
     // Handle new image upload
     if (file) {
-      // Delete old image if it exists
-      if (product.image) {
-        try {
-          const oldImagePath = path.join(process.cwd(), product.image);
-          await fs.unlink(oldImagePath);
-        } catch (error) {
-          console.error('Error deleting old image:', error);
-        }
-      }
-
       let imagePath = path.join('uploads', 'products', file.filename);
       updateData.image = imagePath.replace(/\\/g, '/');
     }
@@ -152,6 +143,16 @@ export class ProductService {
       updateData,
       { new: true, runValidators: true }
     );
+
+    // ONLY delete old image if DB update succeeded AND a new file was provided
+    if (file && oldImagePath) {
+      try {
+        const fullOldPath = path.join(process.cwd(), oldImagePath);
+        await fs.unlink(fullOldPath);
+      } catch (error) {
+        console.error('Error deleting old image after update:', error);
+      }
+    }
 
     return { updatedProduct, oldData };
   }

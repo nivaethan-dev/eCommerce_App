@@ -80,50 +80,51 @@ const upload = multer({
   }
 });
 
-export const validateImage = async (req, res, next) => {
-  // Check if a file was uploaded
-  if (!req.file) {
-    return res.status(400).json({
-      success: false,
-      error: {
-        code: 'NO_FILE_PROVIDED',
-        message: 'No image file provided',
-        details: {
-          maxFileSize: UPLOAD_CONFIG.MAX_FILE_SIZE,
-          maxFiles: UPLOAD_CONFIG.MAX_IMAGES,
-          allowedTypes: Object.keys(UPLOAD_CONFIG.MIME_TYPES)
-        }
-      },
-      timestamp: new Date().toISOString()
-    });
+// Helper to clean up files
+const cleanupFiles = async (req) => {
+  if (req.file) {
+    try { await fs.unlink(req.file.path); } catch (_) { }
   }
-
-  // Additional validation: ensure only one image is uploaded
-  // This is a safety check in case multer configuration doesn't work as expected
-  if (req.files && req.files.length > UPLOAD_CONFIG.MAX_IMAGES) {
-    // Clean up any uploaded files
-    if (Array.isArray(req.files)) {
-      for (const file of req.files) {
-        try {
-          await fs.unlink(file.path);
-        } catch (unlinkError) {
-          console.error('Error deleting file:', unlinkError);
-        }
-      }
+  if (req.files) {
+    for (const file of req.files) {
+      try { await fs.unlink(file.path); } catch (_) { }
     }
-    return res.status(400).json({
-      success: false,
-      error: {
-        code: 'TOO_MANY_FILES',
-        message: `Only ${UPLOAD_CONFIG.MAX_IMAGES} image${UPLOAD_CONFIG.MAX_IMAGES > 1 ? 's' : ''} allowed per product`,
-        details: {
-          maxFileSize: UPLOAD_CONFIG.MAX_FILE_SIZE,
-          maxFiles: UPLOAD_CONFIG.MAX_IMAGES,
-          allowedTypes: Object.keys(UPLOAD_CONFIG.MIME_TYPES)
-        }
-      },
-      timestamp: new Date().toISOString()
-    });
+  }
+};
+
+// Centralized error response formatter for image uploads
+const sendUploadError = (res, code, message, statusCode = 400) => {
+  return res.status(statusCode).json({
+    success: false,
+    error: {
+      code,
+      message,
+      details: {
+        maxFileSize: UPLOAD_CONFIG.MAX_FILE_SIZE,
+        maxFiles: UPLOAD_CONFIG.MAX_IMAGES,
+        allowedTypes: Object.keys(UPLOAD_CONFIG.MIME_TYPES)
+      }
+    },
+    timestamp: new Date().toISOString()
+  });
+};
+
+// Middleware to enforce that a file MUST be present (for Create)
+export const requireImage = (req, res, next) => {
+  if (!req.file) {
+    return sendUploadError(res, 'NO_FILE_PROVIDED', 'Product image is required');
+  }
+  next();
+};
+
+export const validateImage = async (req, res, next) => {
+  // If no file, just skip (logic for required vs optional is handled by requireImage)
+  if (!req.file) return next();
+
+  // Safety check: ensure only one image is uploaded
+  if (req.files && req.files.length > UPLOAD_CONFIG.MAX_IMAGES) {
+    await cleanupFiles(req);
+    return sendUploadError(res, 'TOO_MANY_FILES', `Only ${UPLOAD_CONFIG.MAX_IMAGES} images allowed`);
   }
 
   try {
@@ -132,46 +133,13 @@ export const validateImage = async (req, res, next) => {
 
     // Validate against allowed MIME types
     if (!fileType || !Object.values(MIME_TYPES).includes(fileType.ext)) {
-        // Delete fake/invalid file
-        await fs.unlink(req.file.path);
-        return res.status(400).json({
-            success: false,
-            error: {
-              code: 'INVALID_FILE_TYPE',
-              message: 'Invalid file type detected. Only JPG, JPEG, PNG, WEBP, and AVIF are allowed.',
-              details: {
-                maxFileSize: UPLOAD_CONFIG.MAX_FILE_SIZE,
-                maxFiles: UPLOAD_CONFIG.MAX_IMAGES,
-                allowedTypes: Object.keys(UPLOAD_CONFIG.MIME_TYPES)
-              }
-            },
-            timestamp: new Date().toISOString()
-        });
+      await cleanupFiles(req);
+      return sendUploadError(res, 'INVALID_FILE_TYPE', 'Invalid file type detected. Only JPG, JPEG, PNG, WEBP, and AVIF are allowed.');
     }
     next();
   } catch (err) {
-    // Catch unexpected errors and clean up
-    if (req.file) {
-      try {
-        await fs.unlink(req.file.path);
-      } catch (unlinkError) {
-        console.error('Error deleting invalid file:', unlinkError);
-      }
-    }
-
-    return res.status(400).json({
-      success: false,
-      error: {
-        code: 'FILE_PROCESSING_ERROR',
-        message: 'Invalid file format or corrupted file',
-        details: {
-          maxFileSize: UPLOAD_CONFIG.MAX_FILE_SIZE,
-          maxFiles: UPLOAD_CONFIG.MAX_IMAGES,
-          allowedTypes: Object.keys(UPLOAD_CONFIG.MIME_TYPES)
-        }
-      },
-      timestamp: new Date().toISOString()
-    });
+    await cleanupFiles(req);
+    return sendUploadError(res, 'FILE_PROCESSING_ERROR', 'Invalid file format or corrupted file');
   }
 };
 
@@ -189,7 +157,7 @@ export const processImage = async (req, res, next) => {
     // Generate final filename with correct extension
     const finalFilename = filename.replace('temp_', 'product_').replace(/\.[^.]+$/, `.${UPLOAD_CONFIG.IMAGE_RESIZE.OUTPUT_FORMAT}`);
     const outputPath = path.join(uploadDirectory, finalFilename);
-    
+
     console.log('Processing image:', {
       inputPath,
       outputPath,
@@ -197,7 +165,7 @@ export const processImage = async (req, res, next) => {
       finalFilename,
       mimetype: req.file.mimetype
     });
-    
+
     // Check if input file exists and get file stats
     let fileStats;
     try {
@@ -210,12 +178,12 @@ export const processImage = async (req, res, next) => {
     } catch (accessError) {
       throw new Error(`Input file does not exist: ${inputPath}`);
     }
-    
+
     // Check if file is not empty
     if (fileStats.size === 0) {
       throw new Error('Input file is empty');
     }
-    
+
     // Process image with Sharp - read from input and write to output
     const processedBuffer = await sharp(inputPath)
       .resize(UPLOAD_CONFIG.IMAGE_RESIZE.WIDTH, UPLOAD_CONFIG.IMAGE_RESIZE.HEIGHT, {
@@ -228,10 +196,10 @@ export const processImage = async (req, res, next) => {
       })
       .withMetadata(!UPLOAD_CONFIG.IMAGE_RESIZE.STRIP_METADATA) // Strip metadata if configured
       .toBuffer();
-    
+
     // Write the processed buffer to the output file
     await fs.writeFile(outputPath, processedBuffer);
-    
+
     console.log('Image processed successfully:', {
       outputPath,
       processedSize: processedBuffer.length,
@@ -240,7 +208,7 @@ export const processImage = async (req, res, next) => {
 
     // Delete the original file
     await fs.unlink(inputPath);
-    
+
     // Update the file path in req.file to point to the processed image
     req.file.path = outputPath;
     req.file.mimetype = `image/${UPLOAD_CONFIG.IMAGE_RESIZE.OUTPUT_FORMAT}`;
@@ -343,6 +311,16 @@ export const handleUploadError = (error, req, res, next) => {
   next(error);
 };
 
+// Combined middleware for standard product image processing
+// Note: handleUploadError should be called individually after multer if needed,
+// or included here for maximum maintainability.
+export const productUploadBundle = [
+  uploadProductImage,
+  handleUploadError,
+  processImage,
+  validateImage
+];
+
 // Export configuration for use in other parts of the application
 export { UPLOAD_CONFIG };
 
@@ -356,7 +334,7 @@ export const createUploadMiddleware = (fieldName = 'image', maxImages = UPLOAD_C
       files: maxImages
     }
   };
-  
+
   if (maxImages === 1) {
     return uploadConfig.single(fieldName);
   } else {

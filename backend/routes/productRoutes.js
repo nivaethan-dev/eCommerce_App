@@ -1,6 +1,6 @@
 import express from 'express';
 import { createProduct, fetchProducts, updateProduct, deleteProduct } from '../controllers/productController.js';
-import { uploadProductImage, processImage, validateImage, handleUploadError } from '../middleware/uploadMiddleware.js';
+import { productUploadBundle, requireImage } from '../middleware/uploadMiddleware.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { roleMiddleware } from '../middleware/roleMiddleware.js';
 
@@ -11,10 +11,8 @@ router.post(
   '/create',
   authMiddleware,
   roleMiddleware('admin'),
-  uploadProductImage,
-  handleUploadError, // Handle multer errors with proper response format
-  processImage, // Resize and optimize images to consistent dimensions
-  validateImage,
+  productUploadBundle,
+  requireImage, // Enforce image requirement for new products
   createProduct
 );
 
@@ -22,13 +20,11 @@ router.post(
 router.get('/', fetchProducts);
 
 // Update product - Admin only
-router.put(
+router.patch(
   '/:productId',
   authMiddleware,
   roleMiddleware('admin'),
-  uploadProductImage, // Handle potential image update
-  handleUploadError,
-  processImage, // Process image if uploaded
+  productUploadBundle, // Image is optional here (validateImage skips if no file)
   updateProduct
 );
 
