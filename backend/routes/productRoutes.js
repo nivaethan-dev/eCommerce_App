@@ -1,5 +1,5 @@
 import express from 'express';
-import { createProduct, fetchProducts } from '../controllers/productController.js';
+import { createProduct, fetchProducts, updateProduct, deleteProduct } from '../controllers/productController.js';
 import { uploadProductImage, processImage, validateImage, handleUploadError } from '../middleware/uploadMiddleware.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { roleMiddleware } from '../middleware/roleMiddleware.js';
@@ -20,5 +20,24 @@ router.post(
 
 // Fetch products 
 router.get('/', fetchProducts);
+
+// Update product - Admin only
+router.put(
+  '/:productId',
+  authMiddleware,
+  roleMiddleware('admin'),
+  uploadProductImage, // Handle potential image update
+  handleUploadError,
+  processImage, // Process image if uploaded
+  updateProduct
+);
+
+// Delete product - Admin only
+router.delete(
+  '/:productId',
+  authMiddleware,
+  roleMiddleware('admin'),
+  deleteProduct
+);
 
 export default router;

@@ -68,10 +68,15 @@ export const triggerProductUpdated = async (productId, productName, oldData, new
 
         Object.keys(newData).forEach(key => {
             // Only compare if key exists in newData and is different
-            // Simple comparison (won't work for deep objects/arrays, but good for primitives)
             if (JSON.stringify(oldData[key]) !== JSON.stringify(newData[key])) {
                 changes[key] = newData[key]; // For audit log (new values)
-                diffs.push(`${key}: ${oldData[key]} -> ${newData[key]}`);
+
+                // Special formatting for image field to avoid messy paths
+                if (key === 'image') {
+                    diffs.push(`image: (updated)`);
+                } else {
+                    diffs.push(`${key}: ${oldData[key]} -> ${newData[key]}`);
+                }
             }
         });
 
@@ -115,15 +120,18 @@ export const triggerProductUpdated = async (productId, productName, oldData, new
 // ============================================
 
 // Admin Deletes Product
-export const triggerProductDeleted = async (productId, productName, adminId, ipAddress) => {
+export const triggerProductDeleted = async (productId, productName, oldProductData, adminId, ipAddress) => {
     try {
+        const { price, stock } = oldProductData || {};
+        const details = `(Price: ${price}, Stock: ${stock})`;
+
         // 1. Notify all admins (High Priority)
         await notifyAllAdmins(
             '⚠️ Product Deleted',
-            `Product "${productName}" has been PERMANENTLY deleted.`,
+            `Product "${productName}" ${details} has been PERMANENTLY deleted.`,
             'product_deleted',
-            { productId, productName },
-            'high' // High priority for deletions
+            { productId, productName, deletedData: oldProductData },
+            'high'
         );
 
         // 2. Create audit log
@@ -139,7 +147,10 @@ export const triggerProductDeleted = async (productId, productName, adminId, ipA
             ipAddress,
             geolocation,
             status: 'success',
-            changes: { productName }
+            changes: { // Save full snapshot of deleted data for potential recovery
+                productName,
+                deletedSnapshot: oldProductData
+            }
         });
     } catch (error) {
         console.error('Product deleted trigger error:', error);
