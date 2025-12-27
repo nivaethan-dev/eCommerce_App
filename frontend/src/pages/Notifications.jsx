@@ -2,13 +2,9 @@ import React, { useState, useMemo, useEffect } from 'react';
 import './Notifications.css';
 import NotificationList from '../components/notifications/NotificationList';
 import NotificationFilter from '../components/notifications/NotificationFilter';
-// import { mockNotifications } from '../data/mockNotifications';
 import * as notifApi from '../utils/notificationApi';
 
 const Notifications = () => {
-  // Get user role from localStorage
-  const userRole = localStorage.getItem('userRole') || 'customer';
-
   const [notifications, setNotifications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,28 +16,43 @@ const Notifications = () => {
   });
 
   // Handler to mark single notification as read
-  const handleMarkAsRead = (notificationId) => {
-    setNotifications(prevNotifications =>
-      prevNotifications.map(notif =>
-        notif.id === notificationId
-          ? { ...notif, isRead: true }
-          : notif
-      )
-    );
+  const handleMarkAsRead = async (notificationId) => {
+    try {
+      await notifApi.markAsReadApi(notificationId);
+      setNotifications(prevNotifications =>
+        prevNotifications.map(notif =>
+          notif.id === notificationId
+            ? { ...notif, isRead: true }
+            : notif
+        )
+      );
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
+    }
   };
 
   // Handler to mark ALL notifications as read
-  const handleMarkAllAsRead = () => {
-    setNotifications(prevNotifications =>
-      prevNotifications.map(notif => ({ ...notif, isRead: true }))
-    );
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notifApi.markAllAsReadApi();
+      setNotifications(prevNotifications =>
+        prevNotifications.map(notif => ({ ...notif, isRead: true }))
+      );
+    } catch (err) {
+      console.error('Failed to mark all notifications as read:', err);
+    }
   };
 
   // Handler to delete single notification
-  const handleDelete = (notificationId) => {
-    setNotifications(prevNotifications =>
-      prevNotifications.filter(notif => notif.id !== notificationId)
-    );
+  const handleDelete = async (notificationId) => {
+    try {
+      await notifApi.deleteNotificationApi(notificationId);
+      setNotifications(prevNotifications =>
+        prevNotifications.filter(notif => notif.id !== notificationId)
+      );
+    } catch (err) {
+      console.error('Failed to delete notification:', err);
+    }
   };
 
   // Handler when notification is clicked
@@ -108,7 +119,7 @@ const Notifications = () => {
     return result;
   }, [notifications, filters]);
 
-  // Calculate stats (from original notifications, not filtered)
+  // Calculate stats
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
