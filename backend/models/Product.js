@@ -64,5 +64,11 @@ productSchema.pre('save', function(next) {
   next();
 });
 
+// Update timestamp on findOneAndUpdate (used by findByIdAndUpdate)
+productSchema.pre('findOneAndUpdate', function(next) {
+  this.set({ updatedAt: Date.now() });
+  next();
+});
+
 const Product = mongoose.model('Product', productSchema);
 export default Product;

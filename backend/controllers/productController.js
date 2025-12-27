@@ -61,6 +61,13 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const { productId } = req.params;
+    
+    // Debug logging
+    console.log('Update Product Request:');
+    console.log('Product ID:', productId);
+    console.log('Request Body:', req.body);
+    console.log('File:', req.file ? { filename: req.file.filename, path: req.file.path } : 'No file');
+    
     const { updatedProduct, oldData } = await ProductService.updateProduct(productId, req.body, req.file);
 
     // Trigger product updated event (audit log + admin notification)

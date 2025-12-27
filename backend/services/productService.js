@@ -119,7 +119,7 @@ export class ProductService {
     }
 
     // Normalize category if provided
-    if (updateData.category) {
+    if (updateData.category !== undefined) {
       updateData.category = updateData.category.trim();
       const normalizedCategory = updateData.category.toLowerCase();
       const normalizedCategories = VALID_CATEGORIES.map(cat => cat.toLowerCase());
@@ -132,11 +132,11 @@ export class ProductService {
       }
     }
 
-    // Clean other fields
-    if (updateData.title) updateData.title = updateData.title.trim();
-    if (updateData.description) updateData.description = updateData.description.trim();
-    if (updateData.stock) updateData.stock = parseInt(updateData.stock, 10);
-    if (updateData.price) updateData.price = Number(parseFloat(updateData.price).toFixed(2));
+    // Clean other fields - check for undefined instead of truthiness
+    if (updateData.title !== undefined) updateData.title = updateData.title.trim();
+    if (updateData.description !== undefined) updateData.description = updateData.description.trim();
+    if (updateData.stock !== undefined) updateData.stock = parseInt(updateData.stock, 10);
+    if (updateData.price !== undefined) updateData.price = Number(parseFloat(updateData.price).toFixed(2));
 
     const updatedProduct = await Product.findByIdAndUpdate(
       productId,
