@@ -2,29 +2,17 @@ import React, { useState, useMemo, useEffect } from 'react';
 import './Notifications.css';
 import NotificationList from '../components/notifications/NotificationList';
 import NotificationFilter from '../components/notifications/NotificationFilter';
-import { mockNotifications } from '../data/mockNotifications';
+// import { mockNotifications } from '../data/mockNotifications';
+import * as notifApi from '../utils/notificationApi';
 
-/**
- * Notifications Page
- * Displays user notifications
- * ✅ NotificationItem - COMPLETED
- * ✅ NotificationList - COMPLETED
- * ✅ NotificationFilter - COMPLETED
- * ✅ EmptyNotificationState - COMPLETED (built into NotificationList)
- */
 const Notifications = () => {
   // Get user role from localStorage
   const userRole = localStorage.getItem('userRole') || 'customer';
-  
-  // Filter notifications by user role
-  const roleFilteredNotifications = mockNotifications.filter(
-    notification => notification.category === userRole
-  );
-  
-  const [notifications, setNotifications] = useState(roleFilteredNotifications);
-  const [isLoading, setIsLoading] = useState(false);
+
+  const [notifications, setNotifications] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Filter state
   const [filters, setFilters] = useState({
     status: 'all',      // 'all', 'unread', 'read'
@@ -62,13 +50,32 @@ const Notifications = () => {
     // Future: Navigate to relevant page or show details
   };
 
-  // Update notifications when component mounts or when switching between roles
+  // Load notifications from API on component mount
   useEffect(() => {
-    const roleBasedNotifications = mockNotifications.filter(
-      notification => notification.category === userRole
-    );
-    setNotifications(roleBasedNotifications);
-  }, [userRole]);
+    const loadNotifications = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await notifApi.fetchNotifications();
+
+        // Map backend fields to frontend format
+        const formattedData = data.map(notif => ({
+          ...notif,
+          id: notif._id,
+          timestamp: notif.createdAt
+        }));
+
+        setNotifications(formattedData);
+      } catch (err) {
+        console.error('Failed to fetch notifications:', err);
+        setError('Failed to load notifications. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadNotifications();
+  }, []);
 
   // Handler for filter changes
   const handleFilterChange = (newFilters) => {
@@ -90,7 +97,7 @@ const Notifications = () => {
     result.sort((a, b) => {
       const dateA = new Date(a.timestamp);
       const dateB = new Date(b.timestamp);
-      
+
       if (filters.sortBy === 'newest') {
         return dateB - dateA; // Newest first
       } else {
@@ -115,7 +122,7 @@ const Notifications = () => {
         {/* Main Content */}
         <div className="notifications-content">
           {/* NotificationFilter Component */}
-          <NotificationFilter 
+          <NotificationFilter
             filters={filters}
             onFilterChange={handleFilterChange}
           />
