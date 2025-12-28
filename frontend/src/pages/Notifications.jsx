@@ -15,6 +15,10 @@ const Notifications = () => {
     sortBy: 'newest'    // 'newest', 'oldest'
   });
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   // Handler to mark single notification as read
   const handleMarkAsRead = async (notificationId) => {
     try {
@@ -119,6 +123,26 @@ const Notifications = () => {
     return result;
   }, [notifications, filters]);
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedNotifications = filteredNotifications.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
+  // Pagination handlers
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(totalPages, prev + 1));
+  };
+
   // Calculate stats
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -140,7 +164,7 @@ const Notifications = () => {
 
           {/* NotificationList Component */}
           <NotificationList
-            notifications={filteredNotifications}
+            notifications={paginatedNotifications}
             onMarkAsRead={handleMarkAsRead}
             onMarkAllAsRead={handleMarkAllAsRead}
             onDelete={handleDelete}
@@ -148,6 +172,31 @@ const Notifications = () => {
             isLoading={isLoading}
             error={error}
           />
+
+          {/* Pagination Controls */}
+          {!isLoading && !error && filteredNotifications.length > 0 && (
+            <div className="pagination-controls">
+              <button
+                className="pagination-btn prev-btn"
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
+              >
+                ← Previous
+              </button>
+
+              <span className="page-info">
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <button
+                className="pagination-btn next-btn"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+              >
+                Next →
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
