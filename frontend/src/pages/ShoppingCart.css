@@ -1,0 +1,322 @@
+/* --- Global Styles (Remains the same) --- */
+body {
+
+      background: linear-gradient(135deg, #667eea 0%, #7142a1 100%);
+  margin: 0;
+  font-family: Arial, sans-serif;
+    color: #333;
+}
+
+.layout-container {
+    display: flex;
+    max-width: 1000px;
+    margin: 40px auto;
+    gap: 30px;
+}
+
+.cart-section {
+    flex: 2;
+    min-width: 0;
+}
+
+.back-link {
+    display: block;
+    margin-bottom: 20px;
+    color: #121314;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 1em;
+    font-weight: 500;
+}
+
+.cart-container {
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.cart-header {
+    font-size: 1.5em;
+    font-weight: 600;
+    padding-bottom: 15px;
+    margin: 0 0 15px 0;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.item-count-text {
+    font-size: 0.7em;
+    color: #777;
+    font-weight: 400;
+}
+
+/* --- Cart Item Styling (MODIFIED FOR HYBRID LAYOUT) --- */
+.cart-item {
+    display: flex;
+    padding: 20px 0;
+    border-bottom: 1px solid #eee;
+    align-items: flex-start; 
+}
+
+.cart-item:last-child {
+    border-bottom: none;
+}
+
+.item-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+/* LEFT SIDE: Details and Quantity Controls */
+.item-details-and-controls-left {
+    flex-grow: 1; /* Pushes the right column far right */
+    margin-right: 20px; 
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.item-details-top {
+    margin-bottom: 10px; /* Space between category and quantity controls */
+}
+
+.item-details-top .name {
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.item-details-top .category {
+    font-size: 0.9em;
+    color: #777;
+}
+
+/* Quantity controls wrapper to define its size/position */
+.quantity-controls-wrapper-left {
+    width: 90px; /* Define width for quantity block */
+}
+
+/* Quantity Controls - standard inline Flexbox */
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+    height: 30px; 
+}
+
+.quantity-button {
+    background: #fff;
+    border: none;
+    padding: 5px 8px;
+    cursor: pointer;
+    font-size: 1.1em;
+    width: 30px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.quantity-button:disabled {
+    cursor: not-allowed;
+    color: #ccc;
+    background-color: #f7f7f7;
+}
+
+.quantity-input {
+    width: 30px;
+    text-align: center;
+    border: none;
+    padding: 5px 0;
+    font-size: 1em;
+    outline: none;
+    height: 100%;
+    box-sizing: border-box;
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+}
+
+/* RIGHT COLUMN: Price Info and Remove Link (Vertical Stack) */
+.item-action-stack-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Right-aligns all children */
+    flex-shrink: 0;
+    width: 120px; 
+    text-align: right;
+}
+
+/* Prices */
+.item-price-info {
+    margin-bottom: 10px; /* Space below total price, before remove link */
+}
+
+.item-price-info .price-each {
+    font-size: 0.85em;
+    color: #777;
+    margin-bottom: 2px;
+}
+
+.item-price-info .price-total {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+/* Remove Button - NOW ON THE RIGHT, BELOW PRICE */
+.remove-button-right {
+    background: none;
+    border: none;
+    color: #dc3545; /* Red link color */
+    cursor: pointer;
+    font-size: 0.85em;
+    padding: 0;
+    text-decoration: none;
+}
+
+.remove-button-right:hover {
+    text-decoration: underline;
+}
+
+
+/* --- RIGHT COLUMN: Summary (Remaining styles are the same) --- */
+.summary-container {
+    flex: 1;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.summary-header {
+    margin-top: 0;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    font-size: 1.2em;
+}
+
+/* ... (Include all other summary styles here) ... */
+.summary-section.subtotal-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-size: 0.95em;
+}
+
+.summary-section {
+    margin-top: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.input-field {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 1em;
+    outline: none;
+}
+
+.shipping-select {
+    appearance: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23333' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E") no-repeat right 10px center / 10px;
+    background-color: #f7f7f7;
+    border-color: #ccc;
+    font-weight: 500;
+}
+
+.shipping-select:focus,
+.shipping-select:active {
+    background-color: #333;
+    color: #fff;
+    border-color: #333;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23fff' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+}
+
+.promo-hint {
+    font-size: 0.8em;
+    color: #777;
+    margin-top: 5px;
+}
+
+.summary-breakdown {
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+    margin-top: 20px;
+}
+
+.summary-line {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 0.95em;
+}
+
+.discount-line {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+.summary-total {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    font-size: 1.2em;
+    border-top: 2px solid #333;
+    padding-top: 15px;
+    margin-top: 15px;
+}
+
+.checkout-button {
+    width: 100%;
+    padding: 15px;
+    background: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 20px;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.checkout-button:hover {
+    background-color: #0056b3;
+}
+
+.made-in-bolt {
+    text-align: right;
+    margin-top: 10px;
+    font-size: 0.75em;
+    color: #aaa;
+}
+.page-header-centered {
+
+position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+margin-top: 10px;
+  width: 100%;
+  max-width: 900px;
+  padding: 0px 20px;
+  padding-left: 20px;
+  text-align: center;
+  z-index: 1000;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
