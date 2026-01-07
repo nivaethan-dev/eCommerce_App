@@ -21,6 +21,22 @@ const Notifications = () => {
   const [totalNotifications, setTotalNotifications] = useState(0);
   const itemsPerPage = 10;
 
+  // Global unread count state
+  const [globalUnreadCount, setGlobalUnreadCount] = useState(0);
+
+  // Function to fetch global unread count
+  const fetchGlobalUnreadCount = async () => {
+    try {
+      const response = await notifApi.getUnreadCountApi();
+      setGlobalUnreadCount(response.unreadCount || 0);
+      // Dispatch event to notify other components (like Header) of the change
+      window.dispatchEvent(new Event('notificationChange'));
+    } catch (err) {
+      console.error('Failed to fetch global unread count:', err);
+      setGlobalUnreadCount(0);
+    }
+  };
+
   // Handler to mark single notification as read
   const handleMarkAsRead = async (notificationId) => {
     try {
@@ -32,6 +48,8 @@ const Notifications = () => {
             : notif
         )
       );
+      // Refresh global unread count after marking as read
+      await fetchGlobalUnreadCount();
     } catch (err) {
       console.error('Failed to mark notification as read:', err);
     }
@@ -44,6 +62,8 @@ const Notifications = () => {
       setNotifications(prevNotifications =>
         prevNotifications.map(notif => ({ ...notif, isRead: true }))
       );
+      // Refresh global unread count after marking all as read
+      await fetchGlobalUnreadCount();
     } catch (err) {
       console.error('Failed to mark all notifications as read:', err);
     }
@@ -56,6 +76,8 @@ const Notifications = () => {
       setNotifications(prevNotifications =>
         prevNotifications.filter(notif => notif.id !== notificationId)
       );
+      // Refresh global unread count after deletion (in case it was unread)
+      await fetchGlobalUnreadCount();
     } catch (err) {
       console.error('Failed to delete notification:', err);
     }
@@ -92,6 +114,9 @@ const Notifications = () => {
         // Store pagination metadata for display
         setTotalPages(response.pagination.totalPages);
         setTotalNotifications(response.pagination.total);
+        
+        // Fetch global unread count
+        await fetchGlobalUnreadCount();
       } catch (err) {
         console.error('Failed to fetch notifications:', err);
         setError('Failed to load notifications. Please try again later.');
@@ -118,11 +143,6 @@ const Notifications = () => {
     setCurrentPage(prev => Math.min(totalPages, prev + 1));
   };
 
-  // Calculate unread count from current page notifications
-  // Note: This is an approximation. For accurate total unread count,
-  // we'd need a separate API endpoint or include it in the response metadata
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
   return (
     <div className="notifications-page">
       <div className="notifications-container">
@@ -143,7 +163,7 @@ const Notifications = () => {
           <NotificationList
             notifications={notifications}
             totalNotifications={totalNotifications}
-            totalUnreadCount={unreadCount}
+            totalUnreadCount={globalUnreadCount}
             onMarkAsRead={handleMarkAsRead}
             onMarkAllAsRead={handleMarkAllAsRead}
             onDelete={handleDelete}

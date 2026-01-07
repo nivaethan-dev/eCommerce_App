@@ -15,3 +15,4 @@ export const fetchNotifications = (params = {}) => {
 export const markAsReadApi = (id) => put(`/api/notifications/${id}/read`);
 export const markAllAsReadApi = () => put('/api/notifications/read-all');
 export const deleteNotificationApi = (id) => del(`/api/notifications/${id}`);
+export const getUnreadCountApi = () => get('/api/notifications/unread-count');

@@ -46,6 +46,26 @@ const Header = () => {
     };
   }, []);
 
+  // Listen for notification changes (when notifications are read/deleted)
+  useEffect(() => {
+    const handleNotificationChange = async () => {
+      if (isAuthenticated) {
+        try {
+          const response = await get('/api/notifications/unread-count');
+          setNotificationCount(response.unreadCount || 0);
+        } catch (error) {
+          console.error('Failed to refresh notification count:', error);
+        }
+      }
+    };
+    
+    window.addEventListener('notificationChange', handleNotificationChange);
+    
+    return () => {
+      window.removeEventListener('notificationChange', handleNotificationChange);
+    };
+  }, [isAuthenticated]);
+
   // Fetch cart data to get item count
   useEffect(() => {
     const fetchCartCount = async () => {
@@ -69,12 +89,8 @@ const Header = () => {
     if (isAuthenticated) {
       const fetchNotifications = async () => {
         try {
-          // TODO: Replace with actual API call when backend implements notifications
-          // const notifications = await get(API_ENDPOINTS.NOTIFICATIONS);
-          // setNotificationCount(notifications.unreadCount || 0);
-          
-          // For now, no notifications
-          setNotificationCount(0);
+          const response = await get('/api/notifications/unread-count');
+          setNotificationCount(response.unreadCount || 0);
         } catch (error) {
           console.error('Failed to fetch notifications:', error);
           setNotificationCount(0);
