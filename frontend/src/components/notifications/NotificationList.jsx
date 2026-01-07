@@ -7,18 +7,20 @@ import NotificationItem from './NotificationItem';
  * Simple container that displays a list of notifications
  * Handles: rendering items, empty state, and "mark all as read" action
  */
-const NotificationList = ({ 
-  notifications,      // Array of notification objects
-  onMarkAsRead,       // Function to mark single notification as read
-  onDelete,           // Function to delete single notification
-  onClick,            // Function when notification is clicked
-  onMarkAllAsRead,    // Function to mark ALL notifications as read
-  isLoading = false,  // Shows loading message if true
-  error = null        // Shows error message if provided
+const NotificationList = ({
+  notifications,         // Array of notification objects (paginated)
+  onMarkAsRead,          // Function to mark single notification as read
+  onDelete,              // Function to delete single notification
+  onClick,               // Function when notification is clicked
+  onMarkAllAsRead,       // Function to mark ALL notifications as read
+  totalNotifications,    // Total count of filtered notifications
+  totalUnreadCount,      // Total count of unread notifications (across all pages)
+  isLoading = false,     // Shows loading message if true
+  error = null           // Shows error message if provided
 }) => {
 
-  // Calculate unread count
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  // Use the total counts passed from parent instead of calculating from paginated subset
+  const unreadCount = totalUnreadCount;
 
   // Show loading state
   if (isLoading) {
@@ -58,9 +60,9 @@ const NotificationList = ({
       {/* List Header with "Mark all as read" button */}
       <div className="notification-list-header">
         <div className="notification-count">
-          <span className="count-badge">{notifications.length}</span>
+          <span className="count-badge">{totalNotifications}</span>
           <span className="count-text">
-            {notifications.length === 1 ? 'Notification' : 'Notifications'}
+            {totalNotifications === 1 ? 'Notification' : 'Notifications'}
           </span>
           {unreadCount > 0 && (
             <span className="unread-badge">
@@ -71,7 +73,7 @@ const NotificationList = ({
 
         {/* Show "Mark all as read" button only if there are unread notifications */}
         {unreadCount > 0 && onMarkAllAsRead && (
-          <button 
+          <button
             className="mark-all-read-btn"
             onClick={onMarkAllAsRead}
           >

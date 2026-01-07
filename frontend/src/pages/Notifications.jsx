@@ -165,6 +165,8 @@ const Notifications = () => {
           {/* NotificationList Component */}
           <NotificationList
             notifications={paginatedNotifications}
+            totalNotifications={filteredNotifications.length}
+            totalUnreadCount={unreadCount}
             onMarkAsRead={handleMarkAsRead}
             onMarkAllAsRead={handleMarkAllAsRead}
             onDelete={handleDelete}
