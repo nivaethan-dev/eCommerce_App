@@ -33,18 +33,49 @@ export const createNotification = async (
   }
 };
 
-// Get notifications
+// Get notifications with filtering and pagination
 export const getNotifications = async (userId, userType, filters = {}, pagination = { page: 1, limit: 10 }) => {
   const normalizedUserType = validateUserType(userType);
-  const query = { userId, userType: normalizedUserType, ...filters };
-  const skip = (pagination.page - 1) * pagination.limit;
+
+  // Build query with base filters
+  const query = { userId, userType: normalizedUserType };
+
+  // Apply status filter (read/unread)
+  if (filters.status === 'read') {
+    query.isRead = true;
+  } else if (filters.status === 'unread') {
+    query.isRead = false;
+  }
+  // If status is 'all' or undefined, don't add isRead filter
+
+  // Determine sort order
+  const sortOrder = filters.sortBy === 'oldest' ? 1 : -1; // Default: newest first (-1)
+
+  // Calculate pagination
+  const page = parseInt(pagination.page) || 1;
+  const limit = parseInt(pagination.limit) || 10;
+  const skip = (page - 1) * limit;
 
   try {
+    // Get total count for pagination metadata
+    const total = await Notification.countDocuments(query);
+
+    // Fetch paginated notifications
     const notifications = await Notification.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: sortOrder })
       .skip(skip)
-      .limit(pagination.limit);
-    return notifications;
+      .limit(limit);
+
+    // Return data with pagination metadata
+    return {
+      data: notifications,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
   } catch (error) {
     throw new Error(`Failed to fetch notifications: ${error.message}`);
   }

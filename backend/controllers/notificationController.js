@@ -2,13 +2,26 @@ import * as notificationService from '../services/notificationService.js';
 
 export const getNotifications = async (req, res) => {
   try {
-    const notifications = await notificationService.getNotifications(
+    // Extract pagination params from query
+    const pagination = {
+      page: req.query.page || 1,
+      limit: req.query.limit || 10
+    };
+
+    // Extract filter params from query
+    const filters = {
+      status: req.query.status || 'all',  // 'all', 'read', 'unread'
+      sortBy: req.query.sortBy || 'newest' // 'newest', 'oldest'
+    };
+
+    const result = await notificationService.getNotifications(
       req.user.id,
       req.user.role,
-      {},
-      req.query
+      filters,
+      pagination
     );
-    res.json(notifications);
+
+    res.json(result);  // Returns { data: [...], pagination: {...} }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Notifications.css';
 import NotificationList from '../components/notifications/NotificationList';
 import NotificationFilter from '../components/notifications/NotificationFilter';
@@ -17,6 +17,8 @@ const Notifications = () => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalNotifications, setTotalNotifications] = useState(0);
   const itemsPerPage = 10;
 
   // Handler to mark single notification as read
@@ -65,22 +67,31 @@ const Notifications = () => {
     // Future: Navigate to relevant page or show details
   };
 
-  // Load notifications from API on component mount
+  // Load notifications from API (triggers on page or filter change)
   useEffect(() => {
     const loadNotifications = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const data = await notifApi.fetchNotifications();
+        // Fetch notifications with current pagination and filters
+        const response = await notifApi.fetchNotifications({
+          page: currentPage,
+          limit: itemsPerPage,
+          status: filters.status,
+          sortBy: filters.sortBy
+        });
 
-        // Map backend fields to frontend format
-        const formattedData = data.map(notif => ({
+        // Backend now returns { data: [...], pagination: {...} }
+        const formattedData = response.data.map(notif => ({
           ...notif,
           id: notif._id,
           timestamp: notif.createdAt
         }));
 
         setNotifications(formattedData);
+        // Store pagination metadata for display
+        setTotalPages(response.pagination.totalPages);
+        setTotalNotifications(response.pagination.total);
       } catch (err) {
         console.error('Failed to fetch notifications:', err);
         setError('Failed to load notifications. Please try again later.');
@@ -90,49 +101,13 @@ const Notifications = () => {
     };
 
     loadNotifications();
-  }, []);
+  }, [currentPage, filters]); // Re-fetch when page or filters change
 
   // Handler for filter changes
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
+    setCurrentPage(1); // Reset to page 1 when filters change
   };
-
-  // Apply filters and sorting to notifications
-  const filteredNotifications = useMemo(() => {
-    let result = [...notifications];
-
-    // Filter by status
-    if (filters.status === 'unread') {
-      result = result.filter(n => !n.isRead);
-    } else if (filters.status === 'read') {
-      result = result.filter(n => n.isRead);
-    }
-
-    // Sort by date
-    result.sort((a, b) => {
-      const dateA = new Date(a.timestamp);
-      const dateB = new Date(b.timestamp);
-
-      if (filters.sortBy === 'newest') {
-        return dateB - dateA; // Newest first
-      } else {
-        return dateA - dateB; // Oldest first
-      }
-    });
-
-    return result;
-  }, [notifications, filters]);
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedNotifications = filteredNotifications.slice(startIndex, endIndex);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filters]);
 
   // Pagination handlers
   const handlePreviousPage = () => {
@@ -143,7 +118,9 @@ const Notifications = () => {
     setCurrentPage(prev => Math.min(totalPages, prev + 1));
   };
 
-  // Calculate stats
+  // Calculate unread count from current page notifications
+  // Note: This is an approximation. For accurate total unread count,
+  // we'd need a separate API endpoint or include it in the response metadata
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
@@ -164,8 +141,8 @@ const Notifications = () => {
 
           {/* NotificationList Component */}
           <NotificationList
-            notifications={paginatedNotifications}
-            totalNotifications={filteredNotifications.length}
+            notifications={notifications}
+            totalNotifications={totalNotifications}
             totalUnreadCount={unreadCount}
             onMarkAsRead={handleMarkAsRead}
             onMarkAllAsRead={handleMarkAllAsRead}
@@ -176,7 +153,7 @@ const Notifications = () => {
           />
 
           {/* Pagination Controls */}
-          {!isLoading && !error && filteredNotifications.length > 0 && (
+          {!isLoading && !error && totalNotifications > 0 && (
             <div className="pagination-controls">
               <button
                 className="pagination-btn prev-btn"
