@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './Notifications.css';
 import NotificationList from '../components/notifications/NotificationList';
 import NotificationFilter from '../components/notifications/NotificationFilter';
@@ -25,7 +25,7 @@ const Notifications = () => {
   const [globalUnreadCount, setGlobalUnreadCount] = useState(0);
 
   // Function to fetch global unread count
-  const fetchGlobalUnreadCount = async () => {
+  const fetchGlobalUnreadCount = useCallback(async () => {
     try {
       const response = await notifApi.getUnreadCountApi();
       setGlobalUnreadCount(response.unreadCount || 0);
@@ -35,10 +35,10 @@ const Notifications = () => {
       console.error('Failed to fetch global unread count:', err);
       setGlobalUnreadCount(0);
     }
-  };
+  }, []);
 
   // Function to reload notifications from API
-  const reloadNotifications = async () => {
+  const reloadNotifications = useCallback(async () => {
     try {
       const response = await notifApi.fetchNotifications({
         page: currentPage,
@@ -62,10 +62,10 @@ const Notifications = () => {
     } catch (err) {
       console.error('Failed to reload notifications:', err);
     }
-  };
+  }, [currentPage, itemsPerPage, filters.status, filters.sortBy, fetchGlobalUnreadCount]);
 
   // Handler to mark single notification as read
-  const handleMarkAsRead = async (notificationId) => {
+  const handleMarkAsRead = useCallback(async (notificationId) => {
     try {
       await notifApi.markAsReadApi(notificationId);
       // Reload notifications to get updated state
@@ -73,10 +73,10 @@ const Notifications = () => {
     } catch (err) {
       console.error('Failed to mark notification as read:', err);
     }
-  };
+  }, [reloadNotifications]);
 
   // Handler to mark ALL notifications as read
-  const handleMarkAllAsRead = async () => {
+  const handleMarkAllAsRead = useCallback(async () => {
     try {
       await notifApi.markAllAsReadApi();
       // Reload notifications to get updated state
@@ -84,10 +84,10 @@ const Notifications = () => {
     } catch (err) {
       console.error('Failed to mark all notifications as read:', err);
     }
-  };
+  }, [reloadNotifications]);
 
   // Handler to delete single notification
-  const handleDelete = async (notificationId) => {
+  const handleDelete = useCallback(async (notificationId) => {
     try {
       await notifApi.deleteNotificationApi(notificationId);
       
@@ -102,13 +102,13 @@ const Notifications = () => {
     } catch (err) {
       console.error('Failed to delete notification:', err);
     }
-  };
+  }, [notifications.length, currentPage, reloadNotifications]);
 
   // Handler when notification is clicked
-  const handleNotificationClick = (notification) => {
+  const handleNotificationClick = useCallback((notification) => {
     console.log('Notification clicked:', notification);
     // Future: Navigate to relevant page or show details
-  };
+  }, []);
 
   // Load notifications from API (triggers on page or filter change)
   useEffect(() => {
@@ -147,22 +147,22 @@ const Notifications = () => {
     };
 
     loadNotifications();
-  }, [currentPage, filters]); // Re-fetch when page or filters change
+  }, [currentPage, filters, fetchGlobalUnreadCount]); // Re-fetch when page or filters change
 
   // Handler for filter changes
-  const handleFilterChange = (newFilters) => {
+  const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
     setCurrentPage(1); // Reset to page 1 when filters change
-  };
+  }, []);
 
   // Pagination handlers
-  const handlePreviousPage = () => {
+  const handlePreviousPage = useCallback(() => {
     setCurrentPage(prev => Math.max(1, prev - 1));
-  };
+  }, []);
 
-  const handleNextPage = () => {
+  const handleNextPage = useCallback(() => {
     setCurrentPage(prev => Math.min(totalPages, prev + 1));
-  };
+  }, [totalPages]);
 
   return (
     <div className="notifications-page">
