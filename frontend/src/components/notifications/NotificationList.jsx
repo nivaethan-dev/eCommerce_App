@@ -8,15 +8,15 @@ import NotificationItem from './NotificationItem';
  * Handles: rendering items, empty state, and "mark all as read" action
  */
 const NotificationList = ({
-  notifications,         // Array of notification objects (paginated)
-  onMarkAsRead,          // Function to mark single notification as read
-  onDelete,              // Function to delete single notification
-  onClick,               // Function when notification is clicked
-  onMarkAllAsRead,       // Function to mark ALL notifications as read
-  totalNotifications,    // Total count of filtered notifications
-  totalUnreadCount,      // Total count of unread notifications (across all pages)
-  isLoading = false,     // Shows loading message if true
-  error = null           // Shows error message if provided
+  notifications = [],         // Array of notification objects (paginated)
+  onMarkAsRead,              // Function to mark single notification as read
+  onDelete,                  // Function to delete single notification
+  onClick,                   // Function when notification is clicked
+  onMarkAllAsRead,           // Function to mark ALL notifications as read
+  totalNotifications = 0,    // Total count of filtered notifications
+  totalUnreadCount = 0,      // Total count of unread notifications (across all pages)
+  isLoading = false,         // Shows loading message if true
+  error = null               // Shows error message if provided
 }) => {
 
   // Use the total counts passed from parent instead of calculating from paginated subset
@@ -43,8 +43,8 @@ const NotificationList = ({
     );
   }
 
-  // Show empty state
-  if (notifications.length === 0) {
+  // Show empty state (when there are no notifications after filtering)
+  if (totalNotifications === 0) {
     return (
       <div className="notification-list-empty">
         <div className="empty-icon">📭</div>
