@@ -16,7 +16,8 @@ const NotificationList = ({
   totalNotifications = 0,    // Total count of filtered notifications
   totalUnreadCount = 0,      // Total count of unread notifications (across all pages)
   isLoading = false,         // Shows loading message if true
-  error = null               // Shows error message if provided
+  error = null,              // Shows error message if provided
+  actionLoading = {}         // Loading states for individual actions
 }) => {
 
   // Use the total counts passed from parent instead of calculating from paginated subset
@@ -76,8 +77,16 @@ const NotificationList = ({
           <button
             className="mark-all-read-btn"
             onClick={onMarkAllAsRead}
+            disabled={actionLoading.markingAllAsRead}
           >
-            ✓ Mark all as read
+            {actionLoading.markingAllAsRead ? (
+              <>
+                <span className="btn-spinner"></span>
+                Marking all...
+              </>
+            ) : (
+              <>✓ Mark all as read</>
+            )}
           </button>
         )}
       </div>
@@ -91,6 +100,8 @@ const NotificationList = ({
             onMarkAsRead={onMarkAsRead}
             onDelete={onDelete}
             onClick={onClick}
+            isMarkingAsRead={actionLoading.markingAsRead === notification.id}
+            isDeleting={actionLoading.deleting === notification.id}
           />
         ))}
       </div>

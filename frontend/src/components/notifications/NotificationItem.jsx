@@ -15,7 +15,9 @@ const NotificationItem = ({
   notification, 
   onMarkAsRead, 
   onDelete, 
-  onClick 
+  onClick,
+  isMarkingAsRead = false,
+  isDeleting = false
 }) => {
   const {
     id,
@@ -94,23 +96,33 @@ const NotificationItem = ({
       <div className="notification-actions">
         {!isRead && (
           <button
-            className="notification-action-btn mark-read-btn"
+            className={`notification-action-btn mark-read-btn ${isMarkingAsRead ? 'loading' : ''}`}
             onClick={handleMarkAsRead}
             title="Mark as read"
             aria-label="Mark as read"
+            disabled={isMarkingAsRead || isDeleting}
           >
-            <span className="action-icon">✓</span>
+            {isMarkingAsRead ? (
+              <span className="action-spinner"></span>
+            ) : (
+              <span className="action-icon">✓</span>
+            )}
           </button>
         )}
         
         {onDelete && (
           <button
-            className="notification-action-btn delete-btn"
+            className={`notification-action-btn delete-btn ${isDeleting ? 'loading' : ''}`}
             onClick={handleDelete}
             title="Delete notification"
             aria-label="Delete notification"
+            disabled={isDeleting || isMarkingAsRead}
           >
-            <span className="action-icon">✕</span>
+            {isDeleting ? (
+              <span className="action-spinner"></span>
+            ) : (
+              <span className="action-icon">✕</span>
+            )}
           </button>
         )}
       </div>

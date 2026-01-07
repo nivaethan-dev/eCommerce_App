@@ -82,6 +82,29 @@
   transform: translateY(0);
 }
 
+.mark-all-read-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.mark-all-read-btn:disabled:hover {
+  transform: none;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+}
+
+/* Button Spinner */
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 0.5rem;
+}
+
 /* List Items Container */
 .notification-list-items {
   display: flex;

@@ -278,3 +278,29 @@
   outline-offset: 2px;
 }
 
+/* Button Loading States */
+.notification-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.notification-action-btn.loading {
+  pointer-events: none;
+}
+
+/* Action Spinner */
+.action-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+

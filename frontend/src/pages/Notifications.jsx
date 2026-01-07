@@ -24,6 +24,13 @@ const Notifications = () => {
   // Global unread count state
   const [globalUnreadCount, setGlobalUnreadCount] = useState(0);
 
+  // Action loading states
+  const [actionLoading, setActionLoading] = useState({
+    markingAsRead: null,  // stores notification id being marked
+    deleting: null,       // stores notification id being deleted
+    markingAllAsRead: false
+  });
+
   // Function to fetch global unread count
   const fetchGlobalUnreadCount = useCallback(async () => {
     try {
@@ -67,28 +74,35 @@ const Notifications = () => {
   // Handler to mark single notification as read
   const handleMarkAsRead = useCallback(async (notificationId) => {
     try {
+      setActionLoading(prev => ({ ...prev, markingAsRead: notificationId }));
       await notifApi.markAsReadApi(notificationId);
       // Reload notifications to get updated state
       await reloadNotifications();
     } catch (err) {
       console.error('Failed to mark notification as read:', err);
+    } finally {
+      setActionLoading(prev => ({ ...prev, markingAsRead: null }));
     }
   }, [reloadNotifications]);
 
   // Handler to mark ALL notifications as read
   const handleMarkAllAsRead = useCallback(async () => {
     try {
+      setActionLoading(prev => ({ ...prev, markingAllAsRead: true }));
       await notifApi.markAllAsReadApi();
       // Reload notifications to get updated state
       await reloadNotifications();
     } catch (err) {
       console.error('Failed to mark all notifications as read:', err);
+    } finally {
+      setActionLoading(prev => ({ ...prev, markingAllAsRead: false }));
     }
   }, [reloadNotifications]);
 
   // Handler to delete single notification
   const handleDelete = useCallback(async (notificationId) => {
     try {
+      setActionLoading(prev => ({ ...prev, deleting: notificationId }));
       await notifApi.deleteNotificationApi(notificationId);
       
       // Check if this is the last notification on the current page
@@ -101,6 +115,8 @@ const Notifications = () => {
       }
     } catch (err) {
       console.error('Failed to delete notification:', err);
+    } finally {
+      setActionLoading(prev => ({ ...prev, deleting: null }));
     }
   }, [notifications.length, currentPage, reloadNotifications]);
 
@@ -191,6 +207,7 @@ const Notifications = () => {
             onClick={handleNotificationClick}
             isLoading={isLoading}
             error={error}
+            actionLoading={actionLoading}
           />
 
           {/* Pagination Controls */}
