@@ -37,19 +37,39 @@ const Notifications = () => {
     }
   };
 
+  // Function to reload notifications from API
+  const reloadNotifications = async () => {
+    try {
+      const response = await notifApi.fetchNotifications({
+        page: currentPage,
+        limit: itemsPerPage,
+        status: filters.status,
+        sortBy: filters.sortBy
+      });
+
+      const formattedData = response.data.map(notif => ({
+        ...notif,
+        id: notif._id,
+        timestamp: notif.createdAt
+      }));
+
+      setNotifications(formattedData);
+      setTotalPages(response.pagination.totalPages);
+      setTotalNotifications(response.pagination.total);
+      
+      // Also refresh global unread count
+      await fetchGlobalUnreadCount();
+    } catch (err) {
+      console.error('Failed to reload notifications:', err);
+    }
+  };
+
   // Handler to mark single notification as read
   const handleMarkAsRead = async (notificationId) => {
     try {
       await notifApi.markAsReadApi(notificationId);
-      setNotifications(prevNotifications =>
-        prevNotifications.map(notif =>
-          notif.id === notificationId
-            ? { ...notif, isRead: true }
-            : notif
-        )
-      );
-      // Refresh global unread count after marking as read
-      await fetchGlobalUnreadCount();
+      // Reload notifications to get updated state
+      await reloadNotifications();
     } catch (err) {
       console.error('Failed to mark notification as read:', err);
     }
@@ -59,11 +79,8 @@ const Notifications = () => {
   const handleMarkAllAsRead = async () => {
     try {
       await notifApi.markAllAsReadApi();
-      setNotifications(prevNotifications =>
-        prevNotifications.map(notif => ({ ...notif, isRead: true }))
-      );
-      // Refresh global unread count after marking all as read
-      await fetchGlobalUnreadCount();
+      // Reload notifications to get updated state
+      await reloadNotifications();
     } catch (err) {
       console.error('Failed to mark all notifications as read:', err);
     }
@@ -73,11 +90,15 @@ const Notifications = () => {
   const handleDelete = async (notificationId) => {
     try {
       await notifApi.deleteNotificationApi(notificationId);
-      setNotifications(prevNotifications =>
-        prevNotifications.filter(notif => notif.id !== notificationId)
-      );
-      // Refresh global unread count after deletion (in case it was unread)
-      await fetchGlobalUnreadCount();
+      
+      // Check if this is the last notification on the current page
+      if (notifications.length === 1 && currentPage > 1) {
+        // Go back to previous page if this was the last item
+        setCurrentPage(currentPage - 1);
+      } else {
+        // Reload notifications to get updated state and correct pagination
+        await reloadNotifications();
+      }
     } catch (err) {
       console.error('Failed to delete notification:', err);
     }

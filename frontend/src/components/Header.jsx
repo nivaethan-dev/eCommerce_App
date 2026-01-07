@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { get, post } from '../utils/api';
 import { API_ENDPOINTS, PRODUCT_CATEGORIES } from '../utils/constants';
@@ -47,13 +47,37 @@ const Header = () => {
     };
   }, []);
 
+  // Function to fetch notifications list
+  const fetchNotificationsList = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const response = await get('/api/notifications?page=1&limit=10&status=all&sortBy=newest');
+      const formattedNotifications = response.data.map(notif => ({
+        ...notif,
+        id: notif._id,
+        timestamp: notif.createdAt
+      }));
+      setNotifications(formattedNotifications);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+      setNotifications([]);
+    }
+  }, [isAuthenticated]);
+
   // Listen for notification changes (when notifications are read/deleted)
   useEffect(() => {
     const handleNotificationChange = async () => {
       if (isAuthenticated) {
         try {
+          // Refresh unread count
           const response = await get('/api/notifications/unread-count');
           setNotificationCount(response.unreadCount || 0);
+          
+          // Refresh notifications list if dropdown is open
+          if (showNotificationDropdown) {
+            await fetchNotificationsList();
+          }
         } catch (error) {
           console.error('Failed to refresh notification count:', error);
         }
@@ -65,7 +89,7 @@ const Header = () => {
     return () => {
       window.removeEventListener('notificationChange', handleNotificationChange);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, showNotificationDropdown, fetchNotificationsList]);
 
   // Fetch cart data to get item count
   useEffect(() => {
@@ -174,21 +198,8 @@ const Header = () => {
       // Show immediately
       setShowNotificationDropdown(true);
       
-      // Fetch notifications when opening dropdown (if authenticated)
-      if (isAuthenticated) {
-        try {
-          const response = await get('/api/notifications?page=1&limit=10&status=all&sortBy=newest');
-          const formattedNotifications = response.data.map(notif => ({
-            ...notif,
-            id: notif._id,
-            timestamp: notif.createdAt
-          }));
-          setNotifications(formattedNotifications);
-        } catch (error) {
-          console.error('Failed to fetch notifications:', error);
-          setNotifications([]);
-        }
-      }
+      // Fetch notifications when opening dropdown
+      await fetchNotificationsList();
     } else {
       // Delay before hiding
       notificationTimeoutRef.current = setTimeout(() => {
