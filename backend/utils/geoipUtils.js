@@ -1,4 +1,4 @@
-import geoip from 'geoip-lite';
+import geoip from 'fast-geoip';
 
 /**
  * Get geolocation data from IP address

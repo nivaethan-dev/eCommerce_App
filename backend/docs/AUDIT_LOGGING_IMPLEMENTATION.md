@@ -111,7 +111,7 @@ Service layer for audit log operations.
 - Ensures accurate IP tracking for security and compliance
 
 ### 3.2 Geolocation Utility (`utils/geoipUtils.js`)
-Offline IP geolocation lookup using `geoip-lite` library.
+Offline IP geolocation lookup using `fast-geoip` library.
 
 **Features:**
 - ✅ Offline database (no external API calls)
@@ -248,7 +248,7 @@ To test with higher limits:
 ## 8. Dependencies
 
 **New Packages Added:**
-- `geoip-lite` - Offline IP geolocation database
+- `fast-geoip` - Offline IP geolocation database (secure alternative to geoip-lite)
 
 **Existing Packages Used:**
 - `express-rate-limit` - Rate limiting middleware
@@ -270,9 +270,9 @@ To test with higher limits:
 ## 10. Maintenance
 
 ### Geolocation Database Updates:
-The `geoip-lite` package includes a database that should be updated periodically:
+The `fast-geoip` package includes a database that should be updated periodically:
 ```bash
-npm update geoip-lite
+npm update fast-geoip
 ```
 
 Recommended: Update quarterly for accurate geolocation data.
