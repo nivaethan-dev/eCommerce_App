@@ -1,0 +1,14 @@
+.category-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 768px) {
+  .category-section {
+    padding: 1.25rem;
+    border-radius: 10px;
+  }
+}
+

@@ -1,0 +1,49 @@
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.875rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.view-all-link {
+  background: transparent;
+  border: none;
+  color: #667eea;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+.view-all-link:hover {
+  background: #f3f4f6;
+  color: #5568d3;
+}
+
+@media (max-width: 768px) {
+  .section-header {
+    padding-bottom: 0.875rem;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+  }
+
+  .view-all-link {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
+}
+

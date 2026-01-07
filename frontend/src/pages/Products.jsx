@@ -1,20 +1,58 @@
+import React from 'react';
+import CategorySection from '../components/products/CategorySection';
+import { useProducts } from '../hooks/useProducts';
 import './Products.css';
 
 const Products = () => {
+  const { productsByCategory, categories, loading, error } = useProducts();
+
+  const handleViewAll = (category) => {
+    console.log('View all products in category:', category);
+    // TODO: Navigate to category page or show all products
+  };
+
+  if (loading) {
+    return (
+      <div className="products">
+        <div className="products-container">
+          <div className="products-loading">Loading products...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="products">
+        <div className="products-container">
+          <div className="products-error">
+            <p>Error loading products: {error}</p>
+            <button onClick={() => window.location.reload()}>Retry</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="products">
       <div className="products-container">
-        <h1 className="products-title">Products</h1>
+        <h1 className="products-title">Our Products</h1>
         <p className="products-subtitle">
-          Welcome to the Products Page
+          Discover amazing products across all categories
         </p>
         
         <div className="products-content">
-          {/* Placeholder content - can be expanded with about us features later */}
-          <div className="products-card">
-            <h2>Products Overview</h2>
-            <p>This is the Products page. Add your content here.</p>
-          </div>
+          {categories.map((category) => (
+            productsByCategory[category] && productsByCategory[category].length > 0 && (
+              <CategorySection
+                key={category}
+                category={category}
+                products={productsByCategory[category]}
+                onViewAll={() => handleViewAll(category)}
+              />
+            )
+          ))}
         </div>
       </div>
     </div>
@@ -22,4 +60,3 @@ const Products = () => {
 };
 
 export default Products;
-
