@@ -13,6 +13,7 @@ const Header = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const [showCartDropdown, setShowCartDropdown] = useState(false);
@@ -162,7 +163,7 @@ const Header = () => {
     }
   };
 
-  const handleNotificationsHover = (show) => {
+  const handleNotificationsHover = async (show) => {
     // Clear any existing timeout
     if (notificationTimeoutRef.current) {
       clearTimeout(notificationTimeoutRef.current);
@@ -172,6 +173,22 @@ const Header = () => {
     if (show) {
       // Show immediately
       setShowNotificationDropdown(true);
+      
+      // Fetch notifications when opening dropdown (if authenticated)
+      if (isAuthenticated) {
+        try {
+          const response = await get('/api/notifications?page=1&limit=10&status=all&sortBy=newest');
+          const formattedNotifications = response.data.map(notif => ({
+            ...notif,
+            id: notif._id,
+            timestamp: notif.createdAt
+          }));
+          setNotifications(formattedNotifications);
+        } catch (error) {
+          console.error('Failed to fetch notifications:', error);
+          setNotifications([]);
+        }
+      }
     } else {
       // Delay before hiding
       notificationTimeoutRef.current = setTimeout(() => {
@@ -329,7 +346,7 @@ const Header = () => {
                       Please <Link to="/login" className="sign-in-link">sign-in</Link> to view notifications.
                     </p>
                   </div>
-                ) : notificationCount === 0 ? (
+                ) : notifications.length === 0 ? (
                   <div className="notification-empty">
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" 
@@ -346,16 +363,40 @@ const Header = () => {
                       <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                       <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                     </svg>
-                    <p className="empty-text">No new notifications</p>
+                    <p className="empty-text">No notifications</p>
                     <p className="empty-subtext">You're all caught up!</p>
                   </div>
                 ) : (
-                  <div className="notification-list">
-                    {/* TODO: Map through actual notifications from backend */}
-                    <div className="notification-item">
-                      <p>Sample notification</p>
+                  <>
+                    <div className="notification-list">
+                      {notifications.map((notif) => (
+                        <Link 
+                          key={notif.id} 
+                          to="/notifications" 
+                          className={`notification-item ${!notif.isRead ? 'unread' : ''}`}
+                        >
+                          <div className="notification-icon">
+                            {!notif.isRead ? '🔔' : '✓'}
+                          </div>
+                          <div className="notification-content">
+                            <div className="notification-title">{notif.title}</div>
+                            <div className="notification-message">{notif.message}</div>
+                            <div className="notification-time">
+                              {new Date(notif.timestamp).toLocaleString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit'
+                              })}
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
                     </div>
-                  </div>
+                    <Link to="/notifications" className="view-all-notifications">
+                      View All Notifications
+                    </Link>
+                  </>
                 )}
               </div>
             )}
