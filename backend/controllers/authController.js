@@ -4,9 +4,10 @@ import Admin from '../models/Admin.js';
 import { comparePasswords } from '../utils/securityUtils.js';
 import { generateAccessToken, generateRefreshToken, setAuthCookies } from '../utils/tokenUtils.js';
 import * as eventTriggers from '../eventTriggers/authenticationEvent.js';
+import { AUTH_CONFIG } from '../config/authConfig.js';
 
-const MAX_ATTEMPTS = 5;
-const LOCK_TIME = 15 * 60 * 1000; // 15 minutes
+const MAX_ATTEMPTS = AUTH_CONFIG.MAX_LOGIN_ATTEMPTS;
+const LOCK_TIME = AUTH_CONFIG.ACCOUNT_LOCK_TIME;
 
 const handleFailedLogin = async (user, userType, ipAddress) => {
   user.loginAttempts += 1;
@@ -174,12 +175,12 @@ export const refreshToken = async (req, res) => {
       }
     }
 
-    // Check absolute 6-hour session timeout
+    // Check absolute session timeout
     const loginTime = new Date(decoded.loginTime);
     const now = new Date();
     const sessionDuration = (now - loginTime) / 1000 / 60 / 60; // hours
 
-    if (sessionDuration >= 6) {
+    if (sessionDuration >= AUTH_CONFIG.SESSION_ABSOLUTE_TIMEOUT_HOURS) {
       return res.status(401).json({
         success: false,
         error: 'Session expired. Please login again.',

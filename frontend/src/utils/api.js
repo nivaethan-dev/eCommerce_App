@@ -5,6 +5,21 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 /**
+ * Clear authentication state and redirect to login
+ */
+function handleAuthError() {
+  localStorage.removeItem('isAuthenticated');
+  localStorage.removeItem('userRole');
+  window.dispatchEvent(new Event('authChange'));
+  
+  // Only redirect if not already on login/signup page
+  if (!window.location.pathname.includes('/login') && 
+      !window.location.pathname.includes('/signup')) {
+    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+  }
+}
+
+/**
  * Make a fetch request with default options
  * @param {string} endpoint - API endpoint (e.g., '/api/products')
  * @param {Object} options - Fetch options
@@ -22,6 +37,12 @@ export async function apiFetch(endpoint, options = {}) {
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, defaultOptions);
+    
+    // Handle 401 Unauthorized - token expired or invalid
+    if (response.status === 401) {
+      handleAuthError();
+      throw new Error('Session expired. Please log in again.');
+    }
     
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));

@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { AUTH_CONFIG } from '../config/authConfig.js';
 
 /**
  * Generate short-lived access token
@@ -11,7 +12,7 @@ export const generateAccessToken = (userId, role = 'customer') => {
   return jwt.sign(
     { id: userId, role },
     secret,
-    { expiresIn: '15m' }
+    { expiresIn: AUTH_CONFIG.ACCESS_TOKEN_EXPIRY }
   );
 };
 
@@ -30,7 +31,7 @@ export const generateRefreshToken = (userId, role = 'customer', loginTime = null
   return jwt.sign(
     { id: userId, role, type: 'refresh', loginTime: sessionStart },
     secret,
-    { expiresIn: '6h' }
+    { expiresIn: AUTH_CONFIG.REFRESH_TOKEN_EXPIRY }
   );
 };
 
@@ -44,13 +45,13 @@ export const setAuthCookies = (res, accessToken, refreshToken) => {
     httpOnly: true,
     secure: isProd,
     sameSite: 'strict',
-    maxAge: 15 * 60 * 1000 // 15 min
+    maxAge: AUTH_CONFIG.ACCESS_TOKEN_MAX_AGE
   });
 
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
     secure: isProd,
     sameSite: 'strict',
-    maxAge: 6 * 60 * 60 * 1000 // 6 hours
+    maxAge: AUTH_CONFIG.REFRESH_TOKEN_MAX_AGE
   });
 };
