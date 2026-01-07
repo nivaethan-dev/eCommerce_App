@@ -1,12 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import './ShoppingCart.css'; 
-
-// --- Dummy image utility ---
-const getItemImage = (name) => {
-  if (name.includes('Headphones')) return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSlQq83LWgPlGcW36AlKW0sIOfrRjft-v8yvQ&s';
-  if (name.includes('Shoes')) return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8dGGAFkudYQ5dt4POjzYmxEXl0fPWdpiEnA&s';
-  if (name.includes('Yoga')) return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSVqialCkeipNjrAGU5WMnIhIwmsvccVCbqJw&s';
-};
+import { mockCartItems, getItemImage } from '../data/mockCartData';
 
 // --- Individual Cart Item ---
 const CartItem = ({ item, updateQuantity, removeItem }) => {
@@ -16,7 +10,7 @@ const CartItem = ({ item, updateQuantity, removeItem }) => {
 
   return (
     <div className="cart-item">
-      <img src={getItemImage(item.name)} alt={item.name} className="item-image" />
+      <img src={getItemImage(item)} alt={item.name} className="item-image" />
 
       <div className="item-details-and-controls-left">
         <div className="item-details-top">
@@ -65,15 +59,14 @@ const CartItem = ({ item, updateQuantity, removeItem }) => {
   );
 };
 
-// --- Shopping Cart ---
-const ShoppingCart = () => {
-  const [cartItems, setCartItems] = useState([
-    { id: 1, name: 'Wireless Headphones', category: 'Electronics', price: '79.99', quantity: 1 },
-    { id: 2, name: 'Running Shoes', category: 'Footwear', price: '89.99', quantity: 2 },
-    { id: 3, name: 'Yoga Mat', category: 'Sports', price: '29.99', quantity: 1 },
-  ]);
+// --- Shopping Cart Component (Reusable) ---
+const ShoppingCart = ({ 
+  initialCartItems = mockCartItems,
+  onCheckout = () => console.log('Checkout clicked'),
+  onContinueShopping = () => console.log('Continue shopping clicked')
+}) => {
+  const [cartItems, setCartItems] = useState(initialCartItems);
   const [promoCode, setPromoCode] = useState('');
-  const shippingCost = 10.0;
 
   const subtotal = useMemo(
     () => cartItems.reduce((acc, item) => acc + parseFloat(item.price) * item.quantity, 0),
@@ -84,9 +77,9 @@ const ShoppingCart = () => {
     const count = cartItems.reduce((acc, item) => acc + item.quantity, 0);
     const discountRateCalc = promoCode.toUpperCase() === 'SAVE10' ? 0.1 : 0;
     const discount = subtotal * discountRateCalc;
-    const finalTotal = subtotal + shippingCost - discount;
+    const finalTotal = subtotal - discount;
     return { total: finalTotal, discountAmount: discount, discountRate: discountRateCalc, itemsCount: count };
-  }, [subtotal, promoCode, shippingCost, cartItems]);
+  }, [subtotal, promoCode, cartItems]);
 
   const updateQuantity = (id, newQuantity) => {
     if (newQuantity < 1) return;
@@ -99,63 +92,97 @@ const ShoppingCart = () => {
 
   const formatCurrency = (amount) => `$${amount.toFixed(2)}`;
 
+  const handleApplyPromo = () => {
+    // Promo code is already being used in the useMemo above
+    // This function can trigger a notification or animation
+  };
+
   return (
     <div className="shopping-page">
-      {/* --- CENTERED PAGE HEADER --- */}
+      {/* --- PAGE HEADER --- */}
       <div className="page-header-centered">
-        <h1 className="page-title">Cart</h1>
-        <p className="page-subtitle">Welcome to the cart page</p>
+        <h1 className="page-title">Shopping Cart</h1>
+        <p className="page-subtitle">{itemsCount} {itemsCount === 1 ? 'item' : 'items'} in your cart</p>
       </div>
 
-      {/* --- STACKED CART + SUMMARY --- */}
-      <div className="layout-container stacked">
+      {/* --- MAIN CONTENT --- */}
+      <div className="layout-container">
         {/* Cart Section */}
         <div className="cart-section">
-          <div className="back-link">&#x2190; Continue Shopping</div>
+          <div className="back-link" onClick={onContinueShopping}>
+            &#x2190; Continue Shopping
+          </div>
+          
           <div className="cart-container">
-            <h2 className="cart-header">
-              Shopping Cart <span className="item-count-text">{itemsCount} Items</span>
-            </h2>
-            {cartItems.map(item => (
-              <CartItem key={item.id} item={item} updateQuantity={updateQuantity} removeItem={removeItem} />
-            ))}
+            {cartItems.length === 0 ? (
+              <div className="empty-cart">
+                <p>Your cart is empty</p>
+                <button onClick={onContinueShopping} className="continue-shopping-btn">
+                  Start Shopping
+                </button>
+              </div>
+            ) : (
+              <>
+                <h2 className="cart-header">
+                  Items <span className="item-count-badge">{itemsCount}</span>
+                </h2>
+                {cartItems.map(item => (
+                  <CartItem key={item.id} item={item} updateQuantity={updateQuantity} removeItem={removeItem} />
+                ))}
+              </>
+            )}
           </div>
         </div>
 
         {/* Order Summary */}
-        <div className="summary-container">
-          <h3 className="summary-header">Order Summary</h3>
+        {cartItems.length > 0 && (
+          <div className="summary-container">
+            <h3 className="summary-header">Order Summary</h3>
 
-          <div className="summary-section subtotal-line">
-            <span>Items {itemsCount}</span>
-            <span>{formatCurrency(subtotal)}</span>
-          </div>
-
-          <div className="summary-section">
-            <label htmlFor="shipping">Shipping Method</label>
-            <select id="shipping" className="input-field shipping-select">
-              <option value="standard">Standard Shipping - {formatCurrency(shippingCost)}</option>
-            </select>
-          </div>
-
-          <div className="summary-breakdown">
-            <div className="summary-line"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
-            {discountRate > 0 && (
-              <div className="summary-line discount-line">
-                <span>Discount ({discountRate * 100}%)</span>
-                <span>-{formatCurrency(discountAmount)}</span>
+            <div className="summary-breakdown">
+              <div className="summary-line">
+                <span>Subtotal ({itemsCount} items)</span>
+                <span>{formatCurrency(subtotal)}</span>
               </div>
-            )}
-            <div className="summary-line"><span>Shipping</span><span>{formatCurrency(shippingCost)}</span></div>
-          </div>
+              {discountRate > 0 && (
+                <div className="summary-line discount-line">
+                  <span>Discount ({discountRate * 100}% off)</span>
+                  <span>-{formatCurrency(discountAmount)}</span>
+                </div>
+              )}
+            </div>
 
-          <div className="summary-total">
-            <span className="total-label">Total</span>
-            <span className="total-value">{formatCurrency(total)}</span>
-          </div>
+            <div className="summary-section promo-section">
+              <label htmlFor="promo">Promo Code</label>
+              <div className="promo-input-group">
+                <input
+                  id="promo"
+                  type="text"
+                  className="input-field promo-input"
+                  placeholder="Enter code"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                />
+                <button 
+                  className="apply-promo-btn" 
+                  onClick={handleApplyPromo}
+                >
+                  Apply
+                </button>
+              </div>
+              <div className="promo-hint">Try: SAVE10 for 10% off</div>
+            </div>
 
-          <button className="checkout-button">Checkout</button>
-        </div>
+            <div className="summary-total">
+              <span className="total-label">Total</span>
+              <span className="total-value">{formatCurrency(total)}</span>
+            </div>
+
+            <button className="checkout-button" onClick={onCheckout}>
+              Proceed to Checkout
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
