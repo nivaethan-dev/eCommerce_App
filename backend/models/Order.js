@@ -14,7 +14,11 @@ const orderSchema = new mongoose.Schema({
   subTotal: Number,       // sum of all item subtotals
   tax: { type: Number, default: 0 },
   totalAmount: Number,    // subTotal + tax
-  status: { type: String, default: 'Pending' },
+  status: {
+    type: String,
+    default: 'Pending',
+    enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled']
+  },
   createdAt: { type: Date, default: Date.now },
 });
 

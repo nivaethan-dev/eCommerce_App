@@ -4,10 +4,15 @@ import customerRoutes from './routes/customerRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import productRoutes from './routes/productRoutes.js';
+import auditLogRoutes from './routes/auditLogRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 
 const app = express();
+
+// Trust proxy (required for correct IP behind load balancers/Render/Heroku/etc)
+app.set('trust proxy', true);
 
 /*
 // Force HTTPS in production
@@ -38,6 +43,8 @@ app.use('/api/customers', customerRoutes); // customer-specific
 app.use('/api/auth', authRoutes);          // common auth (refresh, logout, etc.)
 app.use('/api/admins', adminRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/audit-logs', auditLogRoutes);
+app.use('/api/notifications', notificationRoutes);
 //app.use('/api/urls', urlRoutes);
 
 // Centralized Error Handling middleware

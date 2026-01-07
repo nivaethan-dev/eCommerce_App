@@ -1,13 +1,23 @@
 import { ProductService, getProducts } from '../services/productService.js';
 import fs from 'fs/promises';
+import * as productTriggers from '../eventTriggers/productEvent.js';
+import { PRODUCT_MESSAGES } from '../utils/productMessages.js';
 
 export const createProduct = async (req, res) => {
   try {
     const product = await ProductService.createProduct(req.body, req.file);
 
+    // Trigger product created event (audit log + admin notification)
+    await productTriggers.triggerProductCreated(
+      product._id,
+      product.title,
+      req.user.id,
+      req.ip
+    );
+
     res.status(201).json({
       success: true,
-      message: 'Product created successfully',
+      message: PRODUCT_MESSAGES.CREATE_SUCCESS,
       data: product
     });
   } catch (error) {
@@ -16,11 +26,11 @@ export const createProduct = async (req, res) => {
       if (req.file) {
         try {
           await fs.unlink(req.file.path);
-        } catch (_) {}
+        } catch (_) { }
       }
       return res.status(400).json({
         success: false,
-        error: 'A product with the same title and category already exists'
+        error: PRODUCT_MESSAGES.DUPLICATE_PRODUCT
       });
     }
 
@@ -43,8 +53,89 @@ export const createProduct = async (req, res) => {
     console.error('Product creation error:', error);
     res.status(500).json({
       success: false,
-      error: 'Error creating product'
+      error: PRODUCT_MESSAGES.CREATE_FAILED
     });
+  }
+};
+
+export const updateProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    
+    // Debug logging
+    console.log('Update Product Request:');
+    console.log('Product ID:', productId);
+    console.log('Request Body:', req.body);
+    console.log('File:', req.file ? { filename: req.file.filename, path: req.file.path } : 'No file');
+    
+    const { updatedProduct, oldData } = await ProductService.updateProduct(productId, req.body, req.file);
+
+    // Trigger product updated event (audit log + admin notification)
+    // Pass oldData and the specific updates (req.body + file change if any)
+    const changes = { ...req.body };
+    if (req.file) changes.image = '(updated)'; // Mark image as changed
+
+    await productTriggers.triggerProductUpdated(
+      updatedProduct._id,
+      updatedProduct.title,
+      oldData,
+      updatedProduct.toObject(), // Send full new object for diff calculation
+      req.user.id,
+      req.ip
+    );
+
+    res.status(200).json({
+      success: true,
+      message: PRODUCT_MESSAGES.UPDATE_SUCCESS,
+      data: updatedProduct
+    });
+  } catch (error) {
+    if (req.file) {
+      try {
+        await fs.unlink(req.file.path);
+      } catch (_) { }
+    }
+
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        error: PRODUCT_MESSAGES.DUPLICATE_PRODUCT
+      });
+    }
+
+    console.error('Update product error:', error);
+    if (error.message === PRODUCT_MESSAGES.PRODUCT_NOT_FOUND) {
+      return res.status(404).json({ success: false, error: error.message });
+    }
+    res.status(400).json({ success: false, error: error.message || PRODUCT_MESSAGES.UPDATE_FAILED });
+  }
+};
+
+export const deleteProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const deletedData = await ProductService.deleteProduct(productId);
+
+    // Trigger product deleted event (audit log + admin notification)
+    await productTriggers.triggerProductDeleted(
+      productId,
+      deletedData.title,
+      deletedData, // Pass full snapshot of deleted data
+      req.user.id,
+      req.ip
+    );
+
+    res.status(200).json({
+      success: true,
+      message: PRODUCT_MESSAGES.DELETE_SUCCESS,
+      data: { _id: productId }
+    });
+  } catch (error) {
+    console.error('Delete product error:', error);
+    if (error.message === PRODUCT_MESSAGES.PRODUCT_NOT_FOUND) {
+      return res.status(404).json({ success: false, error: error.message });
+    }
+    res.status(500).json({ success: false, error: error.message || PRODUCT_MESSAGES.DELETE_FAILED });
   }
 };
 
@@ -54,7 +145,11 @@ export const fetchProducts = async (req, res) => {
     const role = req.user ? req.user.role : 'public';
     const userId = req.user ? req.user.id : null;
     const products = await getProducts(role, userId, req.query);
-    res.status(200).json({ success: true, products });
+    res.status(200).json({
+      success: true,
+      message: PRODUCT_MESSAGES.FETCH_SUCCESS,
+      products
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

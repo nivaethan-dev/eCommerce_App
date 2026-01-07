@@ -18,7 +18,8 @@
     "mongodb"
   ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "fast-geoip": "^1.1.88"
+  }
 }
-
-

@@ -17,12 +17,20 @@ export const generateAccessToken = (userId, role = 'customer') => {
 
 /**
  * Generate long-lived refresh token
+ * @param {string} loginTime - ISO timestamp of initial login (for absolute timeout)
  */
-export const generateRefreshToken = (userId) => {
+export const generateRefreshToken = (userId, role = 'customer', loginTime = null) => {
+  const secret = role === 'admin' ? 
+    process.env.ADMIN_REFRESH_JWT_SECRET : 
+    process.env.CUSTOMER_REFRESH_JWT_SECRET;
+  
+  // Use provided loginTime or set new one for initial login
+  const sessionStart = loginTime || new Date().toISOString();
+    
   return jwt.sign(
-    { id: userId, type: 'refresh' },
-    process.env.CUSTOMER_REFRESH_JWT_SECRET,
-    { expiresIn: '7d' }
+    { id: userId, role, type: 'refresh', loginTime: sessionStart },
+    secret,
+    { expiresIn: '6h' }
   );
 };
 
@@ -43,6 +51,6 @@ export const setAuthCookies = (res, accessToken, refreshToken) => {
     httpOnly: true,
     secure: isProd,
     sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    maxAge: 6 * 60 * 60 * 1000 // 6 hours
   });
 };
