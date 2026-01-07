@@ -52,7 +52,7 @@ const Header = () => {
     if (!isAuthenticated) return;
     
     try {
-      const response = await get('/api/notifications?page=1&limit=10&status=all&sortBy=newest');
+      const response = await get('/api/notifications?page=1&limit=10&status=all&sortBy=newest', { requireAuth: true });
       const formattedNotifications = response.data.map(notif => ({
         ...notif,
         id: notif._id,
@@ -71,7 +71,7 @@ const Header = () => {
       if (isAuthenticated) {
         try {
           // Refresh unread count
-          const response = await get('/api/notifications/unread-count');
+          const response = await get('/api/notifications/unread-count', { requireAuth: true });
           setNotificationCount(response.unreadCount || 0);
           
           // Refresh notifications list if dropdown is open
@@ -94,27 +94,33 @@ const Header = () => {
   // Fetch cart data to get item count
   useEffect(() => {
     const fetchCartCount = async () => {
+      // Only fetch cart if user is authenticated
+      if (!isAuthenticated) {
+        setCartItemCount(0);
+        return;
+      }
+
       try {
-        const cartData = await get(API_ENDPOINTS.CART);
+        const cartData = await get(API_ENDPOINTS.CART, { requireAuth: true });
         // Calculate total number of items in cart
         const totalItems = cartData.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
         setCartItemCount(totalItems);
       } catch (error) {
         console.error('Failed to fetch cart:', error);
-        // If cart fetch fails (e.g., user not logged in), set count to 0
+        // If cart fetch fails, set count to 0
         setCartItemCount(0);
       }
     };
 
     fetchCartCount();
-  }, []);
+  }, [isAuthenticated]);
 
   // Fetch notifications count for authenticated users
   useEffect(() => {
     if (isAuthenticated) {
       const fetchNotifications = async () => {
         try {
-          const response = await get('/api/notifications/unread-count');
+          const response = await get('/api/notifications/unread-count', { requireAuth: true });
           setNotificationCount(response.unreadCount || 0);
         } catch (error) {
           console.error('Failed to fetch notifications:', error);
@@ -215,7 +221,7 @@ const Header = () => {
   const handleLogout = async () => {
     try {
       // Call backend logout endpoint to clear httpOnly cookies
-      await post(API_ENDPOINTS.LOGOUT, {});
+      await post(API_ENDPOINTS.LOGOUT, {}, { requireAuth: true });
     } catch (error) {
       console.error('Logout API call failed:', error);
     }

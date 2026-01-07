@@ -23,16 +23,19 @@ function handleAuthError() {
  * Make a fetch request with default options
  * @param {string} endpoint - API endpoint (e.g., '/api/products')
  * @param {Object} options - Fetch options
+ * @param {boolean} options.requireAuth - Whether this endpoint requires authentication (default: false)
  * @returns {Promise<any>} - Response data
  */
 export async function apiFetch(endpoint, options = {}) {
+  const { requireAuth = false, ...fetchOptions } = options;
+  
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...fetchOptions.headers,
     },
     credentials: 'include', // Include cookies for authentication
-    ...options,
+    ...fetchOptions,
   };
 
   try {
@@ -40,8 +43,13 @@ export async function apiFetch(endpoint, options = {}) {
     
     // Handle 401 Unauthorized - token expired or invalid
     if (response.status === 401) {
-      handleAuthError();
-      throw new Error('Session expired. Please log in again.');
+      // Only redirect if this was an authenticated request
+      if (requireAuth) {
+        handleAuthError();
+        throw new Error('Session expired. Please log in again.');
+      }
+      // For public endpoints, just throw the error without redirecting
+      throw new Error('Unauthorized');
     }
     
     if (!response.ok) {
@@ -58,31 +66,48 @@ export async function apiFetch(endpoint, options = {}) {
 
 /**
  * GET request
+ * @param {string} endpoint - API endpoint
+ * @param {Object} options - Additional options
+ * @param {boolean} options.requireAuth - Whether this endpoint requires authentication
  */
-export const get = (endpoint) => apiFetch(endpoint, { method: 'GET' });
+export const get = (endpoint, options = {}) => 
+  apiFetch(endpoint, { method: 'GET', ...options });
 
 /**
  * POST request
+ * @param {string} endpoint - API endpoint
+ * @param {Object} data - Request body data
+ * @param {Object} options - Additional options
+ * @param {boolean} options.requireAuth - Whether this endpoint requires authentication
  */
-export const post = (endpoint, data) => 
+export const post = (endpoint, data, options = {}) => 
   apiFetch(endpoint, {
     method: 'POST',
     body: JSON.stringify(data),
+    ...options,
   });
 
 /**
  * PUT request
+ * @param {string} endpoint - API endpoint
+ * @param {Object} data - Request body data
+ * @param {Object} options - Additional options
+ * @param {boolean} options.requireAuth - Whether this endpoint requires authentication
  */
-export const put = (endpoint, data) => 
+export const put = (endpoint, data, options = {}) => 
   apiFetch(endpoint, {
     method: 'PUT',
     body: JSON.stringify(data),
+    ...options,
   });
 
 /**
  * DELETE request
+ * @param {string} endpoint - API endpoint
+ * @param {Object} options - Additional options
+ * @param {boolean} options.requireAuth - Whether this endpoint requires authentication
  */
-export const del = (endpoint) => 
-  apiFetch(endpoint, { method: 'DELETE' });
+export const del = (endpoint, options = {}) => 
+  apiFetch(endpoint, { method: 'DELETE', ...options });
 
 
