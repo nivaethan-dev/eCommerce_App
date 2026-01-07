@@ -15,6 +15,10 @@ const Notifications = () => {
     sortBy: 'newest'    // 'newest', 'oldest'
   });
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   // Handler to mark single notification as read
   const handleMarkAsRead = async (notificationId) => {
     try {
@@ -118,6 +122,26 @@ const Notifications = () => {
 
     return result;
   }, [notifications, filters]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedNotifications = filteredNotifications.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
+  // Pagination handlers
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(totalPages, prev + 1));
+  };
 
   // Calculate stats
   const unreadCount = notifications.filter(n => !n.isRead).length;
