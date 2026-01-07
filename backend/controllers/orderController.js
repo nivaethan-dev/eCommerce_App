@@ -1,11 +1,12 @@
-import { 
-  createOrderFromCart, 
-  getCustomerOrders, 
-  getAllOrders, 
+import {
+  createOrderFromCart,
+  getCustomerOrders,
+  getAllOrders,
   getOrderById,
-  updateOrderStatus 
+  updateOrderStatus
 } from '../services/orderService.js';
 import { ORDER_MESSAGES, VALID_ORDER_STATUSES, formatOrderMessage } from '../utils/orderMessages.js';
+import * as orderTriggers from '../eventTriggers/orderEvent.js';
 
 /**
  * Place order (simulated checkout)
@@ -17,6 +18,14 @@ export const placeOrder = async (req, res) => {
 
     const order = await createOrderFromCart(customerId);
 
+    // Trigger order placed event (customer & admin notifications + audit log)
+    await orderTriggers.triggerOrderPlaced(
+      order._id,
+      customerId,
+      order.totalAmount,
+      req.ip
+    );
+
     res.status(201).json({
       success: true,
       message: ORDER_MESSAGES.ORDER_PLACED,
@@ -24,17 +33,17 @@ export const placeOrder = async (req, res) => {
     });
   } catch (error) {
     console.error('Place order error:', error);
-    
+
     // Handle specific error cases - check for known order error messages
     const knownErrors = [
       ORDER_MESSAGES.CART_EMPTY,
       ORDER_MESSAGES.NO_VALID_ITEMS,
       ORDER_MESSAGES.CUSTOMER_NOT_FOUND
     ];
-    
-    const isKnownError = knownErrors.some(msg => error.message === msg) || 
-                         error.message.includes(ORDER_MESSAGES.INSUFFICIENT_STOCK.split(':')[0]);
-    
+
+    const isKnownError = knownErrors.some(msg => error.message === msg) ||
+      error.message.includes(ORDER_MESSAGES.INSUFFICIENT_STOCK.split(':')[0]);
+
     if (isKnownError) {
       return res.status(400).json({
         success: false,
@@ -80,7 +89,7 @@ export const getOrders = async (req, res) => {
 export const listAllOrders = async (req, res) => {
   try {
     const { status, limit, skip } = req.query;
-    
+
     const options = {
       status: status || undefined,
       limit: limit ? parseInt(limit, 10) : 50,
@@ -158,7 +167,20 @@ export const updateOrder = async (req, res) => {
       });
     }
 
+    // Get old status before update
+    const oldOrder = await getOrderById(orderId);
+    const oldStatus = oldOrder.status;
+
     const order = await updateOrderStatus(orderId, status);
+
+    // Trigger order status update event (notification + audit log)
+    await orderTriggers.triggerOrderStatusUpdate(
+      order._id,
+      order.customerId,
+      oldStatus,
+      status,
+      req.ip
+    );
 
     res.status(200).json({
       success: true,
@@ -167,7 +189,7 @@ export const updateOrder = async (req, res) => {
     });
   } catch (error) {
     console.error('Update order status error:', error);
-    
+
     if (error.message === ORDER_MESSAGES.ORDER_NOT_FOUND) {
       return res.status(404).json({
         success: false,

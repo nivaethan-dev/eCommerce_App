@@ -5,14 +5,11 @@ const Home = () => {
   const navigate = useNavigate();
   
   const categories = [
-    { id: 1, name: 'Electronics', icon: '💻', color: '#667eea', slug: 'electronics' },
-    { id: 2, name: 'Fashion', icon: '👗', color: '#f093fb', slug: 'fashion' },
-    { id: 3, name: 'Home & Garden', icon: '🏡', color: '#4facfe', slug: 'home-garden' },
-    { id: 4, name: 'Sports', icon: '⚽', color: '#43e97b', slug: 'sports' },
-    { id: 5, name: 'Books', icon: '📚', color: '#fa709a', slug: 'books' },
-    { id: 6, name: 'Toys', icon: '🎮', color: '#feca57', slug: 'toys' },
-    { id: 7, name: 'Beauty', icon: '💄', color: '#ff6b6b', slug: 'beauty' },
-    { id: 8, name: 'Food & Beverage', icon: '🍔', color: '#ee5a6f', slug: 'food-beverage' }
+    { id: 1, name: 'Electronics', image: 'https://picsum.photos/seed/electronics/400/300', color: '#667eea', slug: 'electronics' },
+    { id: 2, name: 'Fashion', image: 'https://picsum.photos/seed/fashion/400/300', color: '#f093fb', slug: 'fashion' },
+    { id: 3, name: 'Home & Garden', image: 'https://picsum.photos/seed/homegarden/400/300', color: '#4facfe', slug: 'home-garden' },
+    { id: 4, name: 'Sports', image: 'https://picsum.photos/seed/sports/400/300', color: '#43e97b', slug: 'sports' },
+    { id: 5, name: 'Books', image: 'https://picsum.photos/seed/books/400/300', color: '#fa709a', slug: 'books' }
   ];
 
   const handleCategoryClick = (slug) => {
@@ -43,11 +40,13 @@ const Home = () => {
           <div className="categories-grid">
             {categories.map((category) => (
               <div key={category.id} className="category-card">
-                <div 
-                  className="category-image"
-                  style={{ background: `linear-gradient(135deg, ${category.color}22 0%, ${category.color}44 100%)` }}
-                >
-                  <span className="category-icon">{category.icon}</span>
+                <div className="category-image">
+                  <img 
+                    src={category.image} 
+                    alt={category.name}
+                    className="category-img"
+                    loading="lazy"
+                  />
                 </div>
                 <h3 className="category-name">{category.name}</h3>
                 <button 
