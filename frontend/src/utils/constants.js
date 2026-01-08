@@ -41,11 +41,10 @@ export const USER_ROLES = {
 // Product Categories
 export const PRODUCT_CATEGORIES = [
   'Electronics',
-  'Clothing',
-  'Books',
-  'Home & Kitchen',
+  'Fashion',
+  'Home & Garden',
   'Sports',
-  'Toys',
+  'Books',
 ];
 
 // App configuration

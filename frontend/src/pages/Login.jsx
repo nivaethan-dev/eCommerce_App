@@ -70,12 +70,37 @@ const Login = () => {
         // Set a flag in localStorage to indicate user is logged in
         // (The actual token is in httpOnly cookie)
         localStorage.setItem('isAuthenticated', 'true');
+        
         // Dispatch custom event to notify other components
         window.dispatchEvent(new Event('authChange'));
 
-        // Redirect to home page or last visited page
-        const redirectTo = new URLSearchParams(window.location.search).get('redirect') || '/';
-        navigate(redirectTo);
+        // Check if user is admin by trying to access an admin-only endpoint
+        try {
+          const adminCheckResponse = await fetch('/api/admins/customers', {
+            method: 'GET',
+            credentials: 'include', // Include cookies
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          // If status is 200 or 2xx, user is admin
+          if (adminCheckResponse.ok) {
+            localStorage.setItem('userRole', 'admin');
+            navigate('/admin/dashboard');
+          } else {
+            // User is not admin (403 Forbidden or other error)
+            localStorage.setItem('userRole', 'customer');
+            const redirectTo = new URLSearchParams(window.location.search).get('redirect') || '/';
+            navigate(redirectTo);
+          }
+        } catch (roleCheckError) {
+          // If role check fails, assume customer and redirect to home
+          console.log('Role check failed, assuming customer role');
+          localStorage.setItem('userRole', 'customer');
+          const redirectTo = new URLSearchParams(window.location.search).get('redirect') || '/';
+          navigate(redirectTo);
+        }
       } else {
         setApiError('Login failed. Please try again.');
       }

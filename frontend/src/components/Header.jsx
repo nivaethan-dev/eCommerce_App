@@ -11,23 +11,32 @@ const Header = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [cartItemCount, setCartItemCount] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const [showCartDropdown, setShowCartDropdown] = useState(false);
   const profileDropdownRef = useRef(null);
   const notificationDropdownRef = useRef(null);
+  const cartDropdownRef = useRef(null);
+  const notificationTimeoutRef = useRef(null);
+  const cartTimeoutRef = useRef(null);
 
-  // Check authentication status whenever location changes
+  // Check authentication status and user role whenever location changes
   useEffect(() => {
     const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+    const userRole = localStorage.getItem('userRole');
     setIsAuthenticated(isAuth);
+    setIsAdmin(userRole === 'admin');
   }, [location]);
 
   // Listen for auth change events (login/logout)
   useEffect(() => {
     const handleAuthChange = () => {
       const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+      const userRole = localStorage.getItem('userRole');
       setIsAuthenticated(isAuth);
+      setIsAdmin(userRole === 'admin');
     };
     
     window.addEventListener('authChange', handleAuthChange);
@@ -87,11 +96,21 @@ const Header = () => {
       if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(event.target)) {
         setShowNotificationDropdown(false);
       }
+      if (cartDropdownRef.current && !cartDropdownRef.current.contains(event.target)) {
+        setShowCartDropdown(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      // Cleanup timeouts on unmount
+      if (notificationTimeoutRef.current) {
+        clearTimeout(notificationTimeoutRef.current);
+      }
+      if (cartTimeoutRef.current) {
+        clearTimeout(cartTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -102,15 +121,47 @@ const Header = () => {
   };
 
   const handleCartClick = () => {
-    navigate('/cart');
+    // Cart now shows on hover - click does nothing
   };
 
   const handleLoginClick = () => {
     navigate('/login');
   };
 
-  const handleNotificationsClick = () => {
-    setShowNotificationDropdown(!showNotificationDropdown);
+  const handleCartHover = (show) => {
+    // Clear any existing timeout
+    if (cartTimeoutRef.current) {
+      clearTimeout(cartTimeoutRef.current);
+      cartTimeoutRef.current = null;
+    }
+
+    if (show) {
+      // Show immediately
+      setShowCartDropdown(true);
+    } else {
+      // Delay before hiding
+      cartTimeoutRef.current = setTimeout(() => {
+        setShowCartDropdown(false);
+      }, 200); // 200ms delay before closing
+    }
+  };
+
+  const handleNotificationsHover = (show) => {
+    // Clear any existing timeout
+    if (notificationTimeoutRef.current) {
+      clearTimeout(notificationTimeoutRef.current);
+      notificationTimeoutRef.current = null;
+    }
+
+    if (show) {
+      // Show immediately
+      setShowNotificationDropdown(true);
+    } else {
+      // Delay before hiding
+      notificationTimeoutRef.current = setTimeout(() => {
+        setShowNotificationDropdown(false);
+      }, 200); // 200ms delay before closing
+    }
   };
 
   const handleProfileClick = () => {
@@ -125,9 +176,11 @@ const Header = () => {
       console.error('Logout API call failed:', error);
     }
     
-    // Clear authentication flag
+    // Clear authentication flag and user role
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userRole');
     setIsAuthenticated(false);
+    setIsAdmin(false);
     setShowProfileDropdown(false);
     setNotificationCount(0);
     
@@ -202,27 +255,107 @@ const Header = () => {
           <Link to="/products" className="nav-link">
             Products
           </Link>
-          <Link to="/about" className="nav-link">
+          <Link to="/about-us" className="nav-link">
             About Us
           </Link>
-          <Link to="/contact" className="nav-link">
-            Contact
-          </Link>
           
-          {/* Guest View - Login/Signup Button */}
-          {!isAuthenticated && (
-            <button onClick={handleLoginClick} className="login-button">
-              Login
+          {/* Notifications Icon - Available for everyone */}
+          <div 
+            className="notification-container" 
+            ref={notificationDropdownRef}
+            onMouseEnter={() => handleNotificationsHover(true)}
+            onMouseLeave={() => handleNotificationsHover(false)}
+          >
+            <button 
+              className="notification-button"
+              aria-label={isAuthenticated ? `Notifications - ${notificationCount} unread` : 'Notifications'}
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              {isAuthenticated && notificationCount > 0 && (
+                <span className="notification-badge">{notificationCount > 99 ? '99+' : notificationCount}</span>
+              )}
             </button>
-          )}
+
+            {/* Notification Dropdown */}
+            {showNotificationDropdown && (
+              <div className="notification-dropdown">
+                {!isAuthenticated ? (
+                  <div className="notification-empty">
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      width="48" 
+                      height="48" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="1.5"
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                      className="empty-icon"
+                    >
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <p className="empty-text">
+                      Please <Link to="/login" className="sign-in-link">sign-in</Link> to view notifications.
+                    </p>
+                  </div>
+                ) : notificationCount === 0 ? (
+                  <div className="notification-empty">
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      width="48" 
+                      height="48" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="1.5"
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                      className="empty-icon"
+                    >
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <p className="empty-text">No new notifications</p>
+                    <p className="empty-subtext">You're all caught up!</p>
+                  </div>
+                ) : (
+                  <div className="notification-list">
+                    {/* TODO: Map through actual notifications from backend */}
+                    <div className="notification-item">
+                      <p>Sample notification</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           
-          {/* Authenticated View - Notifications Icon */}
-          {isAuthenticated && (
-            <div className="notification-container" ref={notificationDropdownRef}>
+          {/* Cart Icon with Badge - Visible for Guests and Customers Only (Not Admins) */}
+          {!isAdmin && (
+            <div 
+              className="cart-container" 
+              ref={cartDropdownRef}
+              onMouseEnter={() => handleCartHover(true)}
+              onMouseLeave={() => handleCartHover(false)}
+            >
               <button 
-                onClick={handleNotificationsClick} 
-                className="notification-button"
-                aria-label={`Notifications - ${notificationCount} unread`}
+                className="cart-button"
+                aria-label={`Shopping cart with ${cartItemCount} items`}
               >
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
@@ -235,75 +368,52 @@ const Header = () => {
                   strokeLinecap="round" 
                   strokeLinejoin="round"
                 >
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                  <circle cx="9" cy="21" r="1"></circle>
+                  <circle cx="20" cy="21" r="1"></circle>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                 </svg>
-                {notificationCount > 0 && (
-                  <span className="notification-badge">{notificationCount > 99 ? '99+' : notificationCount}</span>
+                {cartItemCount > 0 && (
+                  <span className="cart-badge">{cartItemCount > 99 ? '99+' : cartItemCount}</span>
                 )}
               </button>
 
-              {/* Notification Dropdown */}
-              {showNotificationDropdown && (
-                <div className="notification-dropdown">
-                  {notificationCount === 0 ? (
-                    <div className="notification-empty">
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        width="48" 
-                        height="48" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="1.5"
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                        className="empty-icon"
-                      >
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                      </svg>
-                      <p className="empty-text">No new notifications</p>
-                      <p className="empty-subtext">You're all caught up!</p>
-                    </div>
-                  ) : (
-                    <div className="notification-list">
-                      {/* TODO: Map through actual notifications from backend */}
-                      <div className="notification-item">
-                        <p>Sample notification</p>
-                      </div>
-                    </div>
-                  )}
+              {/* Cart Dropdown */}
+              {showCartDropdown && (
+                <div className="cart-dropdown">
+                  <div className="cart-empty">
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      width="64" 
+                      height="64" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="1.5"
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                      className="empty-cart-icon"
+                    >
+                      <circle cx="9" cy="21" r="1"></circle>
+                      <circle cx="20" cy="21" r="1"></circle>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <p className="empty-text">Your cart is empty</p>
+                    <p className="empty-subtext">Discover amazing products and start adding items to your cart!</p>
+                    <Link to="/products" className="browse-products-btn">
+                      Browse Products
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>
           )}
           
-          {/* Cart Icon with Badge - Always Visible */}
-          <button 
-            onClick={handleCartClick} 
-            className="cart-button"
-            aria-label={`Shopping cart with ${cartItemCount} items`}
-          >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              width="24" 
-              height="24" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-            >
-              <circle cx="9" cy="21" r="1"></circle>
-              <circle cx="20" cy="21" r="1"></circle>
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-            </svg>
-            {cartItemCount > 0 && (
-              <span className="cart-badge">{cartItemCount > 99 ? '99+' : cartItemCount}</span>
-            )}
-          </button>
+          {/* Guest View - Login/Signup Button */}
+          {!isAuthenticated && (
+            <button onClick={handleLoginClick} className="login-button">
+              Login
+            </button>
+          )}
           
           {/* Authenticated View - Profile Icon with Dropdown */}
           {isAuthenticated && (
@@ -362,21 +472,41 @@ const Header = () => {
                     </svg>
                     <span>Account Settings</span>
                   </Link>
-                  <Link to="/orders" className="dropdown-item">
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      width="18" 
-                      height="18" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="2"
-                    >
-                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                      <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                    </svg>
-                    <span>Order History</span>
-                  </Link>
+                  {isAdmin ? (
+                    <Link to="/admin/dashboard" className="dropdown-item">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="18" 
+                        height="18" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2"
+                      >
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                      </svg>
+                      <span>Admin Dashboard</span>
+                    </Link>
+                  ) : (
+                    <Link to="/orders" className="dropdown-item">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="18" 
+                        height="18" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2"
+                      >
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                      </svg>
+                      <span>Order History</span>
+                    </Link>
+                  )}
                   <div className="dropdown-divider"></div>
                   <button onClick={handleLogout} className="dropdown-item logout-item">
                     <svg 
