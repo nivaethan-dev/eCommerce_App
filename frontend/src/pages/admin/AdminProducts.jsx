@@ -7,13 +7,14 @@ import EditModal from '../../components/EditModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import useFormModal from '../../hooks/useFormModal';
 import useConfirmModal from '../../hooks/useConfirmModal';
+import useProducts from '../../hooks/useProducts';
+import { addProductFields, editProductFields } from '../../config/productFormConfig';
 import { mockProducts } from '../../data/mockProducts';
 
 const AdminProducts = () => {
-  // Using mock data for now - can easily be replaced with API call later
-  const [products, setProducts] = useState(mockProducts);
   const [editingProduct, setEditingProduct] = useState(null);
   
+  const { products, addProduct, updateProduct, deleteProduct } = useProducts(mockProducts);
   const { isOpen: isAddOpen, openModal: openAddModal, closeModal: closeAddModal } = useFormModal();
   const { isOpen: isEditOpen, openModal: openEditModal, closeModal: closeEditModal } = useFormModal();
   const { 
@@ -23,118 +24,9 @@ const AdminProducts = () => {
     itemToDelete 
   } = useConfirmModal();
 
-  // Form fields for adding products
-  const addProductFields = [
-    {
-      name: 'name',
-      label: 'Product Name',
-      type: 'text',
-      required: true,
-      placeholder: 'Enter product name'
-    },
-    {
-      name: 'description',
-      label: 'Description',
-      type: 'textarea',
-      required: true,
-      placeholder: 'Enter product description',
-      rows: 4
-    },
-    {
-      name: 'category',
-      label: 'Category',
-      type: 'select',
-      required: true,
-      options: [
-        { value: 'Electronics', label: 'Electronics' },
-        { value: 'Fashion', label: 'Fashion' },
-        { value: 'Home & Garden', label: 'Home & Garden' },
-        { value: 'Sports', label: 'Sports' },
-        { value: 'Books', label: 'Books' }
-      ]
-    },
-    {
-      name: 'price',
-      label: 'Price',
-      type: 'number',
-      required: true,
-      nonNegative: true,
-      step: '0.01',
-      placeholder: '0.00'
-    },
-    {
-      name: 'stock',
-      label: 'Stock Quantity',
-      type: 'number',
-      required: true,
-      nonNegative: true,
-      placeholder: '0'
-    },
-    {
-      name: 'image',
-      label: 'Product Image',
-      type: 'file',
-      accept: 'image/*'
-    }
-  ];
-
-  // Edit fields - only editable fields (no createdAt/updatedAt)
-  const editFields = [
-    {
-      name: 'name',
-      label: 'Product Name',
-      type: 'text'
-    },
-    {
-      name: 'description',
-      label: 'Description',
-      type: 'textarea',
-      rows: 4
-    },
-    {
-      name: 'category',
-      label: 'Category',
-      type: 'select',
-      options: [
-        { value: 'Electronics', label: 'Electronics' },
-        { value: 'Fashion', label: 'Fashion' },
-        { value: 'Home & Garden', label: 'Home & Garden' },
-        { value: 'Sports', label: 'Sports' },
-        { value: 'Books', label: 'Books' }
-      ]
-    },
-    {
-      name: 'price',
-      label: 'Price',
-      type: 'number',
-      nonNegative: true,
-      step: '0.01'
-    },
-    {
-      name: 'stock',
-      label: 'Stock Quantity',
-      type: 'number',
-      nonNegative: true
-    },
-    {
-      name: 'image',
-      label: 'Product Image',
-      type: 'file',
-      accept: 'image/*'
-    }
-  ];
-
   const handleAddProduct = (formData) => {
-    const newProduct = {
-      id: products.length + 1,
-      ...formData,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    setProducts(prev => [...prev, newProduct]);
+    addProduct(formData);
     closeAddModal();
-    console.log('Product added:', newProduct);
   };
 
   const handleEditClick = (product) => {
@@ -143,14 +35,7 @@ const AdminProducts = () => {
   };
 
   const handleUpdateProduct = (formData) => {
-    const updatedProduct = {
-      ...formData,
-      id: editingProduct.id,
-      createdAt: editingProduct.createdAt,
-      updatedAt: new Date().toISOString()
-    };
-    
-    setProducts(prev => prev.map(p => p.id === editingProduct.id ? updatedProduct : p));
+    updateProduct(editingProduct.id, formData);
     setEditingProduct(null);
     closeEditModal();
   };
@@ -161,8 +46,7 @@ const AdminProducts = () => {
 
   const handleConfirmDelete = () => {
     if (itemToDelete) {
-      setProducts(prev => prev.filter(p => p.id !== itemToDelete.id));
-      console.log('Product deleted:', itemToDelete);
+      deleteProduct(itemToDelete.id);
     }
   };
 
@@ -184,7 +68,6 @@ const AdminProducts = () => {
         onDelete={handleDeleteClick}
       />
 
-      {/* Add Product Modal */}
       <FormModal
         isOpen={isAddOpen}
         onClose={closeAddModal}
@@ -194,7 +77,6 @@ const AdminProducts = () => {
         submitLabel="Add Product"
       />
 
-      {/* Edit Product Modal */}
       <EditModal
         isOpen={isEditOpen}
         onClose={() => {
@@ -203,7 +85,7 @@ const AdminProducts = () => {
         }}
         title="Edit Product"
         data={editingProduct}
-        fields={editFields}
+        fields={editProductFields}
         onSubmit={handleUpdateProduct}
       />
 
