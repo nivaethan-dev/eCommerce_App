@@ -1,3 +1,7 @@
+import IconButton from './IconButton';
+import EditIcon from './icons/EditIcon';
+import DeleteIcon from './icons/DeleteIcon';
+
 const ProductGrid = ({ products = [] }) => {
   return (
     <div style={{ overflowX: 'auto', background: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
@@ -49,32 +53,18 @@ const ProductGrid = ({ products = [] }) => {
                 </td>
                 <td style={{ padding: '1rem', textAlign: 'center' }}>
                   <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                    <button 
-                      style={{ 
-                        background: 'none', 
-                        border: 'none', 
-                        cursor: 'pointer', 
-                        fontSize: '1.25rem',
-                        padding: '0.25rem',
-                        color: '#4facfe'
-                      }}
-                      title="Edit"
-                    >
-                      ✏️
-                    </button>
-                    <button 
-                      style={{ 
-                        background: 'none', 
-                        border: 'none', 
-                        cursor: 'pointer', 
-                        fontSize: '1.25rem',
-                        padding: '0.25rem',
-                        color: '#f44336'
-                      }}
-                      title="Delete"
-                    >
-                      🗑️
-                    </button>
+                    <IconButton
+                      icon={<EditIcon />}
+                      variant="primary"
+                      title="Edit product"
+                      onClick={() => console.log('Edit', product.id)}
+                    />
+                    <IconButton
+                      icon={<DeleteIcon />}
+                      variant="danger"
+                      title="Delete product"
+                      onClick={() => console.log('Delete', product.id)}
+                    />
                   </div>
                 </td>
               </tr>
