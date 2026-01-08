@@ -10,10 +10,14 @@ const EditModal = ({
   onSubmit
 }) => {
   const [formData, setFormData] = useState({});
+  const [originalData, setOriginalData] = useState({});
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (isOpen && data) {
       setFormData({ ...data });
+      setOriginalData({ ...data });
+      setErrors({});
     }
   }, [isOpen, data]);
 
@@ -24,16 +28,55 @@ const EditModal = ({
       ...prev,
       [fieldName]: value
     }));
+    // Clear error when user types
+    if (errors[fieldName]) {
+      setErrors(prev => ({
+        ...prev,
+        [fieldName]: null
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    fields.forEach(field => {
+      const value = formData[field.name];
+      const originalValue = originalData[field.name];
+      
+      // If field had a value and now it's empty, that's an error
+      if (originalValue && !value) {
+        newErrors[field.name] = `${field.label} cannot be removed without a replacement`;
+      }
+      
+      // If field is empty (no original value and no new value), that's an error
+      if (!value && value !== 0) {
+        newErrors[field.name] = `${field.label} is required`;
+      }
+    });
+    
+    return newErrors;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    
     onSubmit(formData);
     setFormData({});
+    setOriginalData({});
+    setErrors({});
   };
 
   const handleClose = () => {
     setFormData({});
+    setOriginalData({});
+    setErrors({});
     onClose();
   };
 
@@ -41,7 +84,7 @@ const EditModal = ({
     const baseInputStyle = {
       width: '100%',
       padding: '0.75rem',
-      border: '1px solid #e0e0e0',
+      border: `1px solid ${errors[field.name] ? '#f44336' : '#e0e0e0'}`,
       borderRadius: '6px',
       fontSize: '1rem',
       boxSizing: 'border-box'
@@ -101,6 +144,7 @@ const EditModal = ({
         );
 
       case 'file':
+        const fileInputId = `file-input-${field.name}`;
         return (
           <div>
             {formData[field.name] && (
@@ -119,10 +163,12 @@ const EditModal = ({
                   />
                   <button
                     type="button"
-                    onClick={() => handleChange(field.name, '')}
+                    onClick={() => {
+                      document.getElementById(fileInputId).click();
+                    }}
                     style={{
                       padding: '0.5rem 1rem',
-                      background: '#f44336',
+                      background: '#4facfe',
                       color: 'white',
                       border: 'none',
                       borderRadius: '6px',
@@ -130,12 +176,13 @@ const EditModal = ({
                       fontSize: '0.875rem'
                     }}
                   >
-                    Remove Image
+                    Change Image
                   </button>
                 </div>
               </div>
             )}
             <input
+              id={fileInputId}
               type="file"
               accept={field.accept || 'image/*'}
               onChange={(e) => {
@@ -148,7 +195,7 @@ const EditModal = ({
                   reader.readAsDataURL(file);
                 }
               }}
-              style={baseInputStyle}
+              style={{ display: 'none' }}
             />
           </div>
         );
@@ -219,6 +266,15 @@ const EditModal = ({
                   {field.label}
                 </label>
                 {renderField(field)}
+                {errors[field.name] && (
+                  <div style={{
+                    color: '#f44336',
+                    fontSize: '0.875rem',
+                    marginTop: '0.25rem'
+                  }}>
+                    {errors[field.name]}
+                  </div>
+                )}
               </div>
             ))}
           </div>
