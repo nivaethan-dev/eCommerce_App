@@ -3,13 +3,21 @@ import ProductGrid from '../../components/ProductGrid';
 import Button from '../../components/Button';
 import PageHeader from '../../components/PageHeader';
 import FormModal from '../../components/FormModal';
+import ConfirmModal from '../../components/ConfirmModal';
 import useFormModal from '../../hooks/useFormModal';
+import useConfirmModal from '../../hooks/useConfirmModal';
 import { mockProducts } from '../../data/mockProducts';
 
 const AdminProducts = () => {
   // Using mock data for now - can easily be replaced with API call later
   const [products, setProducts] = useState(mockProducts);
   const { isOpen, openModal, closeModal } = useFormModal();
+  const { 
+    isOpen: isConfirmOpen, 
+    openModal: openConfirmModal, 
+    closeModal: closeConfirmModal,
+    itemToDelete 
+  } = useConfirmModal();
 
   const productFormFields = [
     {
@@ -78,6 +86,22 @@ const AdminProducts = () => {
     console.log('Product added:', newProduct);
   };
 
+  const handleEditProduct = (product) => {
+    console.log('Edit product:', product);
+    // Edit functionality will be implemented later
+  };
+
+  const handleDeleteClick = (product) => {
+    openConfirmModal(product);
+  };
+
+  const handleConfirmDelete = () => {
+    if (itemToDelete) {
+      setProducts(prev => prev.filter(p => p.id !== itemToDelete.id));
+      console.log('Product deleted:', itemToDelete);
+    }
+  };
+
   return (
     <div>
       <PageHeader 
@@ -90,7 +114,11 @@ const AdminProducts = () => {
         }
       />
       
-      <ProductGrid products={products} />
+      <ProductGrid 
+        products={products}
+        onEdit={handleEditProduct}
+        onDelete={handleDeleteClick}
+      />
 
       <FormModal
         isOpen={isOpen}
@@ -99,6 +127,17 @@ const AdminProducts = () => {
         fields={productFormFields}
         onSubmit={handleAddProduct}
         submitLabel="Add Product"
+      />
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={closeConfirmModal}
+        onConfirm={handleConfirmDelete}
+        title="Delete Product"
+        message={`Are you sure you want to delete "${itemToDelete?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
       />
     </div>
   );

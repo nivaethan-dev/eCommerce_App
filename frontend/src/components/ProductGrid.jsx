@@ -2,7 +2,7 @@ import IconButton from './IconButton';
 import EditIcon from './icons/EditIcon';
 import DeleteIcon from './icons/DeleteIcon';
 
-const ProductGrid = ({ products = [] }) => {
+const ProductGrid = ({ products = [], onEdit, onDelete }) => {
   return (
     <div style={{ overflowX: 'auto', background: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -56,14 +56,16 @@ const ProductGrid = ({ products = [] }) => {
                     <IconButton
                       icon={<EditIcon />}
                       variant="primary"
-                      title="Edit product"
-                      onClick={() => console.log('Edit', product.id)}
+                      title={onEdit ? "Edit product" : "Edit disabled"}
+                      onClick={() => onEdit && onEdit(product)}
+                      disabled={!onEdit}
                     />
                     <IconButton
                       icon={<DeleteIcon />}
                       variant="danger"
-                      title="Delete product"
-                      onClick={() => console.log('Delete', product.id)}
+                      title={onDelete ? "Delete product" : "Delete disabled"}
+                      onClick={() => onDelete && onDelete(product)}
+                      disabled={!onDelete}
                     />
                   </div>
                 </td>
