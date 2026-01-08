@@ -1,26 +1,21 @@
 import { useState, useEffect } from 'react';
 import Button from './Button';
 
-const FormModal = ({ 
+const EditModal = ({ 
   isOpen, 
   onClose, 
-  title, 
-  fields = [], 
-  onSubmit,
-  submitLabel = 'Submit',
-  cancelLabel = 'Cancel',
-  initialData = {}
+  title,
+  data = {},
+  fields = [],
+  onSubmit
 }) => {
   const [formData, setFormData] = useState({});
-  const [errors, setErrors] = useState({});
 
-  // Update form data when modal opens or initialData changes
   useEffect(() => {
-    if (isOpen) {
-      setFormData(initialData);
-      setErrors({});
+    if (isOpen && data) {
+      setFormData({ ...data });
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, data]);
 
   if (!isOpen) return null;
 
@@ -29,49 +24,16 @@ const FormModal = ({
       ...prev,
       [fieldName]: value
     }));
-    // Clear error when user starts typing
-    if (errors[fieldName]) {
-      setErrors(prev => ({
-        ...prev,
-        [fieldName]: null
-      }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    fields.forEach(field => {
-      if (field.required && !formData[field.name]) {
-        newErrors[field.name] = `${field.label} is required`;
-      }
-      if (field.type === 'number' && field.nonNegative && formData[field.name] < 0) {
-        newErrors[field.name] = `${field.label} must be non-negative`;
-      }
-      if (field.validate) {
-        const error = field.validate(formData[field.name]);
-        if (error) newErrors[field.name] = error;
-      }
-    });
-    return newErrors;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const newErrors = validateForm();
-    
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
     onSubmit(formData);
     setFormData({});
-    setErrors({});
   };
 
   const handleClose = () => {
     setFormData({});
-    setErrors({});
     onClose();
   };
 
@@ -79,18 +41,15 @@ const FormModal = ({
     const baseInputStyle = {
       width: '100%',
       padding: '0.75rem',
-      border: `1px solid ${errors[field.name] ? '#f44336' : '#e0e0e0'}`,
+      border: '1px solid #e0e0e0',
       borderRadius: '6px',
       fontSize: '1rem',
-      boxSizing: 'border-box',
-      backgroundColor: field.readOnly ? '#f5f5f5' : 'white',
-      cursor: field.readOnly ? 'not-allowed' : 'text'
+      boxSizing: 'border-box'
     };
 
     switch (field.type) {
       case 'text':
       case 'email':
-      case 'password':
         return (
           <input
             type={field.type}
@@ -98,8 +57,6 @@ const FormModal = ({
             onChange={(e) => handleChange(field.name, e.target.value)}
             placeholder={field.placeholder}
             style={baseInputStyle}
-            readOnly={field.readOnly}
-            disabled={field.readOnly}
           />
         );
 
@@ -113,8 +70,6 @@ const FormModal = ({
             min={field.nonNegative ? 0 : undefined}
             step={field.step || 'any'}
             style={baseInputStyle}
-            readOnly={field.readOnly}
-            disabled={field.readOnly}
           />
         );
 
@@ -126,8 +81,6 @@ const FormModal = ({
             placeholder={field.placeholder}
             rows={field.rows || 4}
             style={{ ...baseInputStyle, resize: 'vertical' }}
-            readOnly={field.readOnly}
-            disabled={field.readOnly}
           />
         );
 
@@ -137,7 +90,6 @@ const FormModal = ({
             value={formData[field.name] || ''}
             onChange={(e) => handleChange(field.name, e.target.value)}
             style={baseInputStyle}
-            disabled={field.readOnly}
           >
             <option value="">Select {field.label}</option>
             {field.options?.map(option => (
@@ -146,19 +98,6 @@ const FormModal = ({
               </option>
             ))}
           </select>
-        );
-
-      case 'checkbox':
-        return (
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={formData[field.name] || false}
-              onChange={(e) => handleChange(field.name, e.target.checked)}
-              style={{ width: 'auto', cursor: 'pointer' }}
-            />
-            <span>{field.checkboxLabel || field.label}</span>
-          </label>
         );
 
       case 'file':
@@ -194,9 +133,6 @@ const FormModal = ({
                     Remove Image
                   </button>
                 </div>
-                <p style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.5rem' }}>
-                  Upload a new image to replace the current one
-                </p>
               </div>
             )}
             <input
@@ -274,27 +210,15 @@ const FormModal = ({
           <div style={{ padding: '1.5rem' }}>
             {fields.map((field) => (
               <div key={field.name} style={{ marginBottom: '1.25rem' }}>
-                {field.type !== 'checkbox' && (
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '0.5rem',
-                    color: '#333',
-                    fontWeight: '500'
-                  }}>
-                    {field.label}
-                    {field.required && <span style={{ color: '#f44336' }}> *</span>}
-                  </label>
-                )}
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  color: '#333',
+                  fontWeight: '500'
+                }}>
+                  {field.label}
+                </label>
                 {renderField(field)}
-                {errors[field.name] && (
-                  <div style={{
-                    color: '#f44336',
-                    fontSize: '0.875rem',
-                    marginTop: '0.25rem'
-                  }}>
-                    {errors[field.name]}
-                  </div>
-                )}
               </div>
             ))}
           </div>
@@ -308,10 +232,10 @@ const FormModal = ({
             justifyContent: 'flex-end'
           }}>
             <Button variant="secondary" type="button" onClick={handleClose}>
-              {cancelLabel}
+              Cancel
             </Button>
             <Button variant="primary" type="submit">
-              {submitLabel}
+              Update
             </Button>
           </div>
         </form>
@@ -320,5 +244,5 @@ const FormModal = ({
   );
 };
 
-export default FormModal;
+export default EditModal;
 
