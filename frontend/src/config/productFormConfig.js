@@ -2,7 +2,7 @@
 
 export const addProductFields = [
   {
-    name: 'name',
+    name: 'title',
     label: 'Product Name',
     type: 'text',
     required: true,
@@ -56,7 +56,7 @@ export const addProductFields = [
 
 export const editProductFields = [
   {
-    name: 'name',
+    name: 'title',
     label: 'Product Name',
     type: 'text'
   },

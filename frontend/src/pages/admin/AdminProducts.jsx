@@ -9,12 +9,11 @@ import useFormModal from '../../hooks/useFormModal';
 import useConfirmModal from '../../hooks/useConfirmModal';
 import useProducts from '../../hooks/useProducts';
 import { addProductFields, editProductFields } from '../../config/productFormConfig';
-import { mockProducts } from '../../data/mockProducts';
 
 const AdminProducts = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   
-  const { products, addProduct, updateProduct, deleteProduct } = useProducts(mockProducts);
+  const { products, loading, error, addProduct, updateProduct, deleteProduct } = useProducts();
   const { isOpen: isAddOpen, openModal: openAddModal, closeModal: closeAddModal } = useFormModal();
   const { isOpen: isEditOpen, openModal: openEditModal, closeModal: closeEditModal } = useFormModal();
   const { 
@@ -61,12 +60,26 @@ const AdminProducts = () => {
           </Button>
         }
       />
-      
-      <ProductGrid 
-        products={products}
-        onEdit={handleEditClick}
-        onDelete={handleDeleteClick}
-      />
+
+      {loading && (
+        <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
+          Loading products...
+        </div>
+      )}
+
+      {error && (
+        <div style={{ padding: '2rem', textAlign: 'center', color: '#f44336' }}>
+          Error: {error}
+        </div>
+      )}
+
+      {!loading && !error && (
+        <ProductGrid 
+          products={products}
+          onEdit={handleEditClick}
+          onDelete={handleDeleteClick}
+        />
+      )}
 
       <FormModal
         isOpen={isAddOpen}
@@ -94,7 +107,7 @@ const AdminProducts = () => {
         onClose={closeConfirmModal}
         onConfirm={handleConfirmDelete}
         title="Delete Product"
-        message={`Are you sure you want to delete "${itemToDelete?.name}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete "${itemToDelete?.title || itemToDelete?.name}"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         variant="danger"

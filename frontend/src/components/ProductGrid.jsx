@@ -2,7 +2,20 @@ import IconButton from './IconButton';
 import EditIcon from './icons/EditIcon';
 import DeleteIcon from './icons/DeleteIcon';
 
+// Backend base URL (server defaults to PORT=3000 if not set)
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 const ProductGrid = ({ products = [], onEdit, onDelete }) => {
+  // Helper to get full image URL
+  const getImageUrl = (imagePath) => {
+    // Use a real placeholder image (no text) if missing
+    if (!imagePath) return 'https://via.placeholder.com/50';
+    if (imagePath.startsWith('http') || imagePath.startsWith('data:')) return imagePath;
+    // Remove leading slash if present to avoid double slashes
+    const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
+    return `${API_BASE_URL}/${cleanPath}`;
+  };
+
   return (
     <div style={{ overflowX: 'auto', background: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -28,15 +41,28 @@ const ProductGrid = ({ products = [], onEdit, onDelete }) => {
             </tr>
           ) : (
             products.map((product, index) => (
-              <tr key={product.id || index} style={{ borderBottom: '1px solid #e0e0e0' }}>
+              <tr key={product._id || product.id || index} style={{ borderBottom: '1px solid #e0e0e0' }}>
                 <td style={{ padding: '1rem' }}>
                   <img 
-                    src={product.image || 'https://via.placeholder.com/50'} 
-                    alt={product.name}
-                    style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }}
+                    src={getImageUrl(product.image)} 
+                    alt=""
+                    style={{ 
+                      width: '50px', 
+                      height: '50px', 
+                      objectFit: 'cover', 
+                      borderRadius: '4px', 
+                      display: 'block',
+                      background: '#f0f0f0'
+                    }}
+                    onError={(e) => { 
+                      const placeholder = 'https://via.placeholder.com/50';
+                      if (e.target.src !== placeholder) {
+                        e.target.src = placeholder;
+                      }
+                    }}
                   />
                 </td>
-                <td style={{ padding: '1rem', color: '#333' }}>{product.name}</td>
+                <td style={{ padding: '1rem', color: '#333' }}>{product.title || product.name}</td>
                 <td style={{ padding: '1rem', color: '#666', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {product.description}
                 </td>
