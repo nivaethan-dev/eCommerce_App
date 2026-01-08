@@ -10,7 +10,7 @@ const CartItem = ({ item, updateQuantity, removeItem }) => {
   const formattedPrice = `$${itemPrice.toFixed(2)}`;
 
   return (
-    <div className="cart-item">
+    <div className="shopping-cart-item">
       <img src={getItemImage(item)} alt={item.name} className="item-image" />
 
       <div className="item-details-and-controls-left">
@@ -136,18 +136,18 @@ const ShoppingCart = ({
       <div className="layout-container">
         {/* Cart Section */}
         <div className="cart-section">
-          <div className="cart-container">
+          <div className="shopping-cart-container">
             {cartItems.length === 0 ? (
-              <div className="empty-cart">
+              <div className="shopping-empty-cart">
                 <p>Your cart is empty</p>
-                <button onClick={handleContinueShopping} className="continue-shopping-btn">
+                <button onClick={handleContinueShopping} className="shopping-continue-shopping-btn">
                   Start Shopping
                 </button>
               </div>
             ) : (
               <>
-                <h2 className="cart-header">
-                  Items <span className="item-count-badge">{itemsCount}</span>
+                <h2 className="shopping-cart-header">
+                  Items <span className="shopping-item-count-badge">{itemsCount}</span>
                 </h2>
                 {cartItems.map(item => (
                   <CartItem key={item.id} item={item} updateQuantity={updateQuantity} removeItem={removeItem} />
