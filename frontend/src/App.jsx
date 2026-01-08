@@ -1,10 +1,15 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './App.css'
 import Layout from './components/Layout'
+import AdminLayout from './components/admin/AdminLayout'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
-import AdminDashboard from './pages/AdminDashboard'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminProducts from './pages/admin/AdminProducts'
+import AdminOrders from './pages/admin/AdminOrders'
+import AdminCustomers from './pages/admin/AdminCustomers'
+import AdminAuditLogs from './pages/admin/AdminAuditLogs'
 import AboutUs from './pages/AboutUs'
 import Products from './pages/Products'
 import Cart from './pages/Cart'
@@ -34,11 +39,20 @@ function App() {
               <Notifications />
             </ProtectedRoute>
           } />
-          <Route path="admin/dashboard" element={
+          
+          {/* Admin Routes - Nested inside Layout for header/footer */}
+          <Route path="admin" element={
             <ProtectedRoute>
-              <AdminDashboard />
+              <AdminLayout />
             </ProtectedRoute>
-          } />
+          }>
+            <Route index element={<AdminDashboard />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="customers" element={<AdminCustomers />} />
+            <Route path="audit-logs" element={<AdminAuditLogs />} />
+          </Route>
           
           {/* 404 Page */}
           <Route path="404" element={<NotFound />} />
