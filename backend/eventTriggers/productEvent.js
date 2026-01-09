@@ -100,7 +100,7 @@ export const triggerProductUpdated = async (productId, productName, oldData, new
             resource: 'Product',
             resourceId: productId,
             endpoint: '/api/products',
-            method: 'PUT',
+            method: 'PATCH',
             ipAddress,
             geolocation,
             status: 'success',
