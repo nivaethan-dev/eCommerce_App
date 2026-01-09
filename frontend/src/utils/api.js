@@ -29,21 +29,45 @@ export async function apiFetch(endpoint, options = {}) {
     ...options,
   };
 
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, defaultOptions);
-    
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      // Backend often returns `{ success:false, error: "..." }` or `{ error: { message } }`
+  const doFetch = async (url, opts) => {
+    const res = await fetch(url, opts);
+
+    // If token expired, try refresh once then retry original request.
+    // This reduces intermittent notification failures due to 15min access token expiry.
+    const alreadyRetried = Boolean(opts.__retried);
+    const isAuthEndpoint =
+      endpoint.startsWith('/api/auth/login') ||
+      endpoint.startsWith('/api/auth/refresh-token') ||
+      endpoint.startsWith('/api/auth/logout');
+
+    if (res.status === 401 && !alreadyRetried && !isAuthEndpoint) {
+      const refreshRes = await fetch(`${API_BASE_URL}/api/auth/refresh-token`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (refreshRes.ok) {
+        return await doFetch(url, { ...opts, __retried: true });
+      }
+      // If refresh fails, fall through to normal error handling below.
+    }
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
       const message =
         (typeof error.error === 'string' && error.error) ||
         error?.error?.message ||
         error?.message ||
-        `HTTP error! status: ${response.status}`;
+        `HTTP error! status: ${res.status}`;
       throw new Error(message);
     }
-    
-    return await response.json();
+
+    return await res.json();
+  };
+
+  try {
+    return await doFetch(`${API_BASE_URL}${endpoint}`, defaultOptions);
   } catch (error) {
     console.error('API request failed:', error);
     throw error;
