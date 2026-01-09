@@ -34,7 +34,13 @@ export async function apiFetch(endpoint, options = {}) {
     
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+      // Backend often returns `{ success:false, error: "..." }` or `{ error: { message } }`
+      const message =
+        (typeof error.error === 'string' && error.error) ||
+        error?.error?.message ||
+        error?.message ||
+        `HTTP error! status: ${response.status}`;
+      throw new Error(message);
     }
     
     return await response.json();

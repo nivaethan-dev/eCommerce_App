@@ -1,4 +1,5 @@
 import Button from './Button';
+import { useState, useEffect } from 'react';
 
 const ConfirmModal = ({ 
   isOpen, 
@@ -12,9 +13,28 @@ const ConfirmModal = ({
 }) => {
   if (!isOpen) return null;
 
-  const handleConfirm = () => {
-    onConfirm();
-    onClose();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsSubmitting(false);
+      setSubmitError('');
+    }
+  }, [isOpen]);
+
+  const handleConfirm = async () => {
+    if (isSubmitting) return;
+    try {
+      setIsSubmitting(true);
+      setSubmitError('');
+      await onConfirm?.();
+      onClose();
+    } catch (e) {
+      setSubmitError(e?.message || 'Action failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -61,6 +81,18 @@ const ConfirmModal = ({
           lineHeight: '1.6'
         }}>
           {message}
+          {submitError && (
+            <div style={{
+              marginTop: '0.75rem',
+              background: '#fff5f5',
+              border: '1px solid #fed7d7',
+              color: '#c53030',
+              padding: '0.75rem',
+              borderRadius: '8px'
+            }}>
+              {submitError}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -71,11 +103,11 @@ const ConfirmModal = ({
           gap: '1rem',
           justifyContent: 'flex-end'
         }}>
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
             {cancelText}
           </Button>
-          <Button variant={variant} onClick={handleConfirm}>
-            {confirmText}
+          <Button variant={variant} onClick={handleConfirm} disabled={isSubmitting}>
+            {isSubmitting ? 'Please wait…' : confirmText}
           </Button>
         </div>
       </div>

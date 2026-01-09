@@ -7,20 +7,28 @@ const FormModal = ({
   title, 
   fields = [], 
   onSubmit,
+  onSuccess,
+  onError,
   submitLabel = 'Submit',
   cancelLabel = 'Cancel',
-  initialData = {}
+  initialData
 }) => {
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Update form data when modal opens or initialData changes
+  // Initialize form data when modal opens.
+  // NOTE: Don't depend on `initialData` here because for "add" flows it's often an inline `{}` which
+  // would trigger this effect on every render and wipe user typing.
   useEffect(() => {
     if (isOpen) {
-      setFormData(initialData);
+      setFormData(initialData || {});
       setErrors({});
+      setSubmitError('');
+      setIsSubmitting(false);
     }
-  }, [isOpen, initialData]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -55,8 +63,9 @@ const FormModal = ({
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const newErrors = validateForm();
     
     if (Object.keys(newErrors).length > 0) {
@@ -64,9 +73,21 @@ const FormModal = ({
       return;
     }
 
-    onSubmit(formData);
-    setFormData({});
-    setErrors({});
+    try {
+      setIsSubmitting(true);
+      setSubmitError('');
+      // Allow onSubmit to be async; only clear form on success
+      await onSubmit(formData);
+      onSuccess?.();
+      setFormData({});
+      setErrors({});
+    } catch (err) {
+      // Keep the modal + current inputs so the user can fix and retry
+      setSubmitError(err?.message || 'Failed to submit. Please try again.');
+      onError?.(err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
@@ -272,6 +293,18 @@ const FormModal = ({
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <div style={{ padding: '1.5rem' }}>
+            {submitError && (
+              <div style={{
+                background: '#fff5f5',
+                border: '1px solid #fed7d7',
+                color: '#c53030',
+                padding: '0.75rem',
+                borderRadius: '8px',
+                marginBottom: '1rem'
+              }}>
+                {submitError}
+              </div>
+            )}
             {fields.map((field) => (
               <div key={field.name} style={{ marginBottom: '1.25rem' }}>
                 {field.type !== 'checkbox' && (
@@ -307,11 +340,11 @@ const FormModal = ({
             gap: '1rem',
             justifyContent: 'flex-end'
           }}>
-            <Button variant="secondary" type="button" onClick={handleClose}>
+            <Button variant="secondary" type="button" onClick={handleClose} disabled={isSubmitting}>
               {cancelLabel}
             </Button>
-            <Button variant="primary" type="submit">
-              {submitLabel}
+            <Button variant="primary" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Please wait…' : submitLabel}
             </Button>
           </div>
         </form>

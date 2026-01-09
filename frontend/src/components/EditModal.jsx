@@ -10,11 +10,15 @@ const EditModal = ({
   title,
   data = {},
   fields = [],
-  onSubmit
+  onSubmit,
+  onSuccess,
+  onError
 }) => {
   const [formData, setFormData] = useState({});
   const [originalData, setOriginalData] = useState({});
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return '';
@@ -29,6 +33,8 @@ const EditModal = ({
       setFormData({ ...data });
       setOriginalData({ ...data });
       setErrors({});
+      setSubmitError('');
+      setIsSubmitting(false);
     }
   }, [isOpen, data]);
 
@@ -69,8 +75,9 @@ const EditModal = ({
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
@@ -78,10 +85,20 @@ const EditModal = ({
       return;
     }
     
-    onSubmit(formData);
-    setFormData({});
-    setOriginalData({});
-    setErrors({});
+    try {
+      setIsSubmitting(true);
+      setSubmitError('');
+      await onSubmit(formData);
+      onSuccess?.();
+      setFormData({});
+      setOriginalData({});
+      setErrors({});
+    } catch (err) {
+      setSubmitError(err?.message || 'Failed to update. Please try again.');
+      onError?.(err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
@@ -270,6 +287,18 @@ const EditModal = ({
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <div style={{ padding: '1.5rem' }}>
+            {submitError && (
+              <div style={{
+                background: '#fff5f5',
+                border: '1px solid #fed7d7',
+                color: '#c53030',
+                padding: '0.75rem',
+                borderRadius: '8px',
+                marginBottom: '1rem'
+              }}>
+                {submitError}
+              </div>
+            )}
             {fields.map((field) => (
               <div key={field.name} style={{ marginBottom: '1.25rem' }}>
                 <label style={{
@@ -302,11 +331,11 @@ const EditModal = ({
             gap: '1rem',
             justifyContent: 'flex-end'
           }}>
-            <Button variant="secondary" type="button" onClick={handleClose}>
+            <Button variant="secondary" type="button" onClick={handleClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button variant="primary" type="submit">
-              Update
+            <Button variant="primary" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Please wait…' : 'Update'}
             </Button>
           </div>
         </form>

@@ -9,6 +9,8 @@ import useFormModal from '../../hooks/useFormModal';
 import useConfirmModal from '../../hooks/useConfirmModal';
 import useProducts from '../../hooks/useProducts';
 import { addProductFields, editProductFields } from '../../config/productFormConfig';
+import ToastStack from '../../components/ToastStack';
+import useToasts from '../../hooks/useToasts';
 
 const AdminProducts = () => {
   const [editingProduct, setEditingProduct] = useState(null);
@@ -23,8 +25,13 @@ const AdminProducts = () => {
     itemToDelete 
   } = useConfirmModal();
 
-  const handleAddProduct = (formData) => {
-    addProduct(formData);
+  const { toasts, push, dismiss } = useToasts();
+
+  // UI reflect (backend is the source of truth)
+  const isAdmin = localStorage.getItem('userRole') === 'admin';
+
+  const handleAddProduct = async (formData) => {
+    await addProduct(formData);
     closeAddModal();
   };
 
@@ -33,8 +40,8 @@ const AdminProducts = () => {
     openEditModal();
   };
 
-  const handleUpdateProduct = (formData) => {
-    updateProduct(editingProduct?._id || editingProduct?.id, formData);
+  const handleUpdateProduct = async (formData) => {
+    await updateProduct(editingProduct?._id || editingProduct?.id, formData);
     setEditingProduct(null);
     closeEditModal();
   };
@@ -43,19 +50,20 @@ const AdminProducts = () => {
     openConfirmModal(product);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (itemToDelete) {
-      deleteProduct(itemToDelete?._id || itemToDelete?.id);
+      await deleteProduct(itemToDelete?._id || itemToDelete?.id);
     }
   };
 
   return (
     <div>
+      <ToastStack toasts={toasts} onDismiss={dismiss} />
       <PageHeader 
         title="Products"
         description="Manage your product inventory"
         actions={
-          <Button variant="primary" onClick={openAddModal}>
+          <Button variant="primary" onClick={openAddModal} disabled={!isAdmin} title={!isAdmin ? 'Admins only' : undefined}>
             + Add Product
           </Button>
         }
@@ -76,8 +84,8 @@ const AdminProducts = () => {
       {!loading && !error && (
         <ProductGrid 
           products={products}
-          onEdit={handleEditClick}
-          onDelete={handleDeleteClick}
+          onEdit={isAdmin ? handleEditClick : undefined}
+          onDelete={isAdmin ? handleDeleteClick : undefined}
         />
       )}
 
@@ -87,6 +95,8 @@ const AdminProducts = () => {
         title="Add New Product"
         fields={addProductFields}
         onSubmit={handleAddProduct}
+        onSuccess={() => push({ type: 'success', title: 'Created', message: 'Product added successfully.' })}
+        onError={(e) => push({ type: 'error', title: 'Create failed', message: e?.message || 'Failed to add product.' })}
         submitLabel="Add Product"
       />
 
@@ -100,6 +110,8 @@ const AdminProducts = () => {
         data={editingProduct}
         fields={editProductFields}
         onSubmit={handleUpdateProduct}
+        onSuccess={() => push({ type: 'success', title: 'Updated', message: 'Product updated successfully.' })}
+        onError={(e) => push({ type: 'error', title: 'Update failed', message: e?.message || 'Failed to update product.' })}
       />
 
       <ConfirmModal

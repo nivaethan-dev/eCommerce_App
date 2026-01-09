@@ -22,11 +22,12 @@ export const addProductFields = [
     type: 'select',
     required: true,
     options: [
+      // Must match backend VALID_CATEGORIES in `backend/services/productService.js`
       { value: 'Electronics', label: 'Electronics' },
-      { value: 'Fashion', label: 'Fashion' },
-      { value: 'Home & Garden', label: 'Home & Garden' },
-      { value: 'Sports', label: 'Sports' },
-      { value: 'Books', label: 'Books' }
+      { value: 'Clothing', label: 'Clothing' },
+      { value: 'Books', label: 'Books' },
+      { value: 'Home & Kitchen', label: 'Home & Kitchen' },
+      { value: 'Sports', label: 'Sports' }
     ]
   },
   {
@@ -50,7 +51,8 @@ export const addProductFields = [
     name: 'image',
     label: 'Product Image',
     type: 'file',
-    accept: 'image/*'
+    accept: 'image/*',
+    required: true
   }
 ];
 
@@ -71,11 +73,12 @@ export const editProductFields = [
     label: 'Category',
     type: 'select',
     options: [
+      // Must match backend VALID_CATEGORIES in `backend/services/productService.js`
       { value: 'Electronics', label: 'Electronics' },
-      { value: 'Fashion', label: 'Fashion' },
-      { value: 'Home & Garden', label: 'Home & Garden' },
-      { value: 'Sports', label: 'Sports' },
-      { value: 'Books', label: 'Books' }
+      { value: 'Clothing', label: 'Clothing' },
+      { value: 'Books', label: 'Books' },
+      { value: 'Home & Kitchen', label: 'Home & Kitchen' },
+      { value: 'Sports', label: 'Sports' }
     ]
   },
   {
