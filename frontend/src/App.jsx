@@ -42,7 +42,7 @@ function App() {
           
           {/* Admin Routes - Nested inside Layout for header/footer */}
           <Route path="admin" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="admin">
               <AdminLayout />
             </ProtectedRoute>
           }>
