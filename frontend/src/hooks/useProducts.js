@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { get, post } from '../utils/api';
+import { get, post, patch, del } from '../utils/api';
 
 const useProducts = () => {
   const [products, setProducts] = useState([]);
@@ -62,11 +62,7 @@ const useProducts = () => {
   const addProduct = async (productData) => {
     try {
       const formData = prepareFormData(productData);
-      const response = await post('/api/products/create', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      const response = await post('/api/products/create', formData);
       
       const newProduct = response.data;
       setProducts(prev => [...prev, newProduct]);
@@ -80,12 +76,7 @@ const useProducts = () => {
   const updateProduct = async (productId, productData) => {
     try {
       const formData = prepareFormData(productData);
-      const response = await post(`/api/products/${productId}`, formData, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      const response = await patch(`/api/products/${productId}`, formData);
       
       const updatedProduct = response.data;
       setProducts(prev => prev.map(p => p._id === productId ? updatedProduct : p));
@@ -98,7 +89,7 @@ const useProducts = () => {
 
   const deleteProduct = async (productId) => {
     try {
-      await post(`/api/products/${productId}`, null, { method: 'DELETE' });
+      await del(`/api/products/${productId}`);
       setProducts(prev => prev.filter(p => p._id !== productId));
     } catch (error) {
       console.error('Failed to delete product:', error);

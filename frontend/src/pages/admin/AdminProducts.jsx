@@ -34,7 +34,7 @@ const AdminProducts = () => {
   };
 
   const handleUpdateProduct = (formData) => {
-    updateProduct(editingProduct.id, formData);
+    updateProduct(editingProduct?._id || editingProduct?.id, formData);
     setEditingProduct(null);
     closeEditModal();
   };
@@ -45,7 +45,7 @@ const AdminProducts = () => {
 
   const handleConfirmDelete = () => {
     if (itemToDelete) {
-      deleteProduct(itemToDelete.id);
+      deleteProduct(itemToDelete?._id || itemToDelete?.id);
     }
   };
 
