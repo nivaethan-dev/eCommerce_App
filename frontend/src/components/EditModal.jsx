@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import Button from './Button';
 
+// Backend base URL (server defaults to PORT=3000 if not set)
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 const EditModal = ({ 
   isOpen, 
   onClose, 
@@ -12,6 +15,14 @@ const EditModal = ({
   const [formData, setFormData] = useState({});
   const [originalData, setOriginalData] = useState({});
   const [errors, setErrors] = useState({});
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return '';
+    if (typeof imagePath !== 'string') return '';
+    if (imagePath.startsWith('http') || imagePath.startsWith('data:')) return imagePath;
+    const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
+    return `${API_BASE_URL}/${cleanPath}`;
+  };
 
   useEffect(() => {
     if (isOpen && data) {
@@ -151,7 +162,7 @@ const EditModal = ({
               <div style={{ marginBottom: '0.75rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <img 
-                    src={formData[field.name]} 
+                    src={getImageUrl(formData[field.name])} 
                     alt="Current" 
                     style={{ 
                       maxWidth: '150px', 
@@ -160,6 +171,10 @@ const EditModal = ({
                       borderRadius: '6px',
                       border: '1px solid #e0e0e0'
                     }} 
+                    onError={(e) => {
+                      // If the stored path is invalid/unreachable, hide broken image icon
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                   <button
                     type="button"
