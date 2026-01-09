@@ -16,6 +16,7 @@ import Cart from './pages/Cart'
 import Notifications from './pages/Notifications'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
+import OrderDetailsPage from './pages/OrderDetailsPage'
 
 function App() {
   return (
@@ -32,6 +33,11 @@ function App() {
           <Route path="cart" element={
             <ProtectedRoute>
               <Cart />
+            </ProtectedRoute>
+          } />
+          <Route path="order-details" element={
+            <ProtectedRoute>
+              <OrderDetailsPage />
             </ProtectedRoute>
           } />
           <Route path="notifications" element={
