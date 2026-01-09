@@ -30,7 +30,7 @@ function App() {
               <Cart />
             </ProtectedRoute>
           } />
-          <Route path="orders" element={
+          <Route path="order-details" element={
             <ProtectedRoute>
               <OrderDetailsPage />
             </ProtectedRoute>
