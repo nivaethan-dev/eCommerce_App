@@ -11,6 +11,8 @@ import useProducts from '../../hooks/useProducts';
 import { addProductFields, editProductFields } from '../../config/productFormConfig';
 import ToastStack from '../../components/ToastStack';
 import useToasts from '../../hooks/useToasts';
+import usePagination from '../../hooks/usePagination';
+import Pagination from '../../components/Pagination';
 
 const AdminProducts = () => {
   const [editingProduct, setEditingProduct] = useState(null);
@@ -29,6 +31,13 @@ const AdminProducts = () => {
 
   // UI reflect (backend is the source of truth)
   const isAdmin = localStorage.getItem('userRole') === 'admin';
+
+  const {
+    page,
+    setPage,
+    totalPages,
+    currentItems: pagedProducts
+  } = usePagination(products, 5);
 
   const handleAddProduct = async (formData) => {
     await addProduct(formData);
@@ -82,11 +91,21 @@ const AdminProducts = () => {
       )}
 
       {!loading && !error && (
-        <ProductGrid 
-          products={products}
+        <>
+          <ProductGrid 
+            products={pagedProducts}
           onEdit={isAdmin ? handleEditClick : undefined}
           onDelete={isAdmin ? handleDeleteClick : undefined}
-        />
+          />
+
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            pageSize={5}
+            totalItems={products.length}
+          />
+        </>
       )}
 
       <FormModal

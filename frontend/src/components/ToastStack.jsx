@@ -1,4 +1,4 @@
-const ToastStack = ({ toasts = [], onDismiss }) => {
+ const ToastStack = ({ toasts = [], onDismiss }) => {
   if (!toasts.length) return null;
 
   const styles = {
