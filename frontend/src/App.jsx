@@ -16,6 +16,7 @@ import Cart from './pages/Cart'
 import Notifications from './pages/Notifications'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
+import ProductView from './components/productview/ProductView'
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="signup" element={<Signup />} />
           <Route path="about-us" element={<AboutUs />} />
           <Route path="products" element={<Products />} />
+          <Route path="productview" element={<ProductView />} />
           
           {/* Protected Routes - Return 404 for guests */}
           <Route path="cart" element={
@@ -52,6 +54,7 @@ function App() {
             <Route path="orders" element={<AdminOrders />} />
             <Route path="customers" element={<AdminCustomers />} />
             <Route path="audit-logs" element={<AdminAuditLogs />} />
+            
           </Route>
           
           {/* 404 Page */}
