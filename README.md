@@ -53,6 +53,15 @@ JWT_REFRESH_SECRET=your-refresh-secret-key-change-this
 
 # CORS
 FRONTEND_URL=http://localhost:5173
+
+# Cloudinary (image uploads)
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+# Optional: where images go in Cloudinary
+CLOUDINARY_FOLDER=cloudcart/products
+# Optional: set false after migration to disable /uploads
+SERVE_LOCAL_UPLOADS=false
 ```
 
 4. Start the backend server:
