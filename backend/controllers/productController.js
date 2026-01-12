@@ -142,3 +142,13 @@ export const fetchProducts = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+export const fetchProductCategories = async (req, res) => {
+  try {
+    // Public endpoint: categories are a static whitelist in ProductService
+    const categories = ProductService.getValidCategories();
+    res.status(200).json({ success: true, categories });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};

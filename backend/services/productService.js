@@ -198,9 +198,23 @@ export class ProductService {
 }
 
 export const getProducts = async (role, userId, queryParams) => {
-  return await fetchDocuments(Product, {
-    search: queryParams.search, // search string
-    searchFields: ['title', 'description', 'category'], // searchable fields
-    query: {} // additional filters if needed
-  }, { role, userId });
+  const query = {};
+
+  // Optional category filter
+  if (typeof queryParams?.category === 'string' && queryParams.category.trim()) {
+    query.category = queryParams.category.trim();
+  }
+
+  return await fetchDocuments(
+    Product,
+    {
+      search: queryParams?.search, // search string
+      searchFields: ['title', 'description', 'category'], // searchable fields
+      query,
+      // Pagination controls
+      limit: queryParams?.limit,
+      page: queryParams?.page,
+    },
+    { role, userId }
+  );
 };
