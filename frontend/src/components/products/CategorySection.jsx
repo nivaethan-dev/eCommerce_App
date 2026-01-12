@@ -10,13 +10,15 @@ import './CategorySection.css';
  * @param {Function} onViewAll - Handler for "View All" action
  */
 const CategorySection = ({ category, products, onViewAll }) => {
+  const previewProducts = (products || []).slice(0, 6);
+
   return (
     <section className="category-section">
       <SectionHeader 
         title={category} 
         onViewAll={onViewAll}
       />
-      <ProductGrid products={products} />
+      <ProductGrid products={previewProducts} />
     </section>
   );
 };

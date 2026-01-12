@@ -9,8 +9,7 @@ const VALID_CATEGORIES = [
   'Clothing',
   'Books',
   'Home & Kitchen',
-  'Sports',
-  'Toys'
+  'Sports'
 ];
 
 export class ProductService {

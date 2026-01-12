@@ -1,14 +1,17 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import CategorySection from '../components/products/CategorySection';
-import { useProducts } from '../hooks/useProducts';
+import { useProductCategoryPreviews } from '../hooks/useProductCategoryPreviews';
 import './Products.css';
 
 const Products = () => {
-  const { productsByCategory, categories, loading, error } = useProducts();
+  const navigate = useNavigate();
+  const { productsByCategory, categories, loading, error } = useProductCategoryPreviews({
+    limitPerCategory: 6
+  });
 
   const handleViewAll = (category) => {
-    console.log('View all products in category:', category);
-    // TODO: Navigate to category page or show all products
+    navigate(`/products/category/${encodeURIComponent(category)}`);
   };
 
   if (loading) {
