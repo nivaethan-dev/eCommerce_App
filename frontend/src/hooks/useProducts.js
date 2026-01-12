@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { get, post, patch, del } from '../utils/api';
 
-const useProducts = () => {
+export const useProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,6 +24,26 @@ const useProducts = () => {
 
     fetchProducts();
   }, []);
+
+  const categories = useMemo(() => {
+    const set = new Set();
+    for (const product of products) {
+      const category = product?.category;
+      if (category) set.add(category);
+    }
+    return Array.from(set);
+  }, [products]);
+
+  const productsByCategory = useMemo(() => {
+    const map = {};
+    for (const product of products) {
+      const category = product?.category;
+      if (!category) continue;
+      if (!map[category]) map[category] = [];
+      map[category].push(product);
+    }
+    return map;
+  }, [products]);
 
   // Helper to convert form data to FormData for backend
   const prepareFormData = (productData) => {
@@ -99,6 +119,8 @@ const useProducts = () => {
 
   return {
     products,
+    categories,
+    productsByCategory,
     loading,
     error,
     addProduct,
