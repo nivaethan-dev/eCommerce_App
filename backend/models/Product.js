@@ -24,11 +24,21 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Product image is required'],
     validate: {
       validator: function(value) {
-        // Validate that image path starts with 'uploads/products/product_'
-        return value.startsWith('uploads/products/product_');
+        // Accept either legacy local uploads path OR a full URL (Cloudinary)
+        if (typeof value !== 'string') return false;
+        return (
+          value.startsWith('uploads/products/product_') ||
+          value.startsWith('http://') ||
+          value.startsWith('https://') ||
+          value.startsWith('data:')
+        );
       },
       message: 'Invalid image path format'
     }
+  },
+  // Cloudinary publicId for cleanup on update/delete (optional for legacy products)
+  imagePublicId: {
+    type: String
   },
   stock: {
     type: Number,
