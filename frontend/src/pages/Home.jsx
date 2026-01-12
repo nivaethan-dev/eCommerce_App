@@ -7,7 +7,7 @@ const Home = () => {
   const categories = [
     { id: 1, name: 'Electronics', image: 'https://picsum.photos/seed/electronics/400/300', color: '#667eea', slug: 'electronics' },
     { id: 2, name: 'Fashion', image: 'https://picsum.photos/seed/fashion/400/300', color: '#f093fb', slug: 'fashion' },
-    { id: 3, name: 'Home & Garden', image: 'https://picsum.photos/seed/homegarden/400/300', color: '#4facfe', slug: 'home-garden' },
+    { id: 3, name: 'Home & Kitchen', image: 'https://picsum.photos/seed/homegarden/400/300', color: '#4facfe', slug: 'home-garden' },
     { id: 4, name: 'Sports', image: 'https://picsum.photos/seed/sports/400/300', color: '#43e97b', slug: 'sports' },
     { id: 5, name: 'Books', image: 'https://picsum.photos/seed/books/400/300', color: '#fa709a', slug: 'books' }
   ];

@@ -1,5 +1,5 @@
 import Product from '../models/Product.js';
-import { fetchDocuments } from '../utils/queryHelper.js';
+import { fetchDocumentsPaged } from '../utils/queryHelper.js';
 import { PRODUCT_MESSAGES, formatProductMessage } from '../utils/productMessages.js';
 import { deleteImageByPublicId } from '../utils/cloudinary.js';
 
@@ -204,7 +204,7 @@ export const getProducts = async (role, userId, queryParams) => {
     query.category = queryParams.category.trim();
   }
 
-  return await fetchDocuments(
+  const { docs, page, limit, total, totalPages } = await fetchDocumentsPaged(
     Product,
     {
       search: queryParams?.search, // search string
@@ -214,6 +214,9 @@ export const getProducts = async (role, userId, queryParams) => {
       limit: queryParams?.limit,
       page: queryParams?.page,
     },
-    { role, userId }
+    // Deterministic order for stable pagination
+    { role, userId, sort: { createdAt: -1, _id: -1 } }
   );
+
+  return { products: docs, page, limit, total, totalPages };
 };

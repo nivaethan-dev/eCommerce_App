@@ -1,13 +1,18 @@
 import { useMemo, useState, useEffect } from 'react';
 import { get, post, patch, del } from '../utils/api';
 
-export const useProducts = () => {
+export const useProducts = (options = {}) => {
+  const { skipFetch = false } = options;
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Fetch products from backend on mount
   useEffect(() => {
+    if (skipFetch) {
+      setLoading(false);
+      return;
+    }
     const fetchProducts = async () => {
       try {
         setLoading(true);
@@ -23,7 +28,7 @@ export const useProducts = () => {
     };
 
     fetchProducts();
-  }, []);
+  }, [skipFetch]);
 
   const categories = useMemo(() => {
     const set = new Set();
