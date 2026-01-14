@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ProductGrid from '../../components/ProductGrid';
 import Button from '../../components/Button';
 import PageHeader from '../../components/PageHeader';
@@ -11,13 +11,14 @@ import useProducts from '../../hooks/useProducts';
 import { addProductFields, editProductFields } from '../../config/productFormConfig';
 import ToastStack from '../../components/ToastStack';
 import useToasts from '../../hooks/useToasts';
-import usePagination from '../../hooks/usePagination';
 import Pagination from '../../components/Pagination';
+import { get } from '../../utils/api';
 
 const AdminProducts = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   
-  const { products, loading, error, addProduct, updateProduct, deleteProduct } = useProducts();
+  // Use the hook only for mutations; list rendering is server-paginated.
+  const { addProduct, updateProduct, deleteProduct } = useProducts({ skipFetch: true });
   const { isOpen: isAddOpen, openModal: openAddModal, closeModal: closeAddModal } = useFormModal();
   const { isOpen: isEditOpen, openModal: openEditModal, closeModal: closeEditModal } = useFormModal();
   const { 
@@ -32,16 +33,38 @@ const AdminProducts = () => {
   // UI reflect (backend is the source of truth)
   const isAdmin = localStorage.getItem('userRole') === 'admin';
 
-  const {
-    page,
-    setPage,
-    totalPages,
-    currentItems: pagedProducts
-  } = usePagination(products, 5);
+  const [page, setPage] = useState(1);
+  const [products, setProducts] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchPage = async (p = page) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await get(`/api/products?page=${p}&limit=5`);
+      setProducts(res.products || []);
+      setTotalPages(res.totalPages || 1);
+      setTotalItems(typeof res.total === 'number' ? res.total : (res.products || []).length);
+    } catch (e) {
+      setError(e?.message || 'Failed to load products');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPage(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   const handleAddProduct = async (formData) => {
     await addProduct(formData);
     closeAddModal();
+    setPage(1);
+    await fetchPage(1);
   };
 
   const handleEditClick = (product) => {
@@ -53,6 +76,7 @@ const AdminProducts = () => {
     await updateProduct(editingProduct?._id || editingProduct?.id, formData);
     setEditingProduct(null);
     closeEditModal();
+    await fetchPage(page);
   };
 
   const handleDeleteClick = (product) => {
@@ -62,6 +86,7 @@ const AdminProducts = () => {
   const handleConfirmDelete = async () => {
     if (itemToDelete) {
       await deleteProduct(itemToDelete?._id || itemToDelete?.id);
+      await fetchPage(page);
     }
   };
 
@@ -93,7 +118,7 @@ const AdminProducts = () => {
       {!loading && !error && (
         <>
           <ProductGrid 
-            products={pagedProducts}
+            products={products}
           onEdit={isAdmin ? handleEditClick : undefined}
           onDelete={isAdmin ? handleDeleteClick : undefined}
           />
@@ -103,7 +128,7 @@ const AdminProducts = () => {
             totalPages={totalPages}
             onPageChange={setPage}
             pageSize={5}
-            totalItems={products.length}
+            totalItems={totalItems}
           />
         </>
       )}

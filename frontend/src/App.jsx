@@ -12,6 +12,7 @@ import AdminCustomers from './pages/admin/AdminCustomers'
 import AdminAuditLogs from './pages/admin/AdminAuditLogs'
 import AboutUs from './pages/AboutUs'
 import Products from './pages/Products'
+import CategoryProducts from './pages/CategoryProducts'
 import Cart from './pages/Cart'
 import Notifications from './pages/Notifications'
 import NotFound from './pages/NotFound'
@@ -27,6 +28,7 @@ function App() {
           <Route path="signup" element={<Signup />} />
           <Route path="about-us" element={<AboutUs />} />
           <Route path="products" element={<Products />} />
+          <Route path="products/category/:category" element={<CategoryProducts />} />
           
           {/* Protected Routes - Return 404 for guests */}
           <Route path="cart" element={

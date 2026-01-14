@@ -1,5 +1,5 @@
 import Product from '../models/Product.js';
-import { fetchDocuments } from '../utils/queryHelper.js';
+import { fetchDocumentsPaged } from '../utils/queryHelper.js';
 import { PRODUCT_MESSAGES, formatProductMessage } from '../utils/productMessages.js';
 import { deleteImageByPublicId } from '../utils/cloudinary.js';
 
@@ -9,8 +9,7 @@ const VALID_CATEGORIES = [
   'Clothing',
   'Books',
   'Home & Kitchen',
-  'Sports',
-  'Toys'
+  'Sports'
 ];
 
 export class ProductService {
@@ -198,9 +197,26 @@ export class ProductService {
 }
 
 export const getProducts = async (role, userId, queryParams) => {
-  return await fetchDocuments(Product, {
-    search: queryParams.search, // search string
-    searchFields: ['title', 'description', 'category'], // searchable fields
-    query: {} // additional filters if needed
-  }, { role, userId });
+  const query = {};
+
+  // Optional category filter
+  if (typeof queryParams?.category === 'string' && queryParams.category.trim()) {
+    query.category = queryParams.category.trim();
+  }
+
+  const { docs, page, limit, total, totalPages } = await fetchDocumentsPaged(
+    Product,
+    {
+      search: queryParams?.search, // search string
+      searchFields: ['title', 'description', 'category'], // searchable fields
+      query,
+      // Pagination controls
+      limit: queryParams?.limit,
+      page: queryParams?.page,
+    },
+    // Deterministic order for stable pagination
+    { role, userId, sort: { createdAt: -1, _id: -1 } }
+  );
+
+  return { products: docs, page, limit, total, totalPages };
 };

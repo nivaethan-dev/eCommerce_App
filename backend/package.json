@@ -9,6 +9,8 @@
     "test": "jest",
     "migrate:cloudinary": "node scripts/migrateProductImagesToCloudinary.js",
     "migrate:cloudinary:dry-run": "node scripts/migrateProductImagesToCloudinary.js --dry-run",
+    "seed:products:category": "NODE_ENV=development node scripts/seedProductsCloudinaryByCategory.js",
+    "seed:products:rollback": "NODE_ENV=development node scripts/rollbackSeedProductsCloudinaryByCategory.js",
     "seed:admin": "NODE_ENV=development node database/seeds/index.js admin",
     "seed:customers": "NODE_ENV=development node database/seeds/index.js customers",
     "seed:all": "NODE_ENV=development node database/seeds/index.js all",

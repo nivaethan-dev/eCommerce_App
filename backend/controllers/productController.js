@@ -132,12 +132,26 @@ export const fetchProducts = async (req, res) => {
     // Allow public access for product search - no authentication required
     const role = req.user ? req.user.role : 'public';
     const userId = req.user ? req.user.id : null;
-    const products = await getProducts(role, userId, req.query);
+    const { products, page, limit, total, totalPages } = await getProducts(role, userId, req.query);
     res.status(200).json({
       success: true,
       message: PRODUCT_MESSAGES.FETCH_SUCCESS,
-      products
+      products,
+      page,
+      limit,
+      total,
+      totalPages
     });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+export const fetchProductCategories = async (req, res) => {
+  try {
+    // Public endpoint: categories are a static whitelist in ProductService
+    const categories = ProductService.getValidCategories();
+    res.status(200).json({ success: true, categories });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
