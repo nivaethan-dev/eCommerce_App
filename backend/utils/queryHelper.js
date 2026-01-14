@@ -34,7 +34,7 @@ export const fetchDocuments = async (model, filters = {}, options = {}) => {
   
     return await query;
 };
-
+  
 /**
  * Fetch documents with pagination metadata (for server-side pagination UIs).
  * Does NOT change `fetchDocuments` behavior to avoid breaking existing callers.

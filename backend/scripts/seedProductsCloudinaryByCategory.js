@@ -15,9 +15,10 @@
  *   --category=Electronics     (required)
  *   --count=20                (default 20)
  *   --base-url=http://localhost:3000  (default)
- *   --image-dir=./seed_images (optional; uses real product photos from disk, per category)
- *   --download-images         (optional; auto-download category images into --asset-dir and reuse)
- *   --asset-dir=./seed_assets (default ./seed_assets; cache of downloaded images, per category)
+ *   --image-dir=./seed_images (optional; use real product photos from disk, per category)
+ *   --download-images         (optional; auto-download category images into --asset-dir and reuse; Electronics default)
+ *   --asset-dir=./seed_assets (default ./seed_assets)
+ *       - Electronics: cached downloaded images live in `seed_assets/electronics/` (fills to --count)\n+ *       - Other categories: YOU provide 5 base images in `seed_assets/<category-slug>/` and the script reuses them to create --count products
  *   --seed-tag=1736700000000  (optional; makes it easier to rollback a run)
  *   --yes                     (skip the confirmation prompt)
  *   --dry-run                 (no API calls, prints what would be created)
@@ -41,8 +42,7 @@ const VALID_CATEGORIES = [
   'Clothing',
   'Books',
   'Home & Kitchen',
-  'Sports',
-  'Toys'
+  'Sports'
 ];
 
 const CATEGORY_STYLES = {
@@ -50,8 +50,7 @@ const CATEGORY_STYLES = {
   Clothing: { bg: '#7c2d12', fg: '#ffffff', accent: '#fdba74', icon: '👕' },
   Books: { bg: '#14532d', fg: '#ffffff', accent: '#86efac', icon: '📚' },
   'Home & Kitchen': { bg: '#3f1d56', fg: '#ffffff', accent: '#d8b4fe', icon: '🏠' },
-  Sports: { bg: '#064e3b', fg: '#ffffff', accent: '#34d399', icon: '🏀' },
-  Toys: { bg: '#7f1d1d', fg: '#ffffff', accent: '#fca5a5', icon: '🧸' }
+  Sports: { bg: '#064e3b', fg: '#ffffff', accent: '#34d399', icon: '🏀' }
 };
 
 function parseArgs(argv) {
@@ -161,13 +160,6 @@ function buildRealisticSeedProduct({ category, index, seedTag }) {
       features: ['sweat-resistant', 'high grip', 'lightweight', 'ergonomic', 'built for training'],
       priceBase: 11.99,
       priceStep: 8.25
-    },
-    Toys: {
-      types: ['Building Blocks Set', 'RC Car', 'Plush Toy', 'Puzzle Box', 'Art Kit', 'Board Game'],
-      brands: ['Playforge', 'BrightBox', 'TinyTown', 'WonderWorks'],
-      features: ['kid-friendly', 'durable materials', 'hours of fun', 'great gift', 'easy to learn'],
-      priceBase: 8.99,
-      priceStep: 6.5
     }
   };
 
@@ -327,8 +319,6 @@ function commonsSearchQueryForCategory(category) {
       return 'kitchen cookware utensil appliance product photo';
     case 'Sports':
       return 'sports equipment shoes ball product photo';
-    case 'Toys':
-      return 'toy figurine plush building blocks product photo';
     default:
       return `${category} product photo`;
   }
@@ -417,13 +407,6 @@ function commonsQueryVariants(category) {
       'football ball product photo filetype:bitmap',
       'basketball product photo filetype:bitmap',
       'tennis racket product photo filetype:bitmap'
-    ];
-  }
-  if (category === 'Toys') {
-    return [
-      'toy product photo filetype:bitmap',
-      'plush toy product photo filetype:bitmap',
-      'building blocks product photo filetype:bitmap'
     ];
   }
   return [commonsSearchQueryForCategory(category)];
@@ -534,6 +517,7 @@ async function listImageFilesForCategory(imageDir, category) {
       const ext = path.extname(f).toLowerCase();
       return ['.jpg', '.jpeg', '.png', '.webp', '.avif'].includes(ext);
     })
+    .sort((a, b) => a.localeCompare(b))
     .map((f) => path.join(folder, f));
 
   return { folder, files };
@@ -625,7 +609,7 @@ async function main() {
     envFile,
     imageDir,
     assetDir,
-    downloadImages,
+    downloadImages: downloadImagesArg,
     yes,
     seedTag: seedTagArg
   } = parseArgs(process.argv);
@@ -660,6 +644,12 @@ async function main() {
 
   const seedTag = seedTagArg || `${Date.now()}`;
 
+  // Behavior defaults:
+  // - Electronics: auto-download to cache unless imageDir explicitly provided.
+  // - Non-Electronics: use 5 base images from assetDir unless imageDir provided.
+  const isElectronics = category === 'Electronics';
+  const downloadImages = isElectronics ? (downloadImagesArg || !imageDir) : downloadImagesArg;
+
   let imageFiles = null;
   let imageFolder = null;
   if (imageDir && downloadImages) {
@@ -667,6 +657,7 @@ async function main() {
   }
 
   if (downloadImages) {
+    // Electronics: ensure there are `count` cached images.
     const { categoryFolder, downloaded, total } = await ensureDownloadedImages({
       assetDir,
       category,
@@ -679,13 +670,28 @@ async function main() {
     imageFiles = files;
     imageFolder = folder;
   } else if (imageDir) {
+    // Explicit per-category image folder (user-managed).
     const resolved = path.isAbsolute(imageDir) ? imageDir : path.join(backendDir, imageDir);
     const { folder, files } = await listImageFilesForCategory(resolved, category);
-    if (files.length < count) {
-      throw new Error(`Not enough images in "${folder}". Need at least ${count}, found ${files.length}.`);
+    if (files.length < Math.min(5, count)) {
+      throw new Error(`Not enough images in "${folder}". Need at least ${Math.min(5, count)}, found ${files.length}.`);
     }
     imageFiles = files;
     imageFolder = folder;
+  } else if (!isElectronics) {
+    // Non-Electronics default: require 5 base images from assetDir/<category> and reuse to create `count` products.
+    const resolvedAsset = path.isAbsolute(assetDir) ? assetDir : path.join(backendDir, assetDir);
+    const { folder, files } = await listImageFilesForCategory(resolvedAsset, category);
+    if (files.length < 5) {
+      throw new Error(
+        `Non-Electronics categories require 5 base images. Found ${files.length} in "${folder}".`
+      );
+    }
+    imageFiles = files.slice(0, 5);
+    imageFolder = folder;
+  } else {
+    // Electronics without downloadImages should not happen due to default above, but keep a safe fallback.
+    throw new Error('Electronics requires either --download-images (default) or --image-dir.');
   }
 
   console.log('--- Seed Products (Cloudinary) ---');
@@ -732,7 +738,9 @@ async function main() {
       let mimeType;
 
       if (imageFiles) {
-        const filePath = imageFiles[i - 1]; // stable order
+        // Reuse base images deterministically.
+        // For non-Electronics with 5 base images, this yields 20 products: 4 per image.
+        const filePath = imageFiles[(i - 1) % imageFiles.length];
         const ext = path.extname(filePath);
         mimeType = extToMime(ext);
         if (!mimeType) throw new Error(`Unsupported image extension: ${ext}`);
