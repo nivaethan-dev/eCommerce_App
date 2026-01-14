@@ -34,7 +34,7 @@ function App() {
           
           {/* Protected Routes - Return 404 for guests */}
           <Route path="cart" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="customer">
               <Cart />
             </ProtectedRoute>
           } />

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useProduct } from '../../hooks/useProduct';
 import { post } from '../../utils/api';
 import ProductGallery from './components/ProductGallery';
@@ -13,13 +13,34 @@ import './ProductDetails.css';
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { product, loading, error } = useProduct(id);
   const [isProcessing, setIsProcessing] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [actionSuccess, setActionSuccess] = useState(null);
 
+  const getReturnTo = () =>
+    `${location.pathname}${location.search || ''}${location.hash || ''}`;
+
+  const redirectToLogin = () => {
+    const returnTo = getReturnTo();
+    navigate(`/login?redirect=${encodeURIComponent(returnTo)}`);
+  };
+
   const handleAddToCart = async (quantity) => {
     try {
+      const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+      const userRole = localStorage.getItem('userRole');
+      if (!isAuthenticated) {
+        redirectToLogin();
+        return;
+      }
+      // Admins should not use customer cart flows
+      if (userRole === 'admin') {
+        navigate('/404');
+        return;
+      }
+
       setIsProcessing(true);
       setActionError(null);
       setActionSuccess(null);
@@ -34,6 +55,10 @@ const ProductDetails = () => {
       window.dispatchEvent(new Event('cartChange'));
     } catch (err) {
       console.error('Failed to add to cart:', err);
+      if (typeof err?.message === 'string' && err.message.includes('status: 401')) {
+        redirectToLogin();
+        return;
+      }
       setActionError(err.message || 'Failed to add item to cart. Please try again.');
     } finally {
       setIsProcessing(false);
@@ -42,6 +67,18 @@ const ProductDetails = () => {
 
   const handleBuyNow = async (quantity) => {
     try {
+      const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+      const userRole = localStorage.getItem('userRole');
+      if (!isAuthenticated) {
+        redirectToLogin();
+        return;
+      }
+      // Admins should not use customer cart/order flows
+      if (userRole === 'admin') {
+        navigate('/404');
+        return;
+      }
+
       setIsProcessing(true);
       setActionError(null);
       
@@ -58,6 +95,10 @@ const ProductDetails = () => {
       });
     } catch (err) {
       console.error('Failed to place direct order:', err);
+      if (typeof err?.message === 'string' && err.message.includes('status: 401')) {
+        redirectToLogin();
+        return;
+      }
       setActionError(err.message || 'Failed to place order. Please try again.');
     } finally {
       setIsProcessing(false);

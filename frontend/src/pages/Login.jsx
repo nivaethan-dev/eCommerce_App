@@ -1,11 +1,16 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { post } from '../utils/api';
 import { API_ENDPOINTS } from '../utils/constants';
 import './Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectQuery = useMemo(() => {
+    const redirectTo = new URLSearchParams(location.search).get('redirect');
+    return redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : '';
+  }, [location.search]);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -207,7 +212,7 @@ const Login = () => {
             <span>Don't have an account?</span>
           </div>
 
-          <Link to="/signup" className="signup-link">
+          <Link to={`/signup${redirectQuery}`} className="signup-link">
             Create a New Account
           </Link>
         </div>

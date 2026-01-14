@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { get, post } from '../utils/api';
+import { get, post, put } from '../utils/api';
 import { API_ENDPOINTS, PRODUCT_CATEGORIES } from '../utils/constants';
 import './Header.css';
 
@@ -11,6 +11,7 @@ const Header = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [cartItemCount, setCartItemCount] = useState(0);
   const [cartItems, setCartItems] = useState([]);
+  const [updatingCartProductId, setUpdatingCartProductId] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -119,6 +120,27 @@ const Header = () => {
   useEffect(() => {
     fetchCartData();
   }, [fetchCartData]);
+
+  const updateCartQuantity = useCallback(
+    async (productId, nextQuantity) => {
+      if (!productId) return;
+
+      try {
+        setUpdatingCartProductId(String(productId));
+        await put(`/api/customers/cart/items/${productId}`, { quantity: nextQuantity });
+        // Refresh from server to keep header consistent with backend stock rules
+        await fetchCartData();
+        window.dispatchEvent(new Event('cartChange'));
+      } catch (error) {
+        console.error('Failed to update cart quantity:', error);
+        // Best-effort refresh to recover from partial state
+        await fetchCartData();
+      } finally {
+        setUpdatingCartProductId(null);
+      }
+    },
+    [fetchCartData]
+  );
 
   // Listen for cart change events
   useEffect(() => {
@@ -469,6 +491,12 @@ const Header = () => {
               {/* Cart Dropdown */}
               {showCartDropdown && (
                 <div className="cart-dropdown">
+                  <div className="cart-dropdown-header">
+                    <div className="cart-dropdown-title">Cart</div>
+                    <div className="cart-dropdown-count">
+                      {cartItemCount} item{cartItemCount === 1 ? '' : 's'}
+                    </div>
+                  </div>
                   {cartItems.length === 0 ? (
                     <div className="cart-empty">
                       <svg 
@@ -523,25 +551,66 @@ const Header = () => {
                               />
                             </div>
                             <div className="cart-item-info">
-                              <div className="cart-item-name">
-                                {(() => {
-                                  const product =
-                                    item?.productId && typeof item.productId === 'object'
-                                      ? item.productId
-                                      : null;
-                                  return product?.title || 'Product';
-                                })()}
-                              </div>
-                              <div className="cart-item-meta">
-                                {item.quantity} × $
-                                {(() => {
-                                  const product =
-                                    item?.productId && typeof item.productId === 'object'
-                                      ? item.productId
-                                      : null;
-                                  return product?.price || 0;
-                                })()}
-                              </div>
+                              {(() => {
+                                const product =
+                                  item?.productId && typeof item.productId === 'object'
+                                    ? item.productId
+                                    : null;
+                                const pid = product?._id;
+                                const title = product?.title || 'Product';
+                                const unitPrice = Number(product?.price) || 0;
+                                const currentQty = Number(item?.quantity) || 0;
+                                const maxStock = Number(product?.stock) || Infinity;
+                                const disabled = updatingCartProductId === String(pid);
+                                const lineTotal = (unitPrice * currentQty).toFixed(2);
+
+                                return (
+                                  <>
+                                    <div className="cart-item-top">
+                                      <div className="cart-item-name" title={title}>
+                                        {title}
+                                      </div>
+                                      <div className="cart-item-line-total">${lineTotal}</div>
+                                    </div>
+
+                                    <div className="cart-item-bottom">
+                                      <div className="cart-item-qty-controls">
+                                        <button
+                                          type="button"
+                                          className="cart-qty-btn"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            updateCartQuantity(pid, Math.max(0, currentQty - 1));
+                                          }}
+                                          disabled={disabled || currentQty <= 0}
+                                          aria-label="Decrease quantity"
+                                        >
+                                          −
+                                        </button>
+                                        <span className="cart-qty-value">{currentQty}</span>
+                                        <button
+                                          type="button"
+                                          className="cart-qty-btn"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            updateCartQuantity(pid, Math.min(maxStock, currentQty + 1));
+                                          }}
+                                          disabled={disabled || currentQty >= maxStock}
+                                          aria-label="Increase quantity"
+                                        >
+                                          +
+                                        </button>
+                                      </div>
+
+                                      <div className="cart-item-unit-price">
+                                        ${unitPrice.toFixed(2)} each
+                                      </div>
+                                    </div>
+                                  </>
+                                );
+                              })()}
                             </div>
                           </div>
                         ))}
