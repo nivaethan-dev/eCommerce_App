@@ -5,16 +5,16 @@ const Home = () => {
   const navigate = useNavigate();
   
   const categories = [
-    { id: 1, name: 'Electronics', image: 'https://picsum.photos/seed/electronics/400/300', color: '#667eea', slug: 'electronics' },
-    { id: 2, name: 'Fashion', image: 'https://picsum.photos/seed/fashion/400/300', color: '#f093fb', slug: 'fashion' },
-    { id: 3, name: 'Home & Garden', image: 'https://picsum.photos/seed/homegarden/400/300', color: '#4facfe', slug: 'home-garden' },
-    { id: 4, name: 'Sports', image: 'https://picsum.photos/seed/sports/400/300', color: '#43e97b', slug: 'sports' },
-    { id: 5, name: 'Books', image: 'https://picsum.photos/seed/books/400/300', color: '#fa709a', slug: 'books' }
+    { id: 1, name: 'Electronics', image: 'https://picsum.photos/seed/electronics/400/300', color: '#667eea' },
+    { id: 2, name: 'Clothing', image: 'https://picsum.photos/seed/fashion/400/300', color: '#f093fb' },
+    { id: 3, name: 'Home & Kitchen', image: 'https://picsum.photos/seed/homegarden/400/300', color: '#4facfe' },
+    { id: 4, name: 'Sports', image: 'https://picsum.photos/seed/sports/400/300', color: '#43e97b' },
+    { id: 5, name: 'Books', image: 'https://picsum.photos/seed/books/400/300', color: '#fa709a' }
   ];
 
-  const handleCategoryClick = (slug) => {
+  const handleCategoryClick = (categoryName) => {
     // Navigate to products page with category filter
-    navigate(`/products?category=${slug}`);
+    navigate(`/products/category/${encodeURIComponent(categoryName)}`);
   };
 
   return (
@@ -51,7 +51,7 @@ const Home = () => {
                 <h3 className="category-name">{category.name}</h3>
                 <button 
                   className="category-btn"
-                  onClick={() => handleCategoryClick(category.slug)}
+                  onClick={() => handleCategoryClick(category.name)}
                 >
                   Browse
                 </button>

@@ -1,17 +1,11 @@
 import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import crypto from 'crypto';
-import { dirname } from 'path';
-import fs from 'fs/promises';
 // Middleware to validate file mime type using file-type package
-import { fileTypeFromFile } from 'file-type';
+import { fileTypeFromBuffer } from 'file-type';
 // Image processing library for resizing
 import sharp from 'sharp';
 
-const currentFilePath = fileURLToPath(import.meta.url);
-const currentDirPath = dirname(currentFilePath);
-const uploadDirectory = path.join(currentDirPath, '..', 'uploads', 'products');
+import { uploadImageBuffer } from '../utils/cloudinary.js';
 
 // Configuration for image uploads - easily modifiable for future scalability
 const UPLOAD_CONFIG = {
@@ -46,19 +40,8 @@ const UPLOAD_CONFIG = {
 // For backward compatibility, keep MIME_TYPES reference
 const MIME_TYPES = UPLOAD_CONFIG.MIME_TYPES;
 
-// Configure multer storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDirectory); // Store in uploads directory using ES modules compatible path
-  },
-  filename: function (req, file, cb) {
-    // Generate random filename with product_ prefix
-    const randomName = crypto.randomBytes(16).toString('hex');
-    // Use original file extension for temporary storage, will be converted during processing
-    const extension = MIME_TYPES[file.mimetype] || 'jpg';
-    cb(null, `temp_${randomName}.${extension}`);
-  }
-});
+// Configure multer storage (memory only — no local disk writes)
+const storage = multer.memoryStorage();
 
 // File filter function
 const fileFilter = (req, file, cb) => {
@@ -80,17 +63,8 @@ const upload = multer({
   }
 });
 
-// Helper to clean up files
-const cleanupFiles = async (req) => {
-  if (req.file) {
-    try { await fs.unlink(req.file.path); } catch (_) { }
-  }
-  if (req.files) {
-    for (const file of req.files) {
-      try { await fs.unlink(file.path); } catch (_) { }
-    }
-  }
-};
+// Helper retained for compatibility (no-op with memory storage)
+const cleanupFiles = async () => {};
 
 // Centralized error response formatter for image uploads
 const sendUploadError = (res, code, message, statusCode = 400) => {
@@ -129,7 +103,7 @@ export const validateImage = async (req, res, next) => {
 
   try {
     // Detect actual file type
-    const fileType = await fileTypeFromFile(req.file.path);
+    const fileType = await fileTypeFromBuffer(req.file.buffer);
 
     // Validate against allowed MIME types
     if (!fileType || !Object.values(MIME_TYPES).includes(fileType.ext)) {
@@ -153,39 +127,14 @@ export const processImage = async (req, res, next) => {
   }
 
   try {
-    const { path: inputPath, filename } = req.file;
-    // Generate final filename with correct extension
-    const finalFilename = filename.replace('temp_', 'product_').replace(/\.[^.]+$/, `.${UPLOAD_CONFIG.IMAGE_RESIZE.OUTPUT_FORMAT}`);
-    const outputPath = path.join(uploadDirectory, finalFilename);
+    const inputBuffer = req.file.buffer;
 
-    console.log('Processing image:', {
-      inputPath,
-      outputPath,
-      originalFilename: filename,
-      finalFilename,
-      mimetype: req.file.mimetype
-    });
-
-    // Check if input file exists and get file stats
-    let fileStats;
-    try {
-      fileStats = await fs.stat(inputPath);
-      console.log('File stats:', {
-        size: fileStats.size,
-        isFile: fileStats.isFile(),
-        mtime: fileStats.mtime
-      });
-    } catch (accessError) {
-      throw new Error(`Input file does not exist: ${inputPath}`);
-    }
-
-    // Check if file is not empty
-    if (fileStats.size === 0) {
+    if (!inputBuffer || inputBuffer.length === 0) {
       throw new Error('Input file is empty');
     }
 
-    // Process image with Sharp - read from input and write to output
-    const processedBuffer = await sharp(inputPath)
+    // Process image with Sharp - read from memory and output a buffer
+    const processedBuffer = await sharp(inputBuffer)
       .resize(UPLOAD_CONFIG.IMAGE_RESIZE.WIDTH, UPLOAD_CONFIG.IMAGE_RESIZE.HEIGHT, {
         fit: 'cover', // Crop to fill dimensions while maintaining aspect ratio
         position: 'center' // Center the crop
@@ -197,22 +146,22 @@ export const processImage = async (req, res, next) => {
       .withMetadata(!UPLOAD_CONFIG.IMAGE_RESIZE.STRIP_METADATA) // Strip metadata if configured
       .toBuffer();
 
-    // Write the processed buffer to the output file
-    await fs.writeFile(outputPath, processedBuffer);
+    // Upload processed buffer to Cloudinary
+    const randomName = crypto.randomBytes(16).toString('hex');
+    const publicId = `product_${randomName}`;
 
-    console.log('Image processed successfully:', {
-      outputPath,
-      processedSize: processedBuffer.length,
-      originalSize: fileStats.size
+    const uploaded = await uploadImageBuffer(processedBuffer, {
+      public_id: publicId
     });
 
-    // Delete the original file
-    await fs.unlink(inputPath);
+    // Attach Cloudinary results for downstream service layer
+    req.file.cloudinaryUrl = uploaded.secure_url;
+    req.file.cloudinaryPublicId = uploaded.public_id;
 
-    // Update the file path in req.file to point to the processed image
-    req.file.path = outputPath;
+    // Keep metadata consistent for any other middleware that inspects req.file
     req.file.mimetype = `image/${UPLOAD_CONFIG.IMAGE_RESIZE.OUTPUT_FORMAT}`;
-    req.file.filename = finalFilename;
+    req.file.filename = `${publicId}.jpg`;
+    req.file.buffer = processedBuffer;
 
     next();
   } catch (error) {
@@ -220,19 +169,9 @@ export const processImage = async (req, res, next) => {
     console.error('Image processing error:', {
       message: error.message,
       stack: error.stack,
-      inputPath: req.file?.path,
       filename: req.file?.filename,
       mimetype: req.file?.mimetype
     });
-
-    // Clean up files on error
-    if (req.file) {
-      try {
-        await fs.unlink(req.file.path);
-      } catch (unlinkError) {
-        console.error('Error deleting file after processing error:', unlinkError);
-      }
-    }
 
     return res.status(400).json({
       success: false,
@@ -317,8 +256,8 @@ export const handleUploadError = (error, req, res, next) => {
 export const productUploadBundle = [
   uploadProductImage,
   handleUploadError,
-  processImage,
-  validateImage
+  validateImage,
+  processImage
 ];
 
 // Export configuration for use in other parts of the application
@@ -327,17 +266,14 @@ export { UPLOAD_CONFIG };
 // Future scalability: Function to create upload middleware for multiple images
 // This can be used when we want to extend to multiple images in the future
 export const createUploadMiddleware = (fieldName = 'image', maxImages = UPLOAD_CONFIG.MAX_IMAGES) => {
-  const uploadConfig = {
-    ...upload,
+  const instance = multer({
+    storage,
+    fileFilter,
     limits: {
-      ...upload.limits,
+      fileSize: UPLOAD_CONFIG.MAX_FILE_SIZE,
       files: maxImages
     }
-  };
+  });
 
-  if (maxImages === 1) {
-    return uploadConfig.single(fieldName);
-  } else {
-    return uploadConfig.array(fieldName, maxImages);
-  }
+  return maxImages === 1 ? instance.single(fieldName) : instance.array(fieldName, maxImages);
 };

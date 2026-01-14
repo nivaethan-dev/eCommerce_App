@@ -2,18 +2,20 @@ import IconButton from './IconButton';
 import EditIcon from './icons/EditIcon';
 import DeleteIcon from './icons/DeleteIcon';
 
-// Backend base URL (server defaults to PORT=3000 if not set)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
 const ProductGrid = ({ products = [], onEdit, onDelete }) => {
   // Helper to get full image URL
   const getImageUrl = (imagePath) => {
     // Use a real placeholder image (no text) if missing
     if (!imagePath) return 'https://via.placeholder.com/50';
-    if (imagePath.startsWith('http') || imagePath.startsWith('data:')) return imagePath;
-    // Remove leading slash if present to avoid double slashes
-    const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
-    return `${API_BASE_URL}/${cleanPath}`;
+    // Remote-only images (Cloudinary/etc.). Do NOT render local upload paths from the machine.
+    if (
+      imagePath.startsWith('http://') ||
+      imagePath.startsWith('https://') ||
+      imagePath.startsWith('data:')
+    ) {
+      return imagePath;
+    }
+    return 'https://via.placeholder.com/50';
   };
 
   return (
