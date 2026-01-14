@@ -10,6 +10,7 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [cartItemCount, setCartItemCount] = useState(0);
+  const [cartItems, setCartItems] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -91,23 +92,41 @@ const Header = () => {
     };
   }, [isAuthenticated, showNotificationDropdown, fetchNotificationsList]);
 
-  // Fetch cart data to get item count
-  useEffect(() => {
-    const fetchCartCount = async () => {
-      try {
-        const cartData = await get(API_ENDPOINTS.CART);
-        // Calculate total number of items in cart
-        const totalItems = cartData.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
-        setCartItemCount(totalItems);
-      } catch (error) {
-        console.error('Failed to fetch cart:', error);
-        // If cart fetch fails (e.g., user not logged in), set count to 0
-        setCartItemCount(0);
-      }
-    };
+  // Fetch cart data to get item count and items list
+  const fetchCartData = useCallback(async () => {
+    try {
+      const cartData = await get(API_ENDPOINTS.CART);
+      // Backend shape: { success, cart: [...], summary: {...} }
+      // Be defensive in case older shape exists.
+      const items = Array.isArray(cartData?.cart)
+        ? cartData.cart
+        : Array.isArray(cartData?.items)
+          ? cartData.items
+          : [];
 
-    fetchCartCount();
+      // Calculate total number of items in cart
+      const totalItems = items.reduce((sum, item) => sum + (Number(item?.quantity) || 0), 0);
+      setCartItemCount(totalItems);
+      setCartItems(items);
+    } catch (error) {
+      console.error('Failed to fetch cart:', error);
+      // If cart fetch fails (e.g., user not logged in), set to defaults
+      setCartItemCount(0);
+      setCartItems([]);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchCartData();
+  }, [fetchCartData]);
+
+  // Listen for cart change events
+  useEffect(() => {
+    window.addEventListener('cartChange', fetchCartData);
+    return () => {
+      window.removeEventListener('cartChange', fetchCartData);
+    };
+  }, [fetchCartData]);
 
   // Fetch notifications count for authenticated users
   useEffect(() => {
@@ -179,6 +198,8 @@ const Header = () => {
     if (show) {
       // Show immediately
       setShowCartDropdown(true);
+      // Ensure hover dropdown always shows latest server cart
+      fetchCartData();
     } else {
       // Delay before hiding
       cartTimeoutRef.current = setTimeout(() => {
@@ -448,29 +469,106 @@ const Header = () => {
               {/* Cart Dropdown */}
               {showCartDropdown && (
                 <div className="cart-dropdown">
-                  <div className="cart-empty">
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      width="64" 
-                      height="64" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="1.5"
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                      className="empty-cart-icon"
-                    >
-                      <circle cx="9" cy="21" r="1"></circle>
-                      <circle cx="20" cy="21" r="1"></circle>
-                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                    </svg>
-                    <p className="empty-text">Your cart is empty</p>
-                    <p className="empty-subtext">Discover amazing products and start adding items to your cart!</p>
-                    <Link to="/products" className="browse-products-btn">
-                      Browse Products
-                    </Link>
-                  </div>
+                  {cartItems.length === 0 ? (
+                    <div className="cart-empty">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="64" 
+                        height="64" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="1.5"
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                        className="empty-cart-icon"
+                      >
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                      </svg>
+                      <p className="empty-text">Your cart is empty</p>
+                      <p className="empty-subtext">Discover amazing products and start adding items to your cart!</p>
+                      <Link to="/products" className="browse-products-btn">
+                        Browse Products
+                      </Link>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="cart-items-list">
+                        {cartItems.map((item) => (
+                          <div
+                            key={item.productId?._id || item.productId || item._id}
+                            className="cart-dropdown-item"
+                          >
+                            <div className="cart-item-img-container">
+                              <img 
+                                src={(() => {
+                                  const product =
+                                    item?.productId && typeof item.productId === 'object'
+                                      ? item.productId
+                                      : null;
+                                  const img = product?.image;
+                                  return typeof img === 'string' && img.startsWith('http')
+                                    ? img
+                                    : 'https://via.placeholder.com/40';
+                                })()}
+                                alt={(() => {
+                                  const product =
+                                    item?.productId && typeof item.productId === 'object'
+                                      ? item.productId
+                                      : null;
+                                  return product?.title || 'Product';
+                                })()}
+                              />
+                            </div>
+                            <div className="cart-item-info">
+                              <div className="cart-item-name">
+                                {(() => {
+                                  const product =
+                                    item?.productId && typeof item.productId === 'object'
+                                      ? item.productId
+                                      : null;
+                                  return product?.title || 'Product';
+                                })()}
+                              </div>
+                              <div className="cart-item-meta">
+                                {item.quantity} × $
+                                {(() => {
+                                  const product =
+                                    item?.productId && typeof item.productId === 'object'
+                                      ? item.productId
+                                      : null;
+                                  return product?.price || 0;
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="cart-dropdown-footer">
+                        <div className="cart-total-row">
+                          <span>Total:</span>
+                          <span className="cart-total-price">
+                            ${cartItems
+                              .reduce((sum, item) => {
+                                const product =
+                                  item?.productId && typeof item.productId === 'object'
+                                    ? item.productId
+                                    : null;
+                                const price = Number(product?.price) || 0;
+                                const qty = Number(item?.quantity) || 0;
+                                return sum + qty * price;
+                              }, 0)
+                              .toFixed(2)}
+                          </span>
+                        </div>
+                        <Link to="/products" className="browse-products-btn">
+                          Continue Shopping
+                        </Link>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
