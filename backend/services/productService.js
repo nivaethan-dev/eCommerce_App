@@ -194,6 +194,14 @@ export class ProductService {
     await Product.findByIdAndDelete(productId);
     return deletedData;
   }
+
+  static async getProductById(productId) {
+    const product = await Product.findById(productId);
+    if (!product) {
+      throw new Error(PRODUCT_MESSAGES.PRODUCT_NOT_FOUND);
+    }
+    return product;
+  }
 }
 
 export const getProducts = async (role, userId, queryParams) => {
