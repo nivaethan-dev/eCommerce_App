@@ -5,6 +5,15 @@ import { API_ENDPOINTS, PRODUCT_CATEGORIES } from '../utils/constants';
 import './Header.css';
 
 const Header = () => {
+  const formatLKR = useCallback((value) => {
+    const numeric = typeof value === 'number' && Number.isFinite(value) ? value : Number(value);
+    const safe = Number.isFinite(numeric) ? numeric : 0;
+    return new Intl.NumberFormat('en-LK', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(safe);
+  }, []);
+
   const navigate = useNavigate();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -498,29 +507,29 @@ const Header = () => {
                     </div>
                   </div>
                   {cartItems.length === 0 ? (
-                    <div className="cart-empty">
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        width="64" 
-                        height="64" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="1.5"
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                        className="empty-cart-icon"
-                      >
-                        <circle cx="9" cy="21" r="1"></circle>
-                        <circle cx="20" cy="21" r="1"></circle>
-                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                      </svg>
-                      <p className="empty-text">Your cart is empty</p>
-                      <p className="empty-subtext">Discover amazing products and start adding items to your cart!</p>
-                      <Link to="/products" className="browse-products-btn">
-                        Browse Products
-                      </Link>
-                    </div>
+                  <div className="cart-empty">
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      width="64" 
+                      height="64" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="1.5"
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                      className="empty-cart-icon"
+                    >
+                      <circle cx="9" cy="21" r="1"></circle>
+                      <circle cx="20" cy="21" r="1"></circle>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <p className="empty-text">Your cart is empty</p>
+                    <p className="empty-subtext">Discover amazing products and start adding items to your cart!</p>
+                    <Link to="/products" className="browse-products-btn">
+                      Browse Products
+                    </Link>
+                  </div>
                   ) : (
                     <>
                       <div className="cart-items-list">
@@ -562,7 +571,7 @@ const Header = () => {
                                 const currentQty = Number(item?.quantity) || 0;
                                 const maxStock = Number(product?.stock) || Infinity;
                                 const disabled = updatingCartProductId === String(pid);
-                                const lineTotal = (unitPrice * currentQty).toFixed(2);
+                                const lineTotal = formatLKR(unitPrice * currentQty);
 
                                 return (
                                   <>
@@ -570,7 +579,7 @@ const Header = () => {
                                       <div className="cart-item-name" title={title}>
                                         {title}
                                       </div>
-                                      <div className="cart-item-line-total">${lineTotal}</div>
+                                      <div className="cart-item-line-total">Rs. {lineTotal}</div>
                                     </div>
 
                                     <div className="cart-item-bottom">
@@ -605,7 +614,7 @@ const Header = () => {
                                       </div>
 
                                       <div className="cart-item-unit-price">
-                                        ${unitPrice.toFixed(2)} each
+                                        Rs. {formatLKR(unitPrice)} each
                                       </div>
                                     </div>
                                   </>
@@ -619,7 +628,7 @@ const Header = () => {
                         <div className="cart-total-row">
                           <span>Total:</span>
                           <span className="cart-total-price">
-                            ${cartItems
+                            Rs. {formatLKR(cartItems
                               .reduce((sum, item) => {
                                 const product =
                                   item?.productId && typeof item.productId === 'object'
@@ -628,8 +637,7 @@ const Header = () => {
                                 const price = Number(product?.price) || 0;
                                 const qty = Number(item?.quantity) || 0;
                                 return sum + qty * price;
-                              }, 0)
-                              .toFixed(2)}
+                              }, 0))}
                           </span>
                         </div>
                         <Link to="/products" className="browse-products-btn">

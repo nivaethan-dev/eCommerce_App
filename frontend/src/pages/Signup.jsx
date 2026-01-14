@@ -95,7 +95,7 @@ const Signup = () => {
         localStorage.setItem('isAuthenticated', 'true');
         // Dispatch custom event to notify other components
         window.dispatchEvent(new Event('authChange'));
-
+        
         const redirectTo = new URLSearchParams(window.location.search).get('redirect') || '/';
         navigate(redirectTo);
       } else {
