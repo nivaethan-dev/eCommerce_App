@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Image from '../ui/Image';
 import Price from '../ui/Price';
 import './ProductCard.css';
@@ -8,6 +9,7 @@ import './ProductCard.css';
  * @param {Object} product - Product object with id, name, price, image
  */
 const ProductCard = ({ product }) => {
+  const navigate = useNavigate();
   // Backend shape (Mongo): _id, title, price, image, description, category, ...
   // Keep compatibility with any mock data still using id/name.
   const id = product?._id || product?.id;
@@ -28,7 +30,7 @@ const ProductCard = ({ product }) => {
 
   const handleClick = () => {
     // Navigate to product detail page
-    console.log('Navigate to product:', id);
+    navigate(`/products/${id}`);
   };
 
   return (

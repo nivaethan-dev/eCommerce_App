@@ -69,7 +69,9 @@ const ProductGrid = ({ products = [], onEdit, onDelete }) => {
                   {product.description}
                 </td>
                 <td style={{ padding: '1rem', color: '#666' }}>{product.category}</td>
-                <td style={{ padding: '1rem', color: '#333', fontWeight: '500' }}>${product.price}</td>
+                <td style={{ padding: '1rem', color: '#333', fontWeight: '500' }}>
+                  Rs. {new Intl.NumberFormat('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(product.price) || 0)}
+                </td>
                 <td style={{ padding: '1rem', color: product.stock > 0 ? '#4caf50' : '#f44336' }}>
                   {product.stock}
                 </td>

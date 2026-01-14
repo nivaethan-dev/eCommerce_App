@@ -1,11 +1,16 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { post } from '../utils/api';
 import { API_ENDPOINTS } from '../utils/constants';
 import './Signup.css';
 
 const Signup = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectQuery = useMemo(() => {
+    const redirectTo = new URLSearchParams(location.search).get('redirect');
+    return redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : '';
+  }, [location.search]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -91,8 +96,8 @@ const Signup = () => {
         // Dispatch custom event to notify other components
         window.dispatchEvent(new Event('authChange'));
         
-        // Redirect to home page
-        navigate('/');
+        const redirectTo = new URLSearchParams(window.location.search).get('redirect') || '/';
+        navigate(redirectTo);
       } else {
         setApiError('Signup failed. Please try again.');
       }
@@ -233,7 +238,7 @@ const Signup = () => {
             <span>Already have an account?</span>
           </div>
 
-          <Link to="/login" className="login-link">
+          <Link to={`/login${redirectQuery}`} className="login-link">
             Sign In to Your Account
           </Link>
         </div>

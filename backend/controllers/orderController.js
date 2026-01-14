@@ -1,5 +1,6 @@
 import {
   createOrderFromCart,
+  createOrderFromItems,
   getCustomerOrders,
   getAllOrders,
   getOrderById,
@@ -15,8 +16,16 @@ import * as orderTriggers from '../eventTriggers/orderEvent.js';
 export const placeOrder = async (req, res) => {
   try {
     const customerId = req.user.id;
+    const { items } = req.body;
 
-    const order = await createOrderFromCart(customerId);
+    let order;
+    if (items && Array.isArray(items) && items.length > 0) {
+      // Buy It Now (direct order from items)
+      order = await createOrderFromItems(customerId, items);
+    } else {
+      // Standard checkout from cart
+      order = await createOrderFromCart(customerId);
+    }
 
     // Trigger order placed event (customer & admin notifications + audit log)
     await orderTriggers.triggerOrderPlaced(
