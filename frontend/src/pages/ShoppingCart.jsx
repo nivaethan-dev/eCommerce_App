@@ -7,6 +7,7 @@ import CartItemList from '../components/cart/CartItemList';
 import CartOrderSummary from '../components/cart/CartOrderSummary';
 import { get, put, del, post } from '../utils/api';
 import { API_ENDPOINTS } from '../utils/constants';
+import { isAuthenticatedClient } from '../utils/auth';
 
 // --- Shopping Cart Component (Reusable) ---
 const ShoppingCart = ({ 
@@ -54,6 +55,10 @@ const ShoppingCart = ({
     }
 
     try {
+      if (!isAuthenticatedClient()) {
+        redirectToLogin();
+        return;
+      }
       setIsCheckingOut(true);
       setCheckoutMessage('');
       setLoadError('');
@@ -101,6 +106,10 @@ const ShoppingCart = ({
     setIsLoading(true);
     setLoadError('');
     try {
+      if (!isAuthenticatedClient()) {
+        redirectToLogin();
+        return;
+      }
       const cartData = await get(API_ENDPOINTS.CART);
       const items = Array.isArray(cartData?.items)
         ? cartData.items
@@ -149,6 +158,10 @@ const ShoppingCart = ({
   const updateQuantity = async (id, newQuantity) => {
     if (newQuantity < 1) return;
     try {
+      if (!isAuthenticatedClient()) {
+        redirectToLogin();
+        return;
+      }
       await put(`/api/customers/cart/items/${id}`, { quantity: newQuantity });
       await fetchCart();
       window.dispatchEvent(new Event('cartChange'));
@@ -163,6 +176,10 @@ const ShoppingCart = ({
 
   const removeItem = async (id) => {
     try {
+      if (!isAuthenticatedClient()) {
+        redirectToLogin();
+        return;
+      }
       await del(API_ENDPOINTS.CART_REMOVE(id));
       await fetchCart();
       window.dispatchEvent(new Event('cartChange'));

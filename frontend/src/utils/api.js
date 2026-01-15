@@ -2,6 +2,8 @@
  * API utility functions for making requests to the backend
  */
 
+import { isAuthenticatedClient } from './auth';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 /**
@@ -10,7 +12,24 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '';
  * @param {Object} options - Fetch options
  * @returns {Promise<any>} - Response data
  */
+const isProtectedEndpoint = (endpoint = '') => {
+  if (!endpoint.startsWith('/api/')) return false;
+  if (endpoint.startsWith('/api/auth/')) return false;
+  if (endpoint.startsWith('/api/products')) return false;
+  if (endpoint === '/api/customers/register') return false;
+  if (endpoint === '/api/admins/register') return false;
+
+  return (
+    endpoint.startsWith('/api/customers') ||
+    endpoint.startsWith('/api/notifications') ||
+    endpoint.startsWith('/api/admins')
+  );
+};
+
 export async function apiFetch(endpoint, options = {}) {
+  if (isProtectedEndpoint(endpoint) && !isAuthenticatedClient()) {
+    throw new Error('Not authenticated');
+  }
   // If we're sending FormData, the browser must set Content-Type (with boundary).
   const isFormDataBody =
     typeof FormData !== 'undefined' &&
@@ -69,7 +88,9 @@ export async function apiFetch(endpoint, options = {}) {
   try {
     return await doFetch(`${API_BASE_URL}${endpoint}`, defaultOptions);
   } catch (error) {
-    console.error('API request failed:', error);
+    if (error?.message !== 'Not authenticated') {
+      console.error('API request failed:', error);
+    }
     throw error;
   }
 }

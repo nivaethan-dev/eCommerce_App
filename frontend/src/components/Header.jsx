@@ -104,6 +104,11 @@ const Header = () => {
 
   // Fetch cart data to get item count and items list
   const fetchCartData = useCallback(async () => {
+    if (!isAuthenticated) {
+      setCartItemCount(0);
+      setCartItems([]);
+      return;
+    }
     try {
       const cartData = await get(API_ENDPOINTS.CART);
       // Backend shape: { success, cart: [...], summary: {...} }
@@ -124,7 +129,7 @@ const Header = () => {
       setCartItemCount(0);
       setCartItems([]);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     fetchCartData();
@@ -132,7 +137,7 @@ const Header = () => {
 
   const updateCartQuantity = useCallback(
     async (productId, nextQuantity) => {
-      if (!productId) return;
+      if (!productId || !isAuthenticated) return;
 
       try {
         setUpdatingCartProductId(String(productId));
@@ -148,12 +153,12 @@ const Header = () => {
         setUpdatingCartProductId(null);
       }
     },
-    [fetchCartData]
+    [fetchCartData, isAuthenticated]
   );
 
   const removeCartItem = useCallback(
     async (productId) => {
-      if (!productId) return;
+      if (!productId || !isAuthenticated) return;
 
       try {
         setUpdatingCartProductId(String(productId));
@@ -167,7 +172,7 @@ const Header = () => {
         setUpdatingCartProductId(null);
       }
     },
-    [fetchCartData]
+    [fetchCartData, isAuthenticated]
   );
 
   // Listen for cart change events
