@@ -11,6 +11,7 @@ router.use(roleMiddleware('admin'));
 
 router.get('/', auditController.getAuditLogs);
 router.get('/stats', auditController.getAuditStats);
+router.get('/filter-values', auditController.getDistinctFilterValues);
 router.get('/:id', auditController.getAuditLogById);
 
 export default router;

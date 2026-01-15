@@ -104,3 +104,29 @@ export const getAuditStats = async (dateRange = {}) => {
     throw new Error(`Failed to get audit stats: ${error.message}`);
   }
 };
+
+// Get distinct filter values (READ-ONLY)
+export const getDistinctFilterValues = async () => {
+  try {
+    // Get distinct actions
+    const actions = await AuditLog.distinct('action');
+    
+    // Get distinct resources
+    const resources = await AuditLog.distinct('resource');
+    
+    // Get distinct user types
+    const userTypes = await AuditLog.distinct('userType');
+    
+    // Get distinct statuses
+    const statuses = await AuditLog.distinct('status');
+
+    return {
+      actions: actions.filter(a => a).sort(), // Filter out null/undefined and sort
+      resources: resources.filter(r => r).sort(),
+      userTypes: userTypes.filter(u => u).sort(),
+      statuses: statuses.filter(s => s).sort()
+    };
+  } catch (error) {
+    throw new Error(`Failed to get distinct filter values: ${error.message}`);
+  }
+};
