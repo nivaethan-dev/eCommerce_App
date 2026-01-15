@@ -1,10 +1,6 @@
 import { get, put, del } from './api';
-import { isAuthenticatedClient } from './auth';
 
 export const fetchNotifications = (params = {}) => {
-    if (!isAuthenticatedClient()) {
-        return Promise.resolve({ data: [], pagination: { totalPages: 1, total: 0 } });
-    }
     // Build query string from parameters
     const queryParams = new URLSearchParams({
         page: params.page || 1,
@@ -16,11 +12,7 @@ export const fetchNotifications = (params = {}) => {
     return get(`/api/notifications?${queryParams}`);
 };
 
-export const markAsReadApi = (id) =>
-    isAuthenticatedClient() ? put(`/api/notifications/${id}/read`) : Promise.resolve({ success: true });
-export const markAllAsReadApi = () =>
-    isAuthenticatedClient() ? put('/api/notifications/read-all') : Promise.resolve({ success: true });
-export const deleteNotificationApi = (id) =>
-    isAuthenticatedClient() ? del(`/api/notifications/${id}`) : Promise.resolve({ success: true });
-export const getUnreadCountApi = () =>
-    isAuthenticatedClient() ? get('/api/notifications/unread-count') : Promise.resolve({ unreadCount: 0 });
+export const markAsReadApi = (id) => put(`/api/notifications/${id}/read`);
+export const markAllAsReadApi = () => put('/api/notifications/read-all');
+export const deleteNotificationApi = (id) => del(`/api/notifications/${id}`);
+export const getUnreadCountApi = () => get('/api/notifications/unread-count');

@@ -32,6 +32,23 @@ export const API_ENDPOINTS = {
   // NOTIFICATIONS: '/api/notifications',
 };
 
+// Public endpoints that do not require auth (prefix matches)
+export const PUBLIC_ENDPOINT_PREFIXES = [
+  '/api/products',
+  '/api/auth/login',
+  '/api/auth/logout',
+  '/api/auth/refresh',
+  '/api/auth/refresh-token',
+  '/api/customers/register',
+];
+
+// Protected endpoint prefixes by role
+export const PROTECTED_ENDPOINT_PREFIXES = {
+  shared: ['/api/notifications'],
+  customer: ['/api/customers'],
+  admin: ['/api/admins'],
+};
+
 // User roles
 export const USER_ROLES = {
   ADMIN: 'admin',

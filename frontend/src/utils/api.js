@@ -2,9 +2,15 @@
  * API utility functions for making requests to the backend
  */
 
-import { isAuthenticatedClient } from './auth';
+import { PROTECTED_ENDPOINT_PREFIXES, PUBLIC_ENDPOINT_PREFIXES, USER_ROLES } from './constants';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const RAW_API_BASE_URL = import.meta.env.VITE_API_URL || '';
+// Avoid IPv6 localhost resolution issues in some environments (ECONNREFUSED to ::1)
+const API_BASE_URL = RAW_API_BASE_URL.startsWith('http://localhost')
+  ? RAW_API_BASE_URL.replace('http://localhost', 'http://127.0.0.1')
+  : RAW_API_BASE_URL.startsWith('https://localhost')
+    ? RAW_API_BASE_URL.replace('https://localhost', 'https://127.0.0.1')
+    : RAW_API_BASE_URL;
 
 /**
  * Make a fetch request with default options
@@ -12,24 +18,36 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '';
  * @param {Object} options - Fetch options
  * @returns {Promise<any>} - Response data
  */
-const isProtectedEndpoint = (endpoint = '') => {
-  if (!endpoint.startsWith('/api/')) return false;
-  if (endpoint.startsWith('/api/auth/')) return false;
-  if (endpoint.startsWith('/api/products')) return false;
-  if (endpoint === '/api/customers/register') return false;
-  if (endpoint === '/api/admins/register') return false;
-
-  return (
-    endpoint.startsWith('/api/customers') ||
-    endpoint.startsWith('/api/notifications') ||
-    endpoint.startsWith('/api/admins')
-  );
-};
-
 export async function apiFetch(endpoint, options = {}) {
-  if (isProtectedEndpoint(endpoint) && !isAuthenticatedClient()) {
-    throw new Error('Not authenticated');
+  const isApiEndpoint = typeof endpoint === 'string' && endpoint.startsWith('/api/');
+  const isPublic = PUBLIC_ENDPOINT_PREFIXES.some((prefix) => endpoint.startsWith(prefix));
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  const userRole = localStorage.getItem('userRole');
+
+  if (isApiEndpoint && !isPublic) {
+    const isSharedProtected = PROTECTED_ENDPOINT_PREFIXES.shared.some((prefix) =>
+      endpoint.startsWith(prefix)
+    );
+    const isCustomerProtected = PROTECTED_ENDPOINT_PREFIXES.customer.some((prefix) =>
+      endpoint.startsWith(prefix)
+    );
+    const isAdminProtected = PROTECTED_ENDPOINT_PREFIXES.admin.some((prefix) =>
+      endpoint.startsWith(prefix)
+    );
+
+    if ((isSharedProtected || isCustomerProtected || isAdminProtected) && !isAuthenticated) {
+      throw new Error('Unauthorized');
+    }
+
+    if (isCustomerProtected && userRole !== USER_ROLES.CUSTOMER) {
+      throw new Error('Forbidden');
+    }
+
+    if (isAdminProtected && userRole !== USER_ROLES.ADMIN) {
+      throw new Error('Forbidden');
+    }
   }
+
   // If we're sending FormData, the browser must set Content-Type (with boundary).
   const isFormDataBody =
     typeof FormData !== 'undefined' &&
@@ -88,9 +106,7 @@ export async function apiFetch(endpoint, options = {}) {
   try {
     return await doFetch(`${API_BASE_URL}${endpoint}`, defaultOptions);
   } catch (error) {
-    if (error?.message !== 'Not authenticated') {
-      console.error('API request failed:', error);
-    }
+    console.error('API request failed:', error);
     throw error;
   }
 }

@@ -154,7 +154,6 @@ export const refreshToken = async (req, res) => {
     const oldRefreshToken = req.cookies.refreshToken;
     // When No refresh token
     if (!oldRefreshToken) {
-      console.error('Refresh token error: No refresh token provided'); // server log
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
