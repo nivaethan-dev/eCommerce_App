@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './ShoppingCart.css';
 import CartPageHeader from '../components/cart/CartPageHeader';
 import CartEmptyState from '../components/cart/CartEmptyState';
@@ -15,6 +15,7 @@ const ShoppingCart = ({
   onContinueShopping
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [cartItems, setCartItems] = useState(initialCartItems);
   const [promoCode, setPromoCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -30,6 +31,21 @@ const ShoppingCart = ({
       navigate('/products');
     }
   };
+
+  const getReturnTo = useCallback(
+    () => `${location.pathname}${location.search || ''}${location.hash || ''}`,
+    [location.pathname, location.search, location.hash]
+  );
+
+  const redirectToLogin = useCallback(() => {
+    const returnTo = getReturnTo();
+    navigate(`/login?redirect=${encodeURIComponent(returnTo)}`);
+  }, [getReturnTo, navigate]);
+
+  const isAuthError = useCallback((err) => {
+    const message = typeof err?.message === 'string' ? err.message : '';
+    return message.includes('status: 401') || message.toLowerCase().includes('unauthorized');
+  }, []);
 
   const handleCheckout = async () => {
     if (onCheckout) {
@@ -50,6 +66,10 @@ const ShoppingCart = ({
           : 'Order placed successfully!'
       );
     } catch (err) {
+      if (isAuthError(err)) {
+        redirectToLogin();
+        return;
+      }
       setLoadError(err?.message || 'Failed to place order.');
     } finally {
       setIsCheckingOut(false);
@@ -89,11 +109,15 @@ const ShoppingCart = ({
           : [];
       setCartItems(normalizeCartItems(items));
     } catch (err) {
+      if (isAuthError(err)) {
+        redirectToLogin();
+        return;
+      }
       setLoadError(err?.message || 'Failed to load cart.');
     } finally {
       setIsLoading(false);
     }
-  }, [normalizeCartItems]);
+  }, [normalizeCartItems, isAuthError, redirectToLogin]);
 
   useEffect(() => {
     fetchCart();
@@ -129,6 +153,10 @@ const ShoppingCart = ({
       await fetchCart();
       window.dispatchEvent(new Event('cartChange'));
     } catch (err) {
+      if (isAuthError(err)) {
+        redirectToLogin();
+        return;
+      }
       setLoadError(err?.message || 'Failed to update quantity.');
     }
   };
@@ -139,6 +167,10 @@ const ShoppingCart = ({
       await fetchCart();
       window.dispatchEvent(new Event('cartChange'));
     } catch (err) {
+      if (isAuthError(err)) {
+        redirectToLogin();
+        return;
+      }
       setLoadError(err?.message || 'Failed to remove item.');
     }
   };

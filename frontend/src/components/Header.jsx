@@ -584,12 +584,16 @@ const Header = () => {
                                   item?.productId && typeof item.productId === 'object'
                                     ? item.productId
                                     : null;
-                                const pid = product?._id;
+                                const pid =
+                                  product?._id ||
+                                  (typeof item?.productId === 'string' ? item.productId : null) ||
+                                  item?._id ||
+                                  item?.id;
                                 const title = product?.title || 'Product';
                                 const unitPrice = Number(product?.price) || 0;
                                 const currentQty = Number(item?.quantity) || 0;
                                 const maxStock = Number(product?.stock) || Infinity;
-                                const disabled = updatingCartProductId === String(pid);
+                                const disabled = !pid || updatingCartProductId === String(pid);
                                 const lineTotal = formatLKR(unitPrice * currentQty);
 
                                 return (
