@@ -41,8 +41,8 @@ export const USER_ROLES = {
 // Product Categories
 export const PRODUCT_CATEGORIES = [
   'Electronics',
-  'Fashion',
-  'Home & Garden',
+  'Clothing',
+  'Home & Kitchen',
   'Sports',
   'Books',
 ];

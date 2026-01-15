@@ -17,7 +17,7 @@ const auditLogSchema = new Schema({
   resourceId: { type: mongoose.Schema.Types.ObjectId, refPath: 'resource', immutable: true },
   changes: { type: Object, default: {}, immutable: true },        // old/new values
   endpoint: { type: String, immutable: true },
-  method: { type: String, enum: ['GET', 'POST', 'PUT', 'DELETE'], immutable: true },
+  method: { type: String, enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], immutable: true },
   ipAddress: { type: String, immutable: true },
   geolocation: {
     country: { type: String, immutable: true },

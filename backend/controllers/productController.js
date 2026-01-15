@@ -1,5 +1,4 @@
 import { ProductService, getProducts } from '../services/productService.js';
-import fs from 'fs/promises';
 import * as productTriggers from '../eventTriggers/productEvent.js';
 import { PRODUCT_MESSAGES } from '../utils/productMessages.js';
 
@@ -23,11 +22,6 @@ export const createProduct = async (req, res) => {
   } catch (error) {
     // Check for duplicate product
     if (error.code === 11000) {
-      if (req.file) {
-        try {
-          await fs.unlink(req.file.path);
-        } catch (_) { }
-      }
       return res.status(400).json({
         success: false,
         error: PRODUCT_MESSAGES.DUPLICATE_PRODUCT
@@ -66,7 +60,7 @@ export const updateProduct = async (req, res) => {
     console.log('Update Product Request:');
     console.log('Product ID:', productId);
     console.log('Request Body:', req.body);
-    console.log('File:', req.file ? { filename: req.file.filename, path: req.file.path } : 'No file');
+    console.log('File:', req.file ? { filename: req.file.filename, cloudinaryUrl: req.file.cloudinaryUrl } : 'No file');
     
     const { updatedProduct, oldData } = await ProductService.updateProduct(productId, req.body, req.file);
 
@@ -90,12 +84,6 @@ export const updateProduct = async (req, res) => {
       data: updatedProduct
     });
   } catch (error) {
-    if (req.file) {
-      try {
-        await fs.unlink(req.file.path);
-      } catch (_) { }
-    }
-
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
@@ -139,17 +127,48 @@ export const deleteProduct = async (req, res) => {
   }
 };
 
+export const fetchProductById = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const product = await ProductService.getProductById(productId);
+    res.status(200).json({
+      success: true,
+      message: PRODUCT_MESSAGES.FETCH_SUCCESS,
+      data: product
+    });
+  } catch (error) {
+    if (error.message === PRODUCT_MESSAGES.PRODUCT_NOT_FOUND) {
+      return res.status(404).json({ success: false, error: error.message });
+    }
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 export const fetchProducts = async (req, res) => {
   try {
     // Allow public access for product search - no authentication required
     const role = req.user ? req.user.role : 'public';
     const userId = req.user ? req.user.id : null;
-    const products = await getProducts(role, userId, req.query);
+    const { products, page, limit, total, totalPages } = await getProducts(role, userId, req.query);
     res.status(200).json({
       success: true,
       message: PRODUCT_MESSAGES.FETCH_SUCCESS,
-      products
+      products,
+      page,
+      limit,
+      total,
+      totalPages
     });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+export const fetchProductCategories = async (req, res) => {
+  try {
+    // Public endpoint: categories are a static whitelist in ProductService
+    const categories = ProductService.getValidCategories();
+    res.status(200).json({ success: true, categories });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

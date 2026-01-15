@@ -1,8 +1,7 @@
 import Product from '../models/Product.js';
-import fs from 'fs/promises';
-import path from 'path';
-import { fetchDocuments } from '../utils/queryHelper.js';
+import { fetchDocumentsPaged } from '../utils/queryHelper.js';
 import { PRODUCT_MESSAGES, formatProductMessage } from '../utils/productMessages.js';
+import { deleteImageByPublicId } from '../utils/cloudinary.js';
 
 // Predefined categories list
 const VALID_CATEGORIES = [
@@ -10,8 +9,7 @@ const VALID_CATEGORIES = [
   'Clothing',
   'Books',
   'Home & Kitchen',
-  'Sports',
-  'Toys'
+  'Sports'
 ];
 
 export class ProductService {
@@ -21,6 +19,9 @@ export class ProductService {
     // Validate required fields
     if (!file) {
       throw new Error(PRODUCT_MESSAGES.IMAGE_REQUIRED);
+    }
+    if (!file.cloudinaryUrl || !file.cloudinaryPublicId) {
+      throw new Error('Image upload failed (Cloudinary).');
     }
 
     if (!title || !description || stock === undefined || !category || price === undefined) {
@@ -39,9 +40,8 @@ export class ProductService {
       throw new Error(PRODUCT_MESSAGES.PRICE_NUMERIC);
     }
 
-    // Use path.join for OS-safe path handling, then normalize to forward slashes
-    let imagePath = path.join('uploads', 'products', file.filename);
-    imagePath = imagePath.replace(/\\/g, '/');
+    const imageUrl = file.cloudinaryUrl;
+    const imagePublicId = file.cloudinaryPublicId;
 
     // Use .trim() for cleaner string data
     const cleanTitle = title.trim();
@@ -54,8 +54,8 @@ export class ProductService {
 
     // Validate category
     if (!normalizedCategories.includes(normalizedCategory)) {
-      // Delete uploaded image
-      await fs.unlink(file.path);
+      // Delete uploaded Cloudinary image
+      await deleteImageByPublicId(imagePublicId);
       throw new Error(formatProductMessage(PRODUCT_MESSAGES.CATEGORY_INVALID, {
         categories: VALID_CATEGORIES.join(', ')
       }));
@@ -75,7 +75,8 @@ export class ProductService {
       const product = await Product.create({
         title: cleanTitle,
         description: cleanDescription,
-        image: imagePath,
+        image: imageUrl,
+        imagePublicId,
         stock: parsedStock,
         category: cleanCategory,
         price: parsedPrice
@@ -83,13 +84,11 @@ export class ProductService {
 
       return product;
     } catch (error) {
-      // If product creation fails, delete uploaded image
-      if (file) {
-        try {
-          await fs.unlink(file.path);
-        } catch (unlinkError) {
-          console.error('Error deleting file:', unlinkError);
-        }
+      // If product creation fails, delete uploaded Cloudinary image
+      try {
+        await deleteImageByPublicId(imagePublicId);
+      } catch (cleanupError) {
+        console.error('Error deleting Cloudinary image after DB failure:', cleanupError);
       }
 
       // Re-throw the error to be handled by the controller
@@ -104,18 +103,23 @@ export class ProductService {
   static async updateProduct(productId, updateData, file) {
     const product = await Product.findById(productId);
     if (!product) {
-      if (file) await fs.unlink(file.path);
+      if (file?.cloudinaryPublicId) {
+        await deleteImageByPublicId(file.cloudinaryPublicId);
+      }
       throw new Error(PRODUCT_MESSAGES.PRODUCT_NOT_FOUND);
     }
 
     // Capture old data before update for comparison
     const oldData = product.toObject();
-    const oldImagePath = product.image;
+    const oldImagePublicId = product.imagePublicId;
 
     // Handle new image upload
     if (file) {
-      let imagePath = path.join('uploads', 'products', file.filename);
-      updateData.image = imagePath.replace(/\\/g, '/');
+      if (!file.cloudinaryUrl || !file.cloudinaryPublicId) {
+        throw new Error('Image upload failed (Cloudinary).');
+      }
+      updateData.image = file.cloudinaryUrl;
+      updateData.imagePublicId = file.cloudinaryPublicId;
     }
 
     // Normalize category if provided
@@ -125,7 +129,9 @@ export class ProductService {
       const normalizedCategories = VALID_CATEGORIES.map(cat => cat.toLowerCase());
 
       if (!normalizedCategories.includes(normalizedCategory)) {
-        if (file) await fs.unlink(file.path);
+        if (file?.cloudinaryPublicId) {
+          await deleteImageByPublicId(file.cloudinaryPublicId);
+        }
         throw new Error(formatProductMessage(PRODUCT_MESSAGES.CATEGORY_INVALID, {
           categories: VALID_CATEGORIES.join(', ')
         }));
@@ -138,19 +144,30 @@ export class ProductService {
     if (updateData.stock !== undefined) updateData.stock = parseInt(updateData.stock, 10);
     if (updateData.price !== undefined) updateData.price = Number(parseFloat(updateData.price).toFixed(2));
 
-    const updatedProduct = await Product.findByIdAndUpdate(
-      productId,
-      updateData,
-      { new: true, runValidators: true }
-    );
+    let updatedProduct;
+    try {
+      updatedProduct = await Product.findByIdAndUpdate(productId, updateData, {
+        new: true,
+        runValidators: true
+      });
+    } catch (error) {
+      // If DB update fails and a new image was uploaded, clean it up
+      if (file?.cloudinaryPublicId) {
+        try {
+          await deleteImageByPublicId(file.cloudinaryPublicId);
+        } catch (cleanupError) {
+          console.error('Error deleting new Cloudinary image after update failure:', cleanupError);
+        }
+      }
+      throw error;
+    }
 
     // ONLY delete old image if DB update succeeded AND a new file was provided
-    if (file && oldImagePath) {
+    if (file && oldImagePublicId) {
       try {
-        const fullOldPath = path.join(process.cwd(), oldImagePath);
-        await fs.unlink(fullOldPath);
+        await deleteImageByPublicId(oldImagePublicId);
       } catch (error) {
-        console.error('Error deleting old image after update:', error);
+        console.error('Error deleting old Cloudinary image after update:', error);
       }
     }
 
@@ -165,25 +182,49 @@ export class ProductService {
 
     const deletedData = product.toObject();
 
-    // Delete associated image file
-    if (product.image) {
+    // Delete associated Cloudinary image (preferred)
+    if (product.imagePublicId) {
       try {
-        const imagePath = path.join(process.cwd(), product.image);
-        await fs.unlink(imagePath);
+        await deleteImageByPublicId(product.imagePublicId);
       } catch (error) {
-        console.error('Error deleting product image:', error);
+        console.error('Error deleting Cloudinary product image:', error);
       }
     }
 
     await Product.findByIdAndDelete(productId);
     return deletedData;
   }
+
+  static async getProductById(productId) {
+    const product = await Product.findById(productId);
+    if (!product) {
+      throw new Error(PRODUCT_MESSAGES.PRODUCT_NOT_FOUND);
+    }
+    return product;
+  }
 }
 
 export const getProducts = async (role, userId, queryParams) => {
-  return await fetchDocuments(Product, {
-    search: queryParams.search, // search string
-    searchFields: ['title', 'description', 'category'], // searchable fields
-    query: {} // additional filters if needed
-  }, { role, userId });
+  const query = {};
+
+  // Optional category filter
+  if (typeof queryParams?.category === 'string' && queryParams.category.trim()) {
+    query.category = queryParams.category.trim();
+  }
+
+  const { docs, page, limit, total, totalPages } = await fetchDocumentsPaged(
+    Product,
+    {
+      search: queryParams?.search, // search string
+      searchFields: ['title', 'description', 'category'], // searchable fields
+      query,
+      // Pagination controls
+      limit: queryParams?.limit,
+      page: queryParams?.page,
+    },
+    // Deterministic order for stable pagination
+    { role, userId, sort: { createdAt: -1, _id: -1 } }
+  );
+
+  return { products: docs, page, limit, total, totalPages };
 };

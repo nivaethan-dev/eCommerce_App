@@ -133,6 +133,110 @@ export const createOrderFromCart = async (customerId) => {
 };
 
 /**
+ * Create order from provided items
+ * @param {string} customerId - Customer ID
+ * @param {Array} orderItemsInput - Array of { productId, quantity }
+ * @returns {Promise<Object>} Created order
+ */
+export const createOrderFromItems = async (customerId, orderItemsInput) => {
+  const session = await mongoose.startSession();
+  
+  try {
+    let order;
+    
+    await session.withTransaction(async () => {
+      // Get customer
+      const customer = await Customer.findById(customerId).session(session);
+      
+      if (!customer) {
+        throw new Error(ORDER_MESSAGES.CUSTOMER_NOT_FOUND);
+      }
+      
+      if (!orderItemsInput || orderItemsInput.length === 0) {
+        throw new Error(ORDER_MESSAGES.NO_VALID_ITEMS);
+      }
+      
+      const items = [];
+      
+      for (const inputItem of orderItemsInput) {
+        const { productId, quantity } = inputItem;
+        
+        if (!productId || !quantity || quantity < 1) {
+          continue;
+        }
+        
+        const product = await Product.findById(productId).session(session);
+        
+        if (!product) {
+          throw new Error(formatOrderMessage(ORDER_MESSAGES.PRODUCT_NOT_FOUND, { productId }));
+        }
+        
+        // Atomic stock decrement
+        const updateResult = await Product.findOneAndUpdate(
+          {
+            _id: product._id,
+            stock: { $gte: quantity }
+          },
+          {
+            $inc: { stock: -quantity }
+          },
+          {
+            session,
+            new: true,
+            runValidators: true
+          }
+        );
+        
+        if (!updateResult) {
+          throw new Error(formatOrderMessage(ORDER_MESSAGES.INSUFFICIENT_STOCK, {
+            productTitle: product.title,
+            stock: product.stock,
+            quantity: quantity
+          }));
+        }
+        
+        const price = updateResult.price;
+        const itemSubtotal = price * quantity;
+        
+        items.push({
+          productId: product._id,
+          name: updateResult.title,
+          quantity: quantity,
+          price: price,
+          subtotal: Math.round(itemSubtotal * 100) / 100
+        });
+      }
+      
+      if (items.length === 0) {
+        throw new Error(ORDER_MESSAGES.NO_VALID_ITEMS);
+      }
+      
+      const orderTotals = calculateOrderTotalsFromItems(items);
+      
+      order = await Order.create([{
+        customer: customerId,
+        items: items,
+        subTotal: orderTotals.subTotal,
+        tax: orderTotals.tax,
+        totalAmount: orderTotals.totalAmount,
+        status: DEFAULT_ORDER_STATUS
+      }], { session });
+      
+      order = order[0];
+    });
+    
+    await order.populate('customer', 'name email');
+    await order.populate('items.productId', 'title image category');
+    
+    return order;
+  } catch (error) {
+    throw error;
+  } finally {
+    await session.endSession();
+  }
+};
+
+/**
  * Get order by ID
  * @param {string} orderId - Order ID
  * @returns {Promise<Object>} Order with populated references

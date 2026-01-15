@@ -36,7 +36,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Static file serving
-app.use('/uploads', express.static('uploads'));
+const serveLocalUploads = (process.env.SERVE_LOCAL_UPLOADS ?? 'true') === 'true';
+if (serveLocalUploads) {
+  app.use('/uploads', express.static('uploads'));
+}
 
 // Routes
 app.use('/api/customers', customerRoutes); // customer-specific

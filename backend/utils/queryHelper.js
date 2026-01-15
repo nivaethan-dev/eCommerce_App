@@ -35,3 +35,47 @@ export const fetchDocuments = async (model, filters = {}, options = {}) => {
     return await query;
 };
   
+/**
+ * Fetch documents with pagination metadata (for server-side pagination UIs).
+ * Does NOT change `fetchDocuments` behavior to avoid breaking existing callers.
+ */
+export const fetchDocumentsPaged = async (model, filters = {}, options = {}) => {
+  const { role, userId, ownerField, selectFields, sort } = options;
+
+  // Role-based filtering
+  const roleFilter = {};
+  if (role === 'customer' && ownerField) {
+    roleFilter[ownerField] = userId;
+  }
+
+  // Build search query for text fields
+  const searchQuery = {};
+  if (filters.search && filters.searchFields) {
+    searchQuery['$or'] = filters.searchFields.map((field) => ({
+      [field]: { $regex: filters.search, $options: 'i' }
+    }));
+  }
+
+  const finalQuery = { ...filters.query, ...roleFilter, ...searchQuery };
+
+  const limit = Math.max(1, parseInt(filters.limit, 10) || 20);
+  const page = Math.max(1, parseInt(filters.page, 10) || 1);
+  const skip = (page - 1) * limit;
+
+  const total = await model.countDocuments(finalQuery);
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  let query = model
+    .find(finalQuery)
+    .sort(sort || { createdAt: -1, _id: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  if (selectFields) {
+    query = query.select(selectFields);
+  }
+
+  const docs = await query;
+  return { docs, page, limit, total, totalPages };
+};
+  

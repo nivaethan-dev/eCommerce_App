@@ -11,24 +11,63 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '';
  * @returns {Promise<any>} - Response data
  */
 export async function apiFetch(endpoint, options = {}) {
+  // If we're sending FormData, the browser must set Content-Type (with boundary).
+  const isFormDataBody =
+    typeof FormData !== 'undefined' &&
+    options?.body instanceof FormData;
+
+  const defaultHeaders = isFormDataBody
+    ? { ...(options.headers || {}) }
+    : {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      };
+
   const defaultOptions = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers: defaultHeaders,
     credentials: 'include', // Include cookies for authentication
     ...options,
   };
 
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, defaultOptions);
-    
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+  const doFetch = async (url, opts) => {
+    const res = await fetch(url, opts);
+
+    // If token expired, try refresh once then retry original request.
+    // This reduces intermittent notification failures due to 15min access token expiry.
+    const alreadyRetried = Boolean(opts.__retried);
+    const isAuthEndpoint =
+      endpoint.startsWith('/api/auth/login') ||
+      endpoint.startsWith('/api/auth/refresh-token') ||
+      endpoint.startsWith('/api/auth/logout');
+
+    if (res.status === 401 && !alreadyRetried && !isAuthEndpoint) {
+      const refreshRes = await fetch(`${API_BASE_URL}/api/auth/refresh-token`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (refreshRes.ok) {
+        return await doFetch(url, { ...opts, __retried: true });
+      }
+      // If refresh fails, fall through to normal error handling below.
     }
-    
-    return await response.json();
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      const message =
+        (typeof error.error === 'string' && error.error) ||
+        error?.error?.message ||
+        error?.message ||
+        `HTTP error! status: ${res.status}`;
+      throw new Error(message);
+    }
+
+    return await res.json();
+  };
+
+  try {
+    return await doFetch(`${API_BASE_URL}${endpoint}`, defaultOptions);
   } catch (error) {
     console.error('API request failed:', error);
     throw error;
@@ -43,19 +82,31 @@ export const get = (endpoint) => apiFetch(endpoint, { method: 'GET' });
 /**
  * POST request
  */
-export const post = (endpoint, data) => 
+export const post = (endpoint, data, options = {}) =>
   apiFetch(endpoint, {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: data instanceof FormData ? data : JSON.stringify(data),
+    ...options,
   });
 
 /**
  * PUT request
  */
-export const put = (endpoint, data) => 
+export const put = (endpoint, data, options = {}) =>
   apiFetch(endpoint, {
     method: 'PUT',
-    body: JSON.stringify(data),
+    body: data instanceof FormData ? data : JSON.stringify(data),
+    ...options,
+  });
+
+/**
+ * PATCH request
+ */
+export const patch = (endpoint, data, options = {}) =>
+  apiFetch(endpoint, {
+    method: 'PATCH',
+    body: data instanceof FormData ? data : JSON.stringify(data),
+    ...options,
   });
 
 /**

@@ -1,15 +1,26 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { get, post } from '../utils/api';
+import { get, post, put } from '../utils/api';
 import { API_ENDPOINTS, PRODUCT_CATEGORIES } from '../utils/constants';
 import './Header.css';
 
 const Header = () => {
+  const formatLKR = useCallback((value) => {
+    const numeric = typeof value === 'number' && Number.isFinite(value) ? value : Number(value);
+    const safe = Number.isFinite(numeric) ? numeric : 0;
+    return new Intl.NumberFormat('en-LK', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(safe);
+  }, []);
+
   const navigate = useNavigate();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [cartItemCount, setCartItemCount] = useState(0);
+  const [cartItems, setCartItems] = useState([]);
+  const [updatingCartProductId, setUpdatingCartProductId] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -91,23 +102,62 @@ const Header = () => {
     };
   }, [isAuthenticated, showNotificationDropdown, fetchNotificationsList]);
 
-  // Fetch cart data to get item count
-  useEffect(() => {
-    const fetchCartCount = async () => {
-      try {
-        const cartData = await get(API_ENDPOINTS.CART);
-        // Calculate total number of items in cart
-        const totalItems = cartData.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
-        setCartItemCount(totalItems);
-      } catch (error) {
-        console.error('Failed to fetch cart:', error);
-        // If cart fetch fails (e.g., user not logged in), set count to 0
-        setCartItemCount(0);
-      }
-    };
+  // Fetch cart data to get item count and items list
+  const fetchCartData = useCallback(async () => {
+    try {
+      const cartData = await get(API_ENDPOINTS.CART);
+      // Backend shape: { success, cart: [...], summary: {...} }
+      // Be defensive in case older shape exists.
+      const items = Array.isArray(cartData?.cart)
+        ? cartData.cart
+        : Array.isArray(cartData?.items)
+          ? cartData.items
+          : [];
 
-    fetchCartCount();
+      // Calculate total number of items in cart
+      const totalItems = items.reduce((sum, item) => sum + (Number(item?.quantity) || 0), 0);
+      setCartItemCount(totalItems);
+      setCartItems(items);
+    } catch (error) {
+      console.error('Failed to fetch cart:', error);
+      // If cart fetch fails (e.g., user not logged in), set to defaults
+      setCartItemCount(0);
+      setCartItems([]);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchCartData();
+  }, [fetchCartData]);
+
+  const updateCartQuantity = useCallback(
+    async (productId, nextQuantity) => {
+      if (!productId) return;
+
+      try {
+        setUpdatingCartProductId(String(productId));
+        await put(`/api/customers/cart/items/${productId}`, { quantity: nextQuantity });
+        // Refresh from server to keep header consistent with backend stock rules
+        await fetchCartData();
+        window.dispatchEvent(new Event('cartChange'));
+      } catch (error) {
+        console.error('Failed to update cart quantity:', error);
+        // Best-effort refresh to recover from partial state
+        await fetchCartData();
+      } finally {
+        setUpdatingCartProductId(null);
+      }
+    },
+    [fetchCartData]
+  );
+
+  // Listen for cart change events
+  useEffect(() => {
+    window.addEventListener('cartChange', fetchCartData);
+    return () => {
+      window.removeEventListener('cartChange', fetchCartData);
+    };
+  }, [fetchCartData]);
 
   // Fetch notifications count for authenticated users
   useEffect(() => {
@@ -179,6 +229,8 @@ const Header = () => {
     if (show) {
       // Show immediately
       setShowCartDropdown(true);
+      // Ensure hover dropdown always shows latest server cart
+      fetchCartData();
     } else {
       // Delay before hiding
       cartTimeoutRef.current = setTimeout(() => {
@@ -448,6 +500,13 @@ const Header = () => {
               {/* Cart Dropdown */}
               {showCartDropdown && (
                 <div className="cart-dropdown">
+                  <div className="cart-dropdown-header">
+                    <div className="cart-dropdown-title">Cart</div>
+                    <div className="cart-dropdown-count">
+                      {cartItemCount} item{cartItemCount === 1 ? '' : 's'}
+                    </div>
+                  </div>
+                  {cartItems.length === 0 ? (
                   <div className="cart-empty">
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" 
@@ -471,6 +530,122 @@ const Header = () => {
                       Browse Products
                     </Link>
                   </div>
+                  ) : (
+                    <>
+                      <div className="cart-items-list">
+                        {cartItems.map((item) => (
+                          <div
+                            key={item.productId?._id || item.productId || item._id}
+                            className="cart-dropdown-item"
+                          >
+                            <div className="cart-item-img-container">
+                              <img 
+                                src={(() => {
+                                  const product =
+                                    item?.productId && typeof item.productId === 'object'
+                                      ? item.productId
+                                      : null;
+                                  const img = product?.image;
+                                  return typeof img === 'string' && img.startsWith('http')
+                                    ? img
+                                    : 'https://via.placeholder.com/40';
+                                })()}
+                                alt={(() => {
+                                  const product =
+                                    item?.productId && typeof item.productId === 'object'
+                                      ? item.productId
+                                      : null;
+                                  return product?.title || 'Product';
+                                })()}
+                              />
+                            </div>
+                            <div className="cart-item-info">
+                              {(() => {
+                                const product =
+                                  item?.productId && typeof item.productId === 'object'
+                                    ? item.productId
+                                    : null;
+                                const pid = product?._id;
+                                const title = product?.title || 'Product';
+                                const unitPrice = Number(product?.price) || 0;
+                                const currentQty = Number(item?.quantity) || 0;
+                                const maxStock = Number(product?.stock) || Infinity;
+                                const disabled = updatingCartProductId === String(pid);
+                                const lineTotal = formatLKR(unitPrice * currentQty);
+
+                                return (
+                                  <>
+                                    <div className="cart-item-top">
+                                      <div className="cart-item-name" title={title}>
+                                        {title}
+                                      </div>
+                                      <div className="cart-item-line-total">Rs. {lineTotal}</div>
+                                    </div>
+
+                                    <div className="cart-item-bottom">
+                                      <div className="cart-item-qty-controls">
+                                        <button
+                                          type="button"
+                                          className="cart-qty-btn"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            updateCartQuantity(pid, Math.max(0, currentQty - 1));
+                                          }}
+                                          disabled={disabled || currentQty <= 0}
+                                          aria-label="Decrease quantity"
+                                        >
+                                          −
+                                        </button>
+                                        <span className="cart-qty-value">{currentQty}</span>
+                                        <button
+                                          type="button"
+                                          className="cart-qty-btn"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            updateCartQuantity(pid, Math.min(maxStock, currentQty + 1));
+                                          }}
+                                          disabled={disabled || currentQty >= maxStock}
+                                          aria-label="Increase quantity"
+                                        >
+                                          +
+                                        </button>
+                                      </div>
+
+                                      <div className="cart-item-unit-price">
+                                        Rs. {formatLKR(unitPrice)} each
+                                      </div>
+                                    </div>
+                                  </>
+                                );
+                              })()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="cart-dropdown-footer">
+                        <div className="cart-total-row">
+                          <span>Total:</span>
+                          <span className="cart-total-price">
+                            Rs. {formatLKR(cartItems
+                              .reduce((sum, item) => {
+                                const product =
+                                  item?.productId && typeof item.productId === 'object'
+                                    ? item.productId
+                                    : null;
+                                const price = Number(product?.price) || 0;
+                                const qty = Number(item?.quantity) || 0;
+                                return sum + qty * price;
+                              }, 0))}
+                          </span>
+                        </div>
+                        <Link to="/products" className="browse-products-btn">
+                          Continue Shopping
+                        </Link>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>

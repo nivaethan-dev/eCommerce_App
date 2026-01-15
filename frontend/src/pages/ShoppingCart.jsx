@@ -6,8 +6,12 @@ import { mockCartItems, getItemImage } from '../data/mockCartData';
 // --- Individual Cart Item ---
 const CartItem = ({ item, updateQuantity, removeItem }) => {
   const itemPrice = parseFloat(item.price);
-  const totalPrice = (itemPrice * item.quantity).toFixed(2);
-  const formattedPrice = `$${itemPrice.toFixed(2)}`;
+  const formatLKR = (amount) =>
+    `Rs. ${new Intl.NumberFormat('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+      Number.isFinite(amount) ? amount : 0
+    )}`;
+  const totalPrice = itemPrice * item.quantity;
+  const formattedPrice = formatLKR(itemPrice);
 
   return (
     <div className="shopping-cart-item">
@@ -47,7 +51,7 @@ const CartItem = ({ item, updateQuantity, removeItem }) => {
       <div className="item-action-stack-right">
         <div className="item-price-info">
           <div className="price-each">{formattedPrice} each</div>
-          <div className="price-total">${totalPrice}</div>
+          <div className="price-total">{formatLKR(totalPrice)}</div>
         </div>
         <button
           onClick={() => removeItem(item.id)}
@@ -110,7 +114,10 @@ const ShoppingCart = ({
     setCartItems(prev => prev.filter(item => item.id !== id));
   };
 
-  const formatCurrency = (amount) => `$${amount.toFixed(2)}`;
+  const formatCurrency = (amount) =>
+    `Rs. ${new Intl.NumberFormat('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+      Number.isFinite(amount) ? amount : 0
+    )}`;
 
   const handleApplyPromo = () => {
     // Promo code is already being used in the useMemo above
