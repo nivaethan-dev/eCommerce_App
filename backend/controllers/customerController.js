@@ -16,13 +16,22 @@ export const registerCustomer = async (req, res) => {
     if (!name || !email || !phone || !password)
       return res.status(400).json({ success: false, error: 'All fields are required' });
 
-    if (!validator.isEmail(email)) 
+    // Sanitize inputs to prevent XSS and injection attacks
+    const sanitizedName = validator.trim(validator.escape(String(name)));
+    const sanitizedEmail = validator.normalizeEmail(validator.trim(String(email)));
+    const sanitizedPhone = validator.trim(String(phone));
+
+    // Validate sanitized inputs
+    if (!sanitizedName || sanitizedName.length < 2)
+      return res.status(400).json({ success: false, error: 'Name must be at least 2 characters' });
+
+    if (!validator.isEmail(sanitizedEmail)) 
       return res.status(400).json({ success: false, error: 'Invalid email' });
 
-    if (!validator.isMobilePhone(phone, 'si-LK')) 
+    if (!validator.isMobilePhone(sanitizedPhone, 'si-LK')) 
       return res.status(400).json({ success: false, error: 'Invalid phone number' });
 
-    let normalizedPhone = phone.startsWith('+94') ? phone : '+94' + phone.slice(1);
+    let normalizedPhone = sanitizedPhone.startsWith('+94') ? sanitizedPhone : '+94' + sanitizedPhone.slice(1);
 
     if (!validator.isStrongPassword(password, {
       minLength: 12, 
@@ -34,8 +43,8 @@ export const registerCustomer = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Weak password' });
     }
 
-    // Check if customer exists
-    const existingCustomer = await Customer.findOne({ $or: [{ email }, { phone }] });
+    // Check if customer exists (using sanitized inputs)
+    const existingCustomer = await Customer.findOne({ $or: [{ email: sanitizedEmail }, { phone: normalizedPhone }] });
     if(existingCustomer){
       return res.status(400).json({ success: false, error: 'Customer already exists' });
     };
@@ -43,8 +52,8 @@ export const registerCustomer = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create customer
-    const customer = await Customer.create({ name, email, phone: normalizedPhone, password: hashedPassword });
+    // Create customer (using sanitized inputs)
+    const customer = await Customer.create({ name: sanitizedName, email: sanitizedEmail, phone: normalizedPhone, password: hashedPassword });
 
     // Generate tokens & set cookies
     const accessToken = generateAccessToken(customer._id);

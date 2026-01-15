@@ -11,6 +11,7 @@ dotenv
 helmet
 cors
 express-rate-limit
+mongo-sanitize # NoSQL injection protection (Express 5 compatible)
 validator # npm install validator@latest 
 
 # Email & Communication
