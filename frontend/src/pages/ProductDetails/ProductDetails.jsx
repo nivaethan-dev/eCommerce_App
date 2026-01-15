@@ -27,6 +27,16 @@ const ProductDetails = () => {
     navigate(`/login?redirect=${encodeURIComponent(returnTo)}`);
   };
 
+  const isAuthError = (err) => {
+    const message = typeof err?.message === 'string' ? err.message : '';
+    const lower = message.toLowerCase();
+    return (
+      message.includes('status: 401') ||
+      lower.includes('unauthorized') ||
+      lower.includes('access token required')
+    );
+  };
+
   const handleAddToCart = async (quantity) => {
     try {
       const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
@@ -55,7 +65,7 @@ const ProductDetails = () => {
       window.dispatchEvent(new Event('cartChange'));
     } catch (err) {
       console.error('Failed to add to cart:', err);
-      if (typeof err?.message === 'string' && err.message.includes('status: 401')) {
+      if (isAuthError(err)) {
         redirectToLogin();
         return;
       }
@@ -95,7 +105,7 @@ const ProductDetails = () => {
       });
     } catch (err) {
       console.error('Failed to place direct order:', err);
-      if (typeof err?.message === 'string' && err.message.includes('status: 401')) {
+      if (isAuthError(err)) {
         redirectToLogin();
         return;
       }

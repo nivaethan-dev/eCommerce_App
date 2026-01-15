@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { get, post, put, del } from '../utils/api';
 import { API_ENDPOINTS, PRODUCT_CATEGORIES } from '../utils/constants';
+import { stopSession } from '../utils/sessionManager';
 import './Header.css';
 
 const Header = () => {
@@ -290,6 +291,9 @@ const Header = () => {
     } catch (error) {
       console.error('Logout API call failed:', error);
     }
+    
+    // Stop session management
+    stopSession();
     
     // Clear authentication flag and user role
     localStorage.removeItem('isAuthenticated');

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { post } from '../utils/api';
 import { API_ENDPOINTS } from '../utils/constants';
+import { startSession } from '../utils/sessionManager';
 import './Signup.css';
 
 const Signup = () => {
@@ -93,6 +94,10 @@ const Signup = () => {
         // Backend automatically logs in user after signup (sets httpOnly cookies)
         // Set auth flag in localStorage
         localStorage.setItem('isAuthenticated', 'true');
+        
+        // Start session management
+        startSession();
+        
         // Dispatch custom event to notify other components
         window.dispatchEvent(new Event('authChange'));
         

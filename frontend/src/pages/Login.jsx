@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { post } from '../utils/api';
 import { API_ENDPOINTS } from '../utils/constants';
+import { startSession } from '../utils/sessionManager';
 import './Login.css';
 
 const Login = () => {
@@ -75,6 +76,9 @@ const Login = () => {
         // Set a flag in localStorage to indicate user is logged in
         // (The actual token is in httpOnly cookie)
         localStorage.setItem('isAuthenticated', 'true');
+        
+        // Start session management (proactive refresh)
+        startSession();
         
         // Dispatch custom event to notify other components
         window.dispatchEvent(new Event('authChange'));

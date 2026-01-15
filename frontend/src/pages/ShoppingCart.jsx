@@ -19,7 +19,7 @@ const ShoppingCart = ({
   const [cartItems, setCartItems] = useState(initialCartItems);
   const [promoCode, setPromoCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [loadError, setLoadError] = useState('');
+  const [cartError, setCartError] = useState(null);
   const [checkoutMessage, setCheckoutMessage] = useState('');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
@@ -47,6 +47,44 @@ const ShoppingCart = ({
     return message.includes('status: 401') || message.toLowerCase().includes('unauthorized');
   }, []);
 
+  const parseCartError = useCallback((err) => {
+    const message = typeof err?.message === 'string' ? err.message : '';
+    const lower = message.toLowerCase();
+
+    if (!message) {
+      return { title: 'Something went wrong', detail: 'Please try again.' };
+    }
+
+    if (lower.includes('failed to fetch') || lower.includes('network')) {
+      return {
+        title: 'Network error',
+        detail: 'Unable to reach the server. Please check that the backend is running.',
+      };
+    }
+
+    if (lower.includes('out of stock')) {
+      return { title: 'Out of stock', detail: message };
+    }
+
+    if (lower.includes('available in stock')) {
+      return { title: 'Insufficient stock', detail: message };
+    }
+
+    if (lower.includes('product not found in cart')) {
+      return { title: 'Cart item missing', detail: message };
+    }
+
+    if (lower.includes('product not found')) {
+      return { title: 'Product unavailable', detail: message };
+    }
+
+    if (lower.includes('quantity must be at least') || lower.includes('quantity cannot be negative')) {
+      return { title: 'Invalid quantity', detail: message };
+    }
+
+    return { title: 'Request failed', detail: message };
+  }, []);
+
   const handleCheckout = async () => {
     if (onCheckout) {
       onCheckout();
@@ -56,7 +94,7 @@ const ShoppingCart = ({
     try {
       setIsCheckingOut(true);
       setCheckoutMessage('');
-      setLoadError('');
+      setCartError(null);
       const response = await post('/api/customers/orders', {});
       await fetchCart();
       window.dispatchEvent(new Event('cartChange'));
@@ -70,7 +108,7 @@ const ShoppingCart = ({
         redirectToLogin();
         return;
       }
-      setLoadError(err?.message || 'Failed to place order.');
+      setCartError(parseCartError(err));
     } finally {
       setIsCheckingOut(false);
     }
@@ -99,7 +137,7 @@ const ShoppingCart = ({
 
   const fetchCart = useCallback(async () => {
     setIsLoading(true);
-    setLoadError('');
+    setCartError(null);
     try {
       const cartData = await get(API_ENDPOINTS.CART);
       const items = Array.isArray(cartData?.items)
@@ -113,11 +151,11 @@ const ShoppingCart = ({
         redirectToLogin();
         return;
       }
-      setLoadError(err?.message || 'Failed to load cart.');
+      setCartError(parseCartError(err));
     } finally {
       setIsLoading(false);
     }
-  }, [normalizeCartItems, isAuthError, redirectToLogin]);
+  }, [normalizeCartItems, isAuthError, redirectToLogin, parseCartError]);
 
   useEffect(() => {
     fetchCart();
@@ -157,7 +195,7 @@ const ShoppingCart = ({
         redirectToLogin();
         return;
       }
-      setLoadError(err?.message || 'Failed to update quantity.');
+      setCartError(parseCartError(err));
     }
   };
 
@@ -171,7 +209,7 @@ const ShoppingCart = ({
         redirectToLogin();
         return;
       }
-      setLoadError(err?.message || 'Failed to remove item.');
+      setCartError(parseCartError(err));
     }
   };
 
@@ -207,9 +245,10 @@ const ShoppingCart = ({
                 <p>{checkoutMessage}</p>
               </div>
             )}
-            {loadError ? (
+            {cartError ? (
               <div className="shopping-empty-cart">
-                <p>{loadError}</p>
+                <p>{cartError.title}</p>
+                {cartError.detail && <p>{cartError.detail}</p>}
               </div>
             ) : isLoading ? (
               <div className="shopping-empty-cart">

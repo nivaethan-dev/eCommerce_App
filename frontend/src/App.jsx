@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './App.css'
 import Layout from './components/Layout'
@@ -18,8 +19,14 @@ import Notifications from './pages/Notifications'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 import ProductDetails from './pages/ProductDetails/ProductDetails'
+import { syncAuthState } from './utils/sessionManager'
 
 function App() {
+  // Sync auth state with cookies on mount
+  useEffect(() => {
+    syncAuthState();
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>

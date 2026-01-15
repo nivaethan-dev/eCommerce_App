@@ -68,6 +68,8 @@ export const login = async (req, res) => {
       const refreshToken = generateRefreshToken(customer._id, 'customer');
       setAuthCookies(res, accessToken, refreshToken);
 
+      console.log(`[Session] Customer login - User: ${customer._id}, Email: ${email}, IP: ${req.ip}, Session start: ${new Date().toISOString()}`);
+
       return res.status(200).json({
         success: true,
         message: `Login successful. Welcome back, ${customer.name}!`
@@ -102,6 +104,8 @@ export const login = async (req, res) => {
       const accessToken = generateAccessToken(admin._id, 'admin');
       const refreshToken = generateRefreshToken(admin._id, 'admin');
       setAuthCookies(res, accessToken, refreshToken);
+
+      console.log(`[Session] Admin login - User: ${admin._id}, Email: ${email}, IP: ${req.ip}, Session start: ${new Date().toISOString()}`);
 
       return res.status(200).json({
         success: true,
@@ -178,7 +182,10 @@ export const refreshToken = async (req, res) => {
     const now = new Date();
     const sessionDuration = (now - loginTime) / 1000 / 60 / 60; // hours
 
+    console.log(`[Session] Refresh request - User: ${decoded.id}, Role: ${userRole}, Session duration: ${sessionDuration.toFixed(2)}h, Login time: ${loginTime.toISOString()}`);
+
     if (sessionDuration >= 6) {
+      console.log(`[Session] Session expired for user ${decoded.id} after ${sessionDuration.toFixed(2)}h`);
       return res.status(401).json({
         success: false,
         error: 'Session expired. Please login again.',
@@ -193,6 +200,7 @@ export const refreshToken = async (req, res) => {
     // Set BOTH new tokens
     setAuthCookies(res, newAccessToken, newRefreshToken);
 
+    console.log(`[Session] Token refreshed successfully for user ${decoded.id}, ${(6 - sessionDuration).toFixed(2)}h remaining`);
     res.json({ success: true, message: 'Token refreshed' });
   } catch (err) {
     // Invalid or expired token
