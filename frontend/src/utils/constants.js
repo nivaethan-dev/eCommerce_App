@@ -20,9 +20,9 @@ export const API_ENDPOINTS = {
   
   // Cart
   CART: '/api/customers/cart',
-  CART_ADD: '/api/customers/cart/add',
-  CART_UPDATE: '/api/customers/cart/update',
-  CART_REMOVE: (productId) => `/api/customers/cart/remove/${productId}`,
+  CART_ADD: '/api/customers/cart/items',
+  CART_UPDATE: (productId) => `/api/customers/cart/items/${productId}`,
+  CART_REMOVE: (productId) => `/api/customers/cart/items/${productId}`,
   
   // Admins
   ADMINS: '/api/admins',
@@ -30,6 +30,23 @@ export const API_ENDPOINTS = {
   
   // Notifications (TODO: Backend to implement)
   // NOTIFICATIONS: '/api/notifications',
+};
+
+// Public endpoints that do not require auth (prefix matches)
+export const PUBLIC_ENDPOINT_PREFIXES = [
+  '/api/products',
+  '/api/auth/login',
+  '/api/auth/logout',
+  '/api/auth/refresh',
+  '/api/auth/refresh-token',
+  '/api/customers/register',
+];
+
+// Protected endpoint prefixes by role
+export const PROTECTED_ENDPOINT_PREFIXES = {
+  shared: ['/api/notifications'],
+  customer: ['/api/customers'],
+  admin: ['/api/admins'],
 };
 
 // User roles

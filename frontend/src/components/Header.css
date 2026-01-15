@@ -654,6 +654,27 @@
   white-space: nowrap;
 }
 
+.cart-item-remove-btn {
+  border: none;
+  background: transparent;
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cart-item-remove-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cart-item-remove-btn:hover:not(:disabled) {
+  color: #dc2626;
+}
+
 .cart-dropdown-footer {
   padding: 1rem;
   background-color: #ffffff;

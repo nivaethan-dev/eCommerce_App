@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { get, post, put } from '../utils/api';
+import { get, post, put, del } from '../utils/api';
 import { API_ENDPOINTS, PRODUCT_CATEGORIES } from '../utils/constants';
+import { useAuth } from '../contexts/AuthContext';
 import './Header.css';
 
 const Header = () => {
+  const { isAuthenticated, isAdmin, logout: authLogout } = useAuth();
   const formatLKR = useCallback((value) => {
     const numeric = typeof value === 'number' && Number.isFinite(value) ? value : Number(value);
     const safe = Number.isFinite(numeric) ? numeric : 0;
@@ -21,8 +23,6 @@ const Header = () => {
   const [cartItemCount, setCartItemCount] = useState(0);
   const [cartItems, setCartItems] = useState([]);
   const [updatingCartProductId, setUpdatingCartProductId] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -34,29 +34,7 @@ const Header = () => {
   const notificationTimeoutRef = useRef(null);
   const cartTimeoutRef = useRef(null);
 
-  // Check authentication status and user role whenever location changes
-  useEffect(() => {
-    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
-    const userRole = localStorage.getItem('userRole');
-    setIsAuthenticated(isAuth);
-    setIsAdmin(userRole === 'admin');
-  }, [location]);
-
-  // Listen for auth change events (login/logout)
-  useEffect(() => {
-    const handleAuthChange = () => {
-      const isAuth = localStorage.getItem('isAuthenticated') === 'true';
-      const userRole = localStorage.getItem('userRole');
-      setIsAuthenticated(isAuth);
-      setIsAdmin(userRole === 'admin');
-    };
-    
-    window.addEventListener('authChange', handleAuthChange);
-    
-    return () => {
-      window.removeEventListener('authChange', handleAuthChange);
-    };
-  }, []);
+  // Auth state is now managed by AuthContext - no local state needed
 
   // Function to fetch notifications list
   const fetchNotificationsList = useCallback(async () => {
@@ -143,6 +121,25 @@ const Header = () => {
       } catch (error) {
         console.error('Failed to update cart quantity:', error);
         // Best-effort refresh to recover from partial state
+        await fetchCartData();
+      } finally {
+        setUpdatingCartProductId(null);
+      }
+    },
+    [fetchCartData]
+  );
+
+  const removeCartItem = useCallback(
+    async (productId) => {
+      if (!productId) return;
+
+      try {
+        setUpdatingCartProductId(String(productId));
+        await del(API_ENDPOINTS.CART_REMOVE(productId));
+        await fetchCartData();
+        window.dispatchEvent(new Event('cartChange'));
+      } catch (error) {
+        console.error('Failed to remove cart item:', error);
         await fetchCartData();
       } finally {
         setUpdatingCartProductId(null);
@@ -265,25 +262,9 @@ const Header = () => {
   };
 
   const handleLogout = async () => {
-    try {
-      // Call backend logout endpoint to clear httpOnly cookies
-      await post(API_ENDPOINTS.LOGOUT, {});
-    } catch (error) {
-      console.error('Logout API call failed:', error);
-    }
-    
-    // Clear authentication flag and user role
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('userRole');
-    setIsAuthenticated(false);
-    setIsAdmin(false);
+    await authLogout();
     setShowProfileDropdown(false);
     setNotificationCount(0);
-    
-    // Dispatch custom event to notify other components
-    window.dispatchEvent(new Event('authChange'));
-    
-    // Redirect to home page
     navigate('/');
   };
 
@@ -565,12 +546,16 @@ const Header = () => {
                                   item?.productId && typeof item.productId === 'object'
                                     ? item.productId
                                     : null;
-                                const pid = product?._id;
+                                const pid =
+                                  product?._id ||
+                                  (typeof item?.productId === 'string' ? item.productId : null) ||
+                                  item?._id ||
+                                  item?.id;
                                 const title = product?.title || 'Product';
                                 const unitPrice = Number(product?.price) || 0;
                                 const currentQty = Number(item?.quantity) || 0;
                                 const maxStock = Number(product?.stock) || Infinity;
-                                const disabled = updatingCartProductId === String(pid);
+                                const disabled = !pid || updatingCartProductId === String(pid);
                                 const lineTotal = formatLKR(unitPrice * currentQty);
 
                                 return (
@@ -582,7 +567,7 @@ const Header = () => {
                                       <div className="cart-item-line-total">Rs. {lineTotal}</div>
                                     </div>
 
-                                    <div className="cart-item-bottom">
+                                      <div className="cart-item-bottom">
                                       <div className="cart-item-qty-controls">
                                         <button
                                           type="button"
@@ -616,6 +601,19 @@ const Header = () => {
                                       <div className="cart-item-unit-price">
                                         Rs. {formatLKR(unitPrice)} each
                                       </div>
+                                        <button
+                                          type="button"
+                                          className="cart-item-remove-btn"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            removeCartItem(pid);
+                                          }}
+                                          disabled={disabled}
+                                          aria-label="Remove item from cart"
+                                        >
+                                          Remove
+                                        </button>
                                     </div>
                                   </>
                                 );
@@ -640,8 +638,8 @@ const Header = () => {
                               }, 0))}
                           </span>
                         </div>
-                        <Link to="/products" className="browse-products-btn">
-                          Continue Shopping
+                        <Link to="/cart" className="browse-products-btn">
+                          View Cart
                         </Link>
                       </div>
                     </>

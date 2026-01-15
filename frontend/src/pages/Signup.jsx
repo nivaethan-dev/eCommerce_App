@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { post } from '../utils/api';
-import { API_ENDPOINTS } from '../utils/constants';
+import { useAuth } from '../contexts/AuthContext';
 import './Signup.css';
 
 const Signup = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { signup } = useAuth();
   const redirectQuery = useMemo(() => {
     const redirectTo = new URLSearchParams(location.search).get('redirect');
     return redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : '';
@@ -82,24 +82,18 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      const response = await post(API_ENDPOINTS.CUSTOMER_REGISTER, {
+      const result = await signup({
         name: formData.name,
         email: formData.email,
         password: formData.password
       });
 
-      // Check if signup was successful
-      if (response.success) {
-        // Backend automatically logs in user after signup (sets httpOnly cookies)
-        // Set auth flag in localStorage
-        localStorage.setItem('isAuthenticated', 'true');
-        // Dispatch custom event to notify other components
-        window.dispatchEvent(new Event('authChange'));
-        
-        const redirectTo = new URLSearchParams(window.location.search).get('redirect') || '/';
+      if (result.success) {
+        const redirectParam = new URLSearchParams(window.location.search).get('redirect');
+        const redirectTo = redirectParam || result.redirectTo || '/';
         navigate(redirectTo);
       } else {
-        setApiError('Signup failed. Please try again.');
+        setApiError(result.error || 'Signup failed. Please try again.');
       }
     } catch (error) {
       console.error('Signup failed:', error);

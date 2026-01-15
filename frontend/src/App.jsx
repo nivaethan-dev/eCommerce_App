@@ -13,17 +13,19 @@ import AdminAuditLogs from './pages/admin/AdminAuditLogs'
 import AboutUs from './pages/AboutUs'
 import Products from './pages/Products'
 import CategoryProducts from './pages/CategoryProducts'
-import Cart from './pages/Cart'
+import ShoppingCart from './pages/ShoppingCart'
 import Notifications from './pages/Notifications'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 import ProductDetails from './pages/ProductDetails/ProductDetails'
+import { AuthProvider } from './contexts/AuthContext'
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="login" element={<Login />} />
           <Route path="signup" element={<Signup />} />
@@ -35,7 +37,7 @@ function App() {
           {/* Protected Routes - Return 404 for guests */}
           <Route path="cart" element={
             <ProtectedRoute requiredRole="customer">
-              <Cart />
+              <ShoppingCart />
             </ProtectedRoute>
           } />
           <Route path="notifications" element={
@@ -63,8 +65,9 @@ function App() {
           <Route path="404" element={<NotFound />} />
           <Route path="*" element={<NotFound />} />
         </Route>
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
 
