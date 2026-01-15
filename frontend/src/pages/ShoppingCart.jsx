@@ -1,21 +1,26 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './ShoppingCart.css';
-import { mockCartItems } from '../data/mockCartData';
 import CartPageHeader from '../components/cart/CartPageHeader';
 import CartEmptyState from '../components/cart/CartEmptyState';
 import CartItemList from '../components/cart/CartItemList';
 import CartOrderSummary from '../components/cart/CartOrderSummary';
+import { get, put, del, post } from '../utils/api';
+import { API_ENDPOINTS } from '../utils/constants';
 
 // --- Shopping Cart Component (Reusable) ---
 const ShoppingCart = ({ 
-  initialCartItems = mockCartItems,
+  initialCartItems = [],
   onCheckout,
   onContinueShopping
 }) => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState(initialCartItems);
   const [promoCode, setPromoCode] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [checkoutMessage, setCheckoutMessage] = useState('');
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   // Default handlers
   const handleContinueShopping = () => {
@@ -26,14 +31,83 @@ const ShoppingCart = ({
     }
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (onCheckout) {
       onCheckout();
-    } else {
-      console.log('Proceeding to checkout...');
-      // TODO: Implement checkout flow
+      return;
+    }
+
+    try {
+      setIsCheckingOut(true);
+      setCheckoutMessage('');
+      setLoadError('');
+      const response = await post('/api/customers/orders', {});
+      await fetchCart();
+      window.dispatchEvent(new Event('cartChange'));
+      setCheckoutMessage(
+        response?.order?._id
+          ? `Order placed successfully! Order ID: ${response.order._id}`
+          : 'Order placed successfully!'
+      );
+    } catch (err) {
+      setLoadError(err?.message || 'Failed to place order.');
+    } finally {
+      setIsCheckingOut(false);
     }
   };
+
+  const normalizeCartItems = useCallback((items = []) => (
+    items.map((item) => {
+      const product = item?.productId && typeof item.productId === 'object'
+        ? item.productId
+        : null;
+      const productId = product?._id || item?.productId || item?._id || item?.id;
+      const imageUrl = product?.image && typeof product.image === 'string' && product.image.startsWith('http')
+        ? product.image
+        : 'https://via.placeholder.com/80';
+
+      return {
+        id: String(productId || ''),
+        name: product?.title || product?.name || item?.name || 'Product',
+        category: product?.category || item?.category || '',
+        price: Number(product?.price ?? item?.price ?? 0),
+        quantity: Number(item?.quantity ?? 0),
+        imageUrl,
+      };
+    }).filter((item) => item.id)
+  ), []);
+
+  const fetchCart = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError('');
+    try {
+      const cartData = await get(API_ENDPOINTS.CART);
+      const items = Array.isArray(cartData?.items)
+        ? cartData.items
+        : Array.isArray(cartData?.cart)
+          ? cartData.cart
+          : [];
+      setCartItems(normalizeCartItems(items));
+    } catch (err) {
+      setLoadError(err?.message || 'Failed to load cart.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [normalizeCartItems]);
+
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
+
+  useEffect(() => {
+    const handleCartChange = () => {
+      fetchCart();
+    };
+    window.addEventListener('cartChange', handleCartChange);
+    return () => {
+      window.removeEventListener('cartChange', handleCartChange);
+    };
+  }, [fetchCart]);
 
   const subtotal = useMemo(
     () => cartItems.reduce((acc, item) => acc + parseFloat(item.price) * item.quantity, 0),
@@ -48,13 +122,25 @@ const ShoppingCart = ({
     return { total: finalTotal, discountAmount: discount, discountRate: discountRateCalc, itemsCount: count };
   }, [subtotal, promoCode, cartItems]);
 
-  const updateQuantity = (id, newQuantity) => {
+  const updateQuantity = async (id, newQuantity) => {
     if (newQuantity < 1) return;
-    setCartItems(prev => prev.map(item => item.id === id ? { ...item, quantity: newQuantity } : item));
+    try {
+      await put(`/api/customers/cart/items/${id}`, { quantity: newQuantity });
+      await fetchCart();
+      window.dispatchEvent(new Event('cartChange'));
+    } catch (err) {
+      setLoadError(err?.message || 'Failed to update quantity.');
+    }
   };
 
-  const removeItem = (id) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
+  const removeItem = async (id) => {
+    try {
+      await del(API_ENDPOINTS.CART_REMOVE(id));
+      await fetchCart();
+      window.dispatchEvent(new Event('cartChange'));
+    } catch (err) {
+      setLoadError(err?.message || 'Failed to remove item.');
+    }
   };
 
   const formatCurrency = (amount) =>
@@ -84,7 +170,20 @@ const ShoppingCart = ({
         {/* Cart Section */}
         <div className="cart-section">
           <div className="shopping-cart-container">
-            {cartItems.length === 0 ? (
+            {checkoutMessage && (
+              <div className="shopping-empty-cart">
+                <p>{checkoutMessage}</p>
+              </div>
+            )}
+            {loadError ? (
+              <div className="shopping-empty-cart">
+                <p>{loadError}</p>
+              </div>
+            ) : isLoading ? (
+              <div className="shopping-empty-cart">
+                <p>Loading cart...</p>
+              </div>
+            ) : cartItems.length === 0 ? (
               <CartEmptyState onContinueShopping={handleContinueShopping} />
             ) : (
               <CartItemList
@@ -111,6 +210,7 @@ const ShoppingCart = ({
             setPromoCode={setPromoCode}
             onApplyPromo={handleApplyPromo}
             onCheckout={handleCheckout}
+            isCheckingOut={isCheckingOut}
           />
         )}
       </div>

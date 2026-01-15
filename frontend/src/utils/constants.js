@@ -20,9 +20,9 @@ export const API_ENDPOINTS = {
   
   // Cart
   CART: '/api/customers/cart',
-  CART_ADD: '/api/customers/cart/add',
-  CART_UPDATE: '/api/customers/cart/update',
-  CART_REMOVE: (productId) => `/api/customers/cart/remove/${productId}`,
+  CART_ADD: '/api/customers/cart/items',
+  CART_UPDATE: (productId) => `/api/customers/cart/items/${productId}`,
+  CART_REMOVE: (productId) => `/api/customers/cart/items/${productId}`,
   
   // Admins
   ADMINS: '/api/admins',

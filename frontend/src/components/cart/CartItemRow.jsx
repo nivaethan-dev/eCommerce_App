@@ -1,14 +1,14 @@
 import React from 'react';
-import { getItemImage } from '../../data/mockCartData';
 
 const CartItemRow = ({ item, updateQuantity, removeItem, formatCurrency }) => {
   const itemPrice = parseFloat(item.price);
   const totalPrice = itemPrice * item.quantity;
   const formattedPrice = formatCurrency(itemPrice);
+  const imageUrl = item.imageUrl || 'https://via.placeholder.com/80';
 
   return (
     <div className="shopping-cart-item">
-      <img src={getItemImage(item)} alt={item.name} className="item-image" />
+      <img src={imageUrl} alt={item.name} className="item-image" />
 
       <div className="item-details-and-controls-left">
         <div className="item-details-top">

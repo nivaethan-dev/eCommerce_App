@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { get, post, put } from '../utils/api';
+import { get, post, put, del } from '../utils/api';
 import { API_ENDPOINTS, PRODUCT_CATEGORIES } from '../utils/constants';
 import './Header.css';
 
@@ -143,6 +143,25 @@ const Header = () => {
       } catch (error) {
         console.error('Failed to update cart quantity:', error);
         // Best-effort refresh to recover from partial state
+        await fetchCartData();
+      } finally {
+        setUpdatingCartProductId(null);
+      }
+    },
+    [fetchCartData]
+  );
+
+  const removeCartItem = useCallback(
+    async (productId) => {
+      if (!productId) return;
+
+      try {
+        setUpdatingCartProductId(String(productId));
+        await del(API_ENDPOINTS.CART_REMOVE(productId));
+        await fetchCartData();
+        window.dispatchEvent(new Event('cartChange'));
+      } catch (error) {
+        console.error('Failed to remove cart item:', error);
         await fetchCartData();
       } finally {
         setUpdatingCartProductId(null);
@@ -582,7 +601,7 @@ const Header = () => {
                                       <div className="cart-item-line-total">Rs. {lineTotal}</div>
                                     </div>
 
-                                    <div className="cart-item-bottom">
+                                      <div className="cart-item-bottom">
                                       <div className="cart-item-qty-controls">
                                         <button
                                           type="button"
@@ -616,6 +635,19 @@ const Header = () => {
                                       <div className="cart-item-unit-price">
                                         Rs. {formatLKR(unitPrice)} each
                                       </div>
+                                        <button
+                                          type="button"
+                                          className="cart-item-remove-btn"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            removeCartItem(pid);
+                                          }}
+                                          disabled={disabled}
+                                          aria-label="Remove item from cart"
+                                        >
+                                          Remove
+                                        </button>
                                     </div>
                                   </>
                                 );
@@ -640,8 +672,8 @@ const Header = () => {
                               }, 0))}
                           </span>
                         </div>
-                        <Link to="/products" className="browse-products-btn">
-                          Continue Shopping
+                        <Link to="/cart" className="browse-products-btn">
+                          View Cart
                         </Link>
                       </div>
                     </>

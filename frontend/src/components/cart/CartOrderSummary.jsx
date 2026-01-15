@@ -12,6 +12,7 @@ const CartOrderSummary = ({
   setPromoCode,
   onApplyPromo,
   onCheckout,
+  isCheckingOut,
 }) => (
   <div className="summary-container">
     <h3 className="summary-header">Order Summary</h3>
@@ -42,8 +43,8 @@ const CartOrderSummary = ({
       <span className="total-value">{formatCurrency(total)}</span>
     </div>
 
-    <button className="checkout-button" onClick={onCheckout}>
-      Proceed to Checkout
+    <button className="checkout-button" onClick={onCheckout} disabled={isCheckingOut}>
+      {isCheckingOut ? 'Placing Order...' : 'Proceed to Checkout'}
     </button>
   </div>
 );
