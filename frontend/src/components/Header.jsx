@@ -2,10 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { get, post, put, del } from '../utils/api';
 import { API_ENDPOINTS, PRODUCT_CATEGORIES } from '../utils/constants';
-import { stopSession } from '../utils/sessionManager';
+import { useAuth } from '../contexts/AuthContext';
 import './Header.css';
 
 const Header = () => {
+  const { isAuthenticated, isAdmin, logout: authLogout } = useAuth();
   const formatLKR = useCallback((value) => {
     const numeric = typeof value === 'number' && Number.isFinite(value) ? value : Number(value);
     const safe = Number.isFinite(numeric) ? numeric : 0;
@@ -22,8 +23,6 @@ const Header = () => {
   const [cartItemCount, setCartItemCount] = useState(0);
   const [cartItems, setCartItems] = useState([]);
   const [updatingCartProductId, setUpdatingCartProductId] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -35,29 +34,7 @@ const Header = () => {
   const notificationTimeoutRef = useRef(null);
   const cartTimeoutRef = useRef(null);
 
-  // Check authentication status and user role whenever location changes
-  useEffect(() => {
-    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
-    const userRole = localStorage.getItem('userRole');
-    setIsAuthenticated(isAuth);
-    setIsAdmin(userRole === 'admin');
-  }, [location]);
-
-  // Listen for auth change events (login/logout)
-  useEffect(() => {
-    const handleAuthChange = () => {
-      const isAuth = localStorage.getItem('isAuthenticated') === 'true';
-      const userRole = localStorage.getItem('userRole');
-      setIsAuthenticated(isAuth);
-      setIsAdmin(userRole === 'admin');
-    };
-    
-    window.addEventListener('authChange', handleAuthChange);
-    
-    return () => {
-      window.removeEventListener('authChange', handleAuthChange);
-    };
-  }, []);
+  // Auth state is now managed by AuthContext - no local state needed
 
   // Function to fetch notifications list
   const fetchNotificationsList = useCallback(async () => {
@@ -285,28 +262,9 @@ const Header = () => {
   };
 
   const handleLogout = async () => {
-    try {
-      // Call backend logout endpoint to clear httpOnly cookies
-      await post(API_ENDPOINTS.LOGOUT, {});
-    } catch (error) {
-      console.error('Logout API call failed:', error);
-    }
-    
-    // Stop session management
-    stopSession();
-    
-    // Clear authentication flag and user role
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('userRole');
-    setIsAuthenticated(false);
-    setIsAdmin(false);
+    await authLogout();
     setShowProfileDropdown(false);
     setNotificationCount(0);
-    
-    // Dispatch custom event to notify other components
-    window.dispatchEvent(new Event('authChange'));
-    
-    // Redirect to home page
     navigate('/');
   };
 
