@@ -95,18 +95,24 @@ export const validateImage = async (req, res, next) => {
   // If no file, just skip (logic for required vs optional is handled by requireImage)
   if (!req.file) return next();
 
-  // Safety check: ensure only one image is uploaded
-  if (req.files && req.files.length > UPLOAD_CONFIG.MAX_IMAGES) {
+  // Safety check: ensure only one image is uploaded (with Array.isArray to prevent type confusion)
+  if (Array.isArray(req.files) && req.files.length > UPLOAD_CONFIG.MAX_IMAGES) {
     await cleanupFiles(req);
     return sendUploadError(res, 'TOO_MANY_FILES', `Only ${UPLOAD_CONFIG.MAX_IMAGES} images allowed`);
   }
 
   try {
+    // Validate buffer type to prevent type confusion attacks
+    if (!Buffer.isBuffer(req.file.buffer)) {
+      await cleanupFiles(req);
+      return sendUploadError(res, 'INVALID_FILE_DATA', 'Invalid file data received');
+    }
+
     // Detect actual file type
     const fileType = await fileTypeFromBuffer(req.file.buffer);
 
-    // Validate against allowed MIME types
-    if (!fileType || !Object.values(MIME_TYPES).includes(fileType.ext)) {
+    // Validate against allowed MIME types (with string type check to prevent type confusion)
+    if (!fileType || typeof fileType.ext !== 'string' || !Object.values(MIME_TYPES).includes(fileType.ext)) {
       await cleanupFiles(req);
       return sendUploadError(res, 'INVALID_FILE_TYPE', 'Invalid file type detected. Only JPG, JPEG, PNG, WEBP, and AVIF are allowed.');
     }
@@ -129,8 +135,9 @@ export const processImage = async (req, res, next) => {
   try {
     const inputBuffer = req.file.buffer;
 
-    if (!inputBuffer || inputBuffer.length === 0) {
-      throw new Error('Input file is empty');
+    // Validate buffer type and content to prevent type confusion attacks
+    if (!Buffer.isBuffer(inputBuffer) || inputBuffer.length === 0) {
+      throw new Error('Invalid or empty file buffer');
     }
 
     // Process image with Sharp - read from memory and output a buffer
@@ -266,6 +273,14 @@ export { UPLOAD_CONFIG };
 // Future scalability: Function to create upload middleware for multiple images
 // This can be used when we want to extend to multiple images in the future
 export const createUploadMiddleware = (fieldName = 'image', maxImages = UPLOAD_CONFIG.MAX_IMAGES) => {
+  // Validate parameters to prevent type confusion
+  if (typeof fieldName !== 'string' || fieldName.length === 0) {
+    throw new Error('fieldName must be a non-empty string');
+  }
+  if (typeof maxImages !== 'number' || maxImages < 1 || !Number.isInteger(maxImages)) {
+    throw new Error('maxImages must be a positive integer');
+  }
+
   const instance = multer({
     storage,
     fileFilter,
