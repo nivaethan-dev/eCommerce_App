@@ -1,9 +1,49 @@
 import * as auditService from '../services/auditLogService.js';
+import AuditLog from '../models/AuditLog.js';
 
 export const getAuditLogs = async (req, res) => {
   try {
-    const logs = await auditService.getAuditLogs(req.query.filters || {}, req.query.pagination || {});
-    res.json(logs);
+    // Validation handled by middleware - query params are sanitized
+    const query = req.validatedQuery || req.query;
+    
+    const page = query.page || 1;
+    const limit = query.limit || 20;
+
+    // Build filters object from validated query parameters
+    const filters = {};
+    if (query.action) filters.action = query.action;
+    if (query.userType) filters.userType = query.userType;
+    if (query.resource) filters.resource = query.resource;
+    if (query.status) filters.status = query.status;
+
+    // Handle date range filtering
+    if (query.startDate || query.endDate) {
+      filters.timestamp = {};
+      if (query.startDate) {
+        filters.timestamp.$gte = new Date(query.startDate);
+      }
+      if (query.endDate) {
+        // Set to end of day for endDate
+        const endDate = new Date(query.endDate);
+        endDate.setHours(23, 59, 59, 999);
+        filters.timestamp.$lte = endDate;
+      }
+    }
+
+    // Get logs with pagination
+    const logs = await auditService.getAuditLogs(filters, { page, limit });
+    
+    // Get total count for pagination
+    const total = await AuditLog.countDocuments(filters);
+    const totalPages = Math.ceil(total / limit);
+
+    res.json({
+      logs,
+      total,
+      totalPages,
+      currentPage: page,
+      pageSize: limit
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -20,8 +60,28 @@ export const getAuditLogById = async (req, res) => {
 
 export const getAuditStats = async (req, res) => {
   try {
-    const stats = await auditService.getAuditStats(req.query.dateRange || {});
+    // Validation handled by middleware - query params are sanitized
+    const query = req.validatedQuery || req.query;
+    
+    const dateRange = {};
+    if (query.startDate) {
+      dateRange.startDate = query.startDate;
+    }
+    if (query.endDate) {
+      dateRange.endDate = query.endDate;
+    }
+
+    const stats = await auditService.getAuditStats(dateRange);
     res.json(stats);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getDistinctFilterValues = async (req, res) => {
+  try {
+    const filterValues = await auditService.getDistinctFilterValues();
+    res.json(filterValues);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

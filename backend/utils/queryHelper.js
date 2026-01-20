@@ -1,3 +1,5 @@
+import { escapeRegex } from '../validation/sanitizers.js';
+
 export const fetchDocuments = async (model, filters = {}, options = {}) => {
     const { role, userId, ownerField, selectFields } = options;
   
@@ -11,8 +13,10 @@ export const fetchDocuments = async (model, filters = {}, options = {}) => {
     // Build search query for text fields
     const searchQuery = {};
     if (filters.search && filters.searchFields) {
+      // Escape regex special characters to prevent ReDoS attacks
+      const safeSearch = escapeRegex(filters.search);
       searchQuery['$or'] = filters.searchFields.map(field => ({
-        [field]: { $regex: filters.search, $options: 'i' }
+        [field]: { $regex: safeSearch, $options: 'i' }
       }));
     }
   
@@ -51,8 +55,10 @@ export const fetchDocumentsPaged = async (model, filters = {}, options = {}) => 
   // Build search query for text fields
   const searchQuery = {};
   if (filters.search && filters.searchFields) {
+    // Escape regex special characters to prevent ReDoS attacks
+    const safeSearch = escapeRegex(filters.search);
     searchQuery['$or'] = filters.searchFields.map((field) => ({
-      [field]: { $regex: filters.search, $options: 'i' }
+      [field]: { $regex: safeSearch, $options: 'i' }
     }));
   }
 

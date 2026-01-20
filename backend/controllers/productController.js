@@ -149,7 +149,9 @@ export const fetchProducts = async (req, res) => {
     // Allow public access for product search - no authentication required
     const role = req.user ? req.user.role : 'public';
     const userId = req.user ? req.user.id : null;
-    const { products, page, limit, total, totalPages } = await getProducts(role, userId, req.query);
+    // Use validatedQuery if available (search is already regex-escaped by middleware)
+    const queryParams = req.validatedQuery || req.query;
+    const { products, page, limit, total, totalPages } = await getProducts(role, userId, queryParams);
     res.status(200).json({
       success: true,
       message: PRODUCT_MESSAGES.FETCH_SUCCESS,

@@ -14,6 +14,7 @@ const Signup = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: ''
   });
@@ -51,13 +52,26 @@ const Signup = () => {
       newErrors.email = 'Please enter a valid email address';
     }
 
+    // Phone validation (Sri Lankan format)
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else {
+      const phoneDigits = formData.phone.replace(/\D/g, '');
+      // Accept formats: 0771234567, 771234567, +94771234567, 94771234567
+      if (phoneDigits.length < 9 || phoneDigits.length > 12) {
+        newErrors.phone = 'Please enter a valid Sri Lankan phone number';
+      } else if (!/^(\+?94|0)?7\d{8}$/.test(formData.phone.replace(/\s/g, ''))) {
+        newErrors.phone = 'Phone must be a valid Sri Lankan mobile number';
+      }
+    }
+
     // Password validation
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = 'Password must contain uppercase, lowercase, and number';
+    } else if (formData.password.length < 12) {
+      newErrors.password = 'Password must be at least 12 characters';
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/.test(formData.password)) {
+      newErrors.password = 'Password must contain uppercase, lowercase, number, and symbol';
     }
 
     // Confirm password validation
@@ -85,6 +99,7 @@ const Signup = () => {
       const result = await signup({
         name: formData.name,
         email: formData.email,
+        phone: formData.phone,
         password: formData.password
       });
 
@@ -169,6 +184,26 @@ const Signup = () => {
               />
               {errors.email && (
                 <span className="error-text">{errors.email}</span>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="phone" className="form-label">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className={`form-input ${errors.phone ? 'input-error' : ''}`}
+                placeholder="0771234567"
+                autoComplete="tel"
+                disabled={isLoading}
+              />
+              {errors.phone && (
+                <span className="error-text">{errors.phone}</span>
               )}
             </div>
 

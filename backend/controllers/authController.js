@@ -28,15 +28,8 @@ const resetLoginAttempts = async (user) => {
 // Unified login for both customers and admins
 export const login = async (req, res) => {
   try {
+    // Validation handled by middleware - data is already sanitized
     const { email, password } = req.body;
-
-    // Validate input
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        error: 'Email and password are required'
-      });
-    }
 
     // Try finding the user in Customer collection
     const customer = await Customer.findOne({ email });

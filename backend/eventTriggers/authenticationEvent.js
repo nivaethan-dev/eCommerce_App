@@ -4,6 +4,45 @@ import { getGeolocation } from '../utils/geoipUtils.js';
 import Admin from '../models/Admin.js';
 
 // ============================================
+// SIGNUP TRIGGERS
+// ============================================
+
+export const triggerCustomerSignup = async (customerId, customerName, customerEmail, ipAddress) => {
+  try {
+    // 1. Create welcome notification for the customer
+    await notificationService.createNotification(
+      customerId,
+      'Customer',
+      {
+        type: 'account_created',
+        title: 'Welcome to Our Store!',
+        message: `Welcome, ${customerName}! Your account has been successfully created. Start shopping and enjoy exclusive deals!`,
+        priority: 'low',
+        metadata: { email: customerEmail }
+      }
+    );
+
+    // 2. Create audit log for admin review
+    const geolocation = getGeolocation(ipAddress);
+    await auditService.createAuditLog({
+      userId: customerId,
+      userType: 'Customer',
+      action: 'CUSTOMER_SIGNUP',
+      resource: 'Auth',
+      resourceId: customerId,
+      endpoint: '/api/auth/register',
+      method: 'POST',
+      ipAddress,
+      geolocation,
+      status: 'success',
+      changes: { customerName, customerEmail }
+    });
+  } catch (error) {
+    console.error('Customer signup trigger error:', error.message);
+  }
+};
+
+// ============================================
 // LOGIN TRIGGERS
 // ============================================
 

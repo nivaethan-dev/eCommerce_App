@@ -8,6 +8,7 @@ import auditLogRoutes from './routes/auditLogRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import mongoSanitize from 'mongo-sanitize';
 
 const app = express();
 
@@ -34,6 +35,16 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Sanitize data to prevent NoSQL injection (Express 5 compatible)
+// Note: In Express 5, req.query and req.params are read-only getters
+// We only sanitize req.body here. Query/params are validated in controllers.
+app.use((req, res, next) => {
+  if (req.body && typeof req.body === 'object') {
+    req.body = mongoSanitize(req.body);
+  }
+  next();
+});
 
 // Static file serving
 const serveLocalUploads = (process.env.SERVE_LOCAL_UPLOADS ?? 'true') === 'true';

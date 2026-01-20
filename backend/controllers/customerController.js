@@ -1,50 +1,31 @@
 import Customer from '../models/Customer.js';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import validator from 'validator';
 import { generateAccessToken, generateRefreshToken, setAuthCookies } from '../utils/tokenUtils.js';
 import { getCustomers, addToCart as addToCartService, removeFromCart as removeFromCartService, getCart as getCartService, updateCartQuantity as updateCartItemService } from '../services/customerService.js';
 import { isUserError, getErrorStatusCode } from '../utils/cartErrors.js';
 import { CART_MESSAGES } from '../utils/cartMessages.js';
+import * as eventTriggers from '../eventTriggers/authenticationEvent.js';
 
 // Register
 export const registerCustomer = async (req, res) => {
   try {
+    // Validation handled by middleware - data is already sanitized
     const { name, email, phone, password } = req.body;
-
-    // Validate input
-    if (!name || !email || !phone || !password)
-      return res.status(400).json({ success: false, error: 'All fields are required' });
-
-    if (!validator.isEmail(email)) 
-      return res.status(400).json({ success: false, error: 'Invalid email' });
-
-    if (!validator.isMobilePhone(phone, 'si-LK')) 
-      return res.status(400).json({ success: false, error: 'Invalid phone number' });
-
-    let normalizedPhone = phone.startsWith('+94') ? phone : '+94' + phone.slice(1);
-
-    if (!validator.isStrongPassword(password, {
-      minLength: 12, 
-      minSymbols: 1,
-      minLowercase: 1,
-      minUppercase: 1,
-      minNumbers: 1 
-    })) {
-      return res.status(400).json({ success: false, error: 'Weak password' });
-    }
 
     // Check if customer exists
     const existingCustomer = await Customer.findOne({ $or: [{ email }, { phone }] });
-    if(existingCustomer){
+    if (existingCustomer) {
       return res.status(400).json({ success: false, error: 'Customer already exists' });
-    };
+    }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create customer
-    const customer = await Customer.create({ name, email, phone: normalizedPhone, password: hashedPassword });
+    const customer = await Customer.create({ name, email, phone, password: hashedPassword });
+
+    // Trigger signup event (notification to customer + audit log for admins)
+    await eventTriggers.triggerCustomerSignup(customer._id, name, email, req.ip);
 
     // Generate tokens & set cookies
     const accessToken = generateAccessToken(customer._id);
@@ -61,22 +42,8 @@ export const registerCustomer = async (req, res) => {
 // Add item to cart
 export const addCartItem = async (req, res) => {
   try {
+    // Validation handled by middleware - data is already sanitized
     const { productId, quantity } = req.body;
-
-    // Validate input
-    if (!productId) {
-      return res.status(400).json({ 
-        success: false, 
-        error: CART_MESSAGES.PRODUCT_ID_REQUIRED 
-      });
-    }
-
-    if (!quantity || quantity < 1) {
-      return res.status(400).json({ 
-        success: false, 
-        error: CART_MESSAGES.QUANTITY_MINIMUM 
-      });
-    }
 
     const cartData = await addToCartService(req.user.id, productId, quantity);
     res.status(201).json({ 
@@ -124,30 +91,9 @@ export const getCart = async (req, res) => {
 // Update cart item
 export const updateCartItem = async (req, res) => {
   try {
+    // Validation handled by middleware - data is already sanitized
     const { productId } = req.params;
     const { quantity } = req.body;
-
-    // Validate input
-    if (!productId) {
-      return res.status(400).json({ 
-        success: false, 
-        error: CART_MESSAGES.PRODUCT_ID_REQUIRED 
-      });
-    }
-
-    if (quantity === undefined || quantity === null) {
-      return res.status(400).json({ 
-        success: false, 
-        error: CART_MESSAGES.QUANTITY_REQUIRED 
-      });
-    }
-
-    if (quantity < 0) {
-      return res.status(400).json({ 
-        success: false, 
-        error: CART_MESSAGES.QUANTITY_NON_NEGATIVE 
-      });
-    }
 
     const result = await updateCartItemService(req.user.id, productId, quantity);
     res.status(200).json({ 
@@ -172,15 +118,8 @@ export const updateCartItem = async (req, res) => {
 // Remove item from cart
 export const removeCartItem = async (req, res) => {
   try {
+    // Validation handled by middleware - productId validated as ObjectId
     const { productId } = req.params;
-
-    // Validate input
-    if (!productId) {
-      return res.status(400).json({ 
-        success: false, 
-        error: CART_MESSAGES.PRODUCT_ID_REQUIRED 
-      });
-    }
 
     const cartData = await removeFromCartService(req.user.id, productId);
     res.status(200).json({ 
