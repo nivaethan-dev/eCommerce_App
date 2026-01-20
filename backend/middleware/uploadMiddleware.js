@@ -45,8 +45,8 @@ const storage = multer.memoryStorage();
 
 // File filter function
 const fileFilter = (req, file, cb) => {
-  // Check if file type is allowed
-  if (MIME_TYPES[file.mimetype]) {
+  // Check if file type is allowed (with type check to prevent type confusion attacks)
+  if (typeof file.mimetype === 'string' && MIME_TYPES[file.mimetype]) {
     cb(null, true);
   } else {
     cb(new Error('Invalid file type. Only JPG, JPEG, PNG, WEBP, and AVIF files are allowed.'), false);
