@@ -23,7 +23,7 @@ export const useProduct = (productId) => {
       const response = await get(`/api/products/${productId}`);
       setProduct(response.data);
     } catch (err) {
-      console.error(`Failed to fetch product ${productId}:`, err);
+      console.error('Failed to fetch product:', productId, err);
       setError(err.message || 'Failed to load product details');
     } finally {
       setLoading(false);
