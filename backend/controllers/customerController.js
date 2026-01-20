@@ -6,6 +6,7 @@ import { generateAccessToken, generateRefreshToken, setAuthCookies } from '../ut
 import { getCustomers, addToCart as addToCartService, removeFromCart as removeFromCartService, getCart as getCartService, updateCartQuantity as updateCartItemService } from '../services/customerService.js';
 import { isUserError, getErrorStatusCode } from '../utils/cartErrors.js';
 import { CART_MESSAGES } from '../utils/cartMessages.js';
+import * as eventTriggers from '../eventTriggers/authenticationEvent.js';
 
 // Register
 export const registerCustomer = async (req, res) => {
@@ -54,6 +55,9 @@ export const registerCustomer = async (req, res) => {
 
     // Create customer (using sanitized inputs)
     const customer = await Customer.create({ name: sanitizedName, email: sanitizedEmail, phone: normalizedPhone, password: hashedPassword });
+
+    // Trigger signup event (notification to customer + audit log for admins)
+    await eventTriggers.triggerCustomerSignup(customer._id, sanitizedName, sanitizedEmail, req.ip);
 
     // Generate tokens & set cookies
     const accessToken = generateAccessToken(customer._id);
