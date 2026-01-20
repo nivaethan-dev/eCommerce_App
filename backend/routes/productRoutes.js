@@ -3,6 +3,7 @@ import { createProduct, fetchProducts, fetchProductCategories, fetchProductById,
 import { productUploadBundle, requireImage } from '../middleware/uploadMiddleware.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { roleMiddleware } from '../middleware/roleMiddleware.js';
+import { productCreateLimiter, productModifyLimiter } from '../middleware/rateLimitMiddleware.js';
 import { validateBody, validateParams, validateQuery } from '../validation/middleware.js';
 import { 
   createProductSchema, 
@@ -18,13 +19,14 @@ router.post(
   '/create',
   authMiddleware,
   roleMiddleware('admin'),
+  productCreateLimiter,
   productUploadBundle,
   requireImage, // Enforce image requirement for new products
   validateBody(createProductSchema),
   createProduct
 );
 
-// Fetch products 
+// Fetch products (public reads - no rate limit, use caching instead)
 router.get('/categories', fetchProductCategories);
 router.get('/:productId', validateParams(productIdParamSchema), fetchProductById);
 router.get('/', validateQuery(productQuerySchema), fetchProducts);
@@ -34,6 +36,7 @@ router.patch(
   '/:productId',
   authMiddleware,
   roleMiddleware('admin'),
+  productModifyLimiter,
   productUploadBundle, // Image is optional here (validateImage skips if no file)
   validateParams(productIdParamSchema),
   validateBody(updateProductSchema),
@@ -45,6 +48,7 @@ router.delete(
   '/:productId',
   authMiddleware,
   roleMiddleware('admin'),
+  productModifyLimiter,
   validateParams(productIdParamSchema),
   deleteProduct
 );

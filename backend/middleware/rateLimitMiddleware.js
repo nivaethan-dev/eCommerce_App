@@ -44,3 +44,129 @@ export const refreshTokenLimiter = rateLimit({
     skipSuccessfulRequests: false, // Count all attempts
     validate: { trustProxy: false } // Disable the validation error
 });
+
+// Order rate limiter - prevents order flooding
+export const orderLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 5, // 5 orders per hour (strict)
+    message: {
+        success: false,
+        error: 'Order limit reached. Please try again later'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false,
+    validate: { trustProxy: false }
+});
+
+// Cart rate limiter - prevents cart bombing
+export const cartLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 10, // 10 cart additions per minute (strict)
+    message: {
+        success: false,
+        error: 'Too many cart requests. Please slow down'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false,
+    validate: { trustProxy: false }
+});
+
+// Search/product listing rate limiter - prevents scraping
+export const searchLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 60, // 60 requests per minute (strict)
+    message: {
+        success: false,
+        error: 'Too many requests. Please try again in a moment'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false,
+    validate: { trustProxy: false }
+});
+
+// Product create rate limiter - prevents bulk creation
+export const productCreateLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 5, // 5 products per minute (strict)
+    message: {
+        success: false,
+        error: 'Product creation limit reached. Please slow down'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false,
+    validate: { trustProxy: false }
+});
+
+// Product modify rate limiter - prevents mass update/delete
+export const productModifyLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 10, // 10 update/delete operations per minute
+    message: {
+        success: false,
+        error: 'Too many product modifications. Please slow down'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false,
+    validate: { trustProxy: false }
+});
+
+// Product read rate limiter - single product fetch, categories
+export const productReadLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 60, // 60 reads per minute
+    message: {
+        success: false,
+        error: 'Too many product requests. Please slow down'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false,
+    validate: { trustProxy: false }
+});
+
+// Cart modify rate limiter - update/delete cart items
+export const cartModifyLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 30, // 30 cart modifications per minute
+    message: {
+        success: false,
+        error: 'Too many cart modifications. Please slow down'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false,
+    validate: { trustProxy: false }
+});
+
+// Admin read rate limiter - list customers, orders, audit logs
+export const adminReadLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 30, // 30 admin read operations per minute
+    message: {
+        success: false,
+        error: 'Too many requests. Please slow down'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false,
+    validate: { trustProxy: false }
+});
+
+// Notification rate limiter - all notification operations
+export const notificationLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 60, // 60 notification operations per minute
+    message: {
+        success: false,
+        error: 'Too many notification requests. Please slow down'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false,
+    validate: { trustProxy: false }
+});

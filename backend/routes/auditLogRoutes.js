@@ -2,6 +2,7 @@ import express from 'express';
 import * as auditController from '../controllers/auditLogController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { roleMiddleware } from '../middleware/roleMiddleware.js';
+import { adminReadLimiter } from '../middleware/rateLimitMiddleware.js';
 import { validateParams, validateQuery } from '../validation/middleware.js';
 import { 
   auditLogQuerySchema, 
@@ -14,6 +15,7 @@ const router = express.Router();
 // Apply middleware
 router.use(authMiddleware);
 router.use(roleMiddleware('admin'));
+router.use(adminReadLimiter);
 
 router.get('/', validateQuery(auditLogQuerySchema), auditController.getAuditLogs);
 router.get('/stats', validateQuery(auditLogStatsQuerySchema), auditController.getAuditStats);
