@@ -97,28 +97,15 @@ export const getOrders = async (req, res) => {
  */
 export const listAllOrders = async (req, res) => {
   try {
-    const { status, limit, skip } = req.query;
-
+    // Validation handled by middleware - query params are sanitized
+    // Use validatedQuery if available, otherwise fall back to req.query
+    const query = req.validatedQuery || req.query;
+    
     const options = {
-      status: status || undefined,
-      limit: limit ? parseInt(limit, 10) : 50,
-      skip: skip ? parseInt(skip, 10) : 0
+      status: query.status || undefined,
+      limit: query.limit || 50,
+      skip: query.skip || 0
     };
-
-    // Validate limit and skip
-    if (isNaN(options.limit) || options.limit < 1 || options.limit > 100) {
-      return res.status(400).json({
-        success: false,
-        error: ORDER_MESSAGES.LIMIT_INVALID
-      });
-    }
-
-    if (isNaN(options.skip) || options.skip < 0) {
-      return res.status(400).json({
-        success: false,
-        error: ORDER_MESSAGES.SKIP_INVALID
-      });
-    }
 
     const result = await getAllOrders(options);
 
@@ -148,33 +135,9 @@ export const listAllOrders = async (req, res) => {
  */
 export const updateOrder = async (req, res) => {
   try {
+    // Validation handled by middleware - params and body are sanitized
     const { orderId } = req.params;
     const { status } = req.body;
-
-    // Validate input
-    if (!orderId) {
-      return res.status(400).json({
-        success: false,
-        error: ORDER_MESSAGES.ORDER_ID_REQUIRED
-      });
-    }
-
-    if (!status) {
-      return res.status(400).json({
-        success: false,
-        error: ORDER_MESSAGES.STATUS_REQUIRED
-      });
-    }
-
-    // Validate status value
-    if (!VALID_ORDER_STATUSES.includes(status)) {
-      return res.status(400).json({
-        success: false,
-        error: formatOrderMessage(ORDER_MESSAGES.STATUS_INVALID, {
-          statuses: VALID_ORDER_STATUSES.join(', ')
-        })
-      });
-    }
 
     // Get old status before update
     const oldOrder = await getOrderById(orderId);

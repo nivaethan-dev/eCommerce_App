@@ -3,6 +3,13 @@ import { createProduct, fetchProducts, fetchProductCategories, fetchProductById,
 import { productUploadBundle, requireImage } from '../middleware/uploadMiddleware.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { roleMiddleware } from '../middleware/roleMiddleware.js';
+import { validateBody, validateParams, validateQuery } from '../validation/middleware.js';
+import { 
+  createProductSchema, 
+  updateProductSchema, 
+  productQuerySchema, 
+  productIdParamSchema 
+} from '../validation/schemas/productSchemas.js';
 
 const router = express.Router();
 
@@ -13,13 +20,14 @@ router.post(
   roleMiddleware('admin'),
   productUploadBundle,
   requireImage, // Enforce image requirement for new products
+  validateBody(createProductSchema),
   createProduct
 );
 
 // Fetch products 
 router.get('/categories', fetchProductCategories);
-router.get('/:productId', fetchProductById);
-router.get('/', fetchProducts);
+router.get('/:productId', validateParams(productIdParamSchema), fetchProductById);
+router.get('/', validateQuery(productQuerySchema), fetchProducts);
 
 // Update product - Admin only
 router.patch(
@@ -27,6 +35,8 @@ router.patch(
   authMiddleware,
   roleMiddleware('admin'),
   productUploadBundle, // Image is optional here (validateImage skips if no file)
+  validateParams(productIdParamSchema),
+  validateBody(updateProductSchema),
   updateProduct
 );
 
@@ -35,6 +45,7 @@ router.delete(
   '/:productId',
   authMiddleware,
   roleMiddleware('admin'),
+  validateParams(productIdParamSchema),
   deleteProduct
 );
 

@@ -2,16 +2,17 @@ import * as notificationService from '../services/notificationService.js';
 
 export const getNotifications = async (req, res) => {
   try {
-    // Extract pagination params from query
+    // Validation handled by middleware - query params are sanitized
+    const query = req.validatedQuery || req.query;
+    
     const pagination = {
-      page: req.query.page || 1,
-      limit: req.query.limit || 10
+      page: query.page || 1,
+      limit: query.limit || 10
     };
 
-    // Extract filter params from query
     const filters = {
-      status: req.query.status || 'all',  // 'all', 'read', 'unread'
-      sortBy: req.query.sortBy || 'newest' // 'newest', 'oldest'
+      status: query.status || 'all',
+      sortBy: query.sortBy || 'newest'
     };
 
     const result = await notificationService.getNotifications(

@@ -3,26 +3,28 @@ import AuditLog from '../models/AuditLog.js';
 
 export const getAuditLogs = async (req, res) => {
   try {
-    // Extract pagination parameters
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    // Validation handled by middleware - query params are sanitized
+    const query = req.validatedQuery || req.query;
+    
+    const page = query.page || 1;
+    const limit = query.limit || 20;
 
-    // Build filters object from query parameters
+    // Build filters object from validated query parameters
     const filters = {};
-    if (req.query.action) filters.action = req.query.action;
-    if (req.query.userType) filters.userType = req.query.userType;
-    if (req.query.resource) filters.resource = req.query.resource;
-    if (req.query.status) filters.status = req.query.status;
+    if (query.action) filters.action = query.action;
+    if (query.userType) filters.userType = query.userType;
+    if (query.resource) filters.resource = query.resource;
+    if (query.status) filters.status = query.status;
 
     // Handle date range filtering
-    if (req.query.startDate || req.query.endDate) {
+    if (query.startDate || query.endDate) {
       filters.timestamp = {};
-      if (req.query.startDate) {
-        filters.timestamp.$gte = new Date(req.query.startDate);
+      if (query.startDate) {
+        filters.timestamp.$gte = new Date(query.startDate);
       }
-      if (req.query.endDate) {
+      if (query.endDate) {
         // Set to end of day for endDate
-        const endDate = new Date(req.query.endDate);
+        const endDate = new Date(query.endDate);
         endDate.setHours(23, 59, 59, 999);
         filters.timestamp.$lte = endDate;
       }
@@ -58,13 +60,15 @@ export const getAuditLogById = async (req, res) => {
 
 export const getAuditStats = async (req, res) => {
   try {
-    // Build date range object from query parameters
+    // Validation handled by middleware - query params are sanitized
+    const query = req.validatedQuery || req.query;
+    
     const dateRange = {};
-    if (req.query.startDate) {
-      dateRange.startDate = req.query.startDate;
+    if (query.startDate) {
+      dateRange.startDate = query.startDate;
     }
-    if (req.query.endDate) {
-      dateRange.endDate = req.query.endDate;
+    if (query.endDate) {
+      dateRange.endDate = query.endDate;
     }
 
     const stats = await auditService.getAuditStats(dateRange);
