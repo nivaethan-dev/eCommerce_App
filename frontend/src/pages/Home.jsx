@@ -5,11 +5,11 @@ const Home = () => {
   const navigate = useNavigate();
   
   const categories = [
-    { id: 1, name: 'Electronics', image: 'https://picsum.photos/seed/electronics/400/300', color: '#667eea' },
-    { id: 2, name: 'Clothing', image: 'https://picsum.photos/seed/fashion/400/300', color: '#f093fb' },
-    { id: 3, name: 'Home & Kitchen', image: 'https://picsum.photos/seed/homegarden/400/300', color: '#4facfe' },
-    { id: 4, name: 'Sports', image: 'https://picsum.photos/seed/sports/400/300', color: '#43e97b' },
-    { id: 5, name: 'Books', image: 'https://picsum.photos/seed/books/400/300', color: '#fa709a' }
+    { id: 1, name: 'Electronics', image: 'https://res.cloudinary.com/dqaqkdgjs/image/upload/v1768237765/cloudcart/products/product_fa4267bfb4c4ecf9ea891408c8388bec.jpg', color: '#667eea' },
+    { id: 2, name: 'Clothing', image: 'https://res.cloudinary.com/dqaqkdgjs/image/upload/v1768141728/cloudcart/products/product_6901e92c314336883328b918.jpg', color: '#f093fb' },
+    { id: 3, name: 'Home & Kitchen', image: 'https://res.cloudinary.com/dqaqkdgjs/image/upload/v1768921049/cloudcart/products/product_8f6a43b32e3185945c07cd698b1c6028.jpg', color: '#4facfe' },
+    { id: 4, name: 'Sports', image: 'https://res.cloudinary.com/dqaqkdgjs/image/upload/v1768415252/cloudcart/products/product_fa3936f331873532c2283b5246c156d5.jpg', color: '#43e97b' },
+    { id: 5, name: 'Books', image: 'https://res.cloudinary.com/dqaqkdgjs/image/upload/v1768414631/cloudcart/products/product_bbdc54a02490de74a0b2b4bda2f1b563.jpg', color: '#fa709a' }
   ];
 
   const handleCategoryClick = (categoryName) => {
