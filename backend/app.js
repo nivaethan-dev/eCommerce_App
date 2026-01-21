@@ -1,4 +1,5 @@
 import express from 'express';
+import helmet from 'helmet';
 // import urlRoutes from './routes/urlRoutes.js';
 import customerRoutes from './routes/customerRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -20,6 +21,10 @@ const app = express();
 
 // Trust proxy (required for correct IP behind load balancers/Render/Heroku/etc)
 app.set('trust proxy', true);
+
+// Security headers (Helmet 8.1.0 - no known vulnerabilities)
+// Sets: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, etc.
+app.use(helmet());
 
 /*
 // Force HTTPS in production
