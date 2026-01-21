@@ -29,8 +29,21 @@ const app = express();
 app.set('trust proxy', true);
 
 // Security headers (Helmet 8.1.0 - no known vulnerabilities)
-// Sets: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, etc.
-app.use(helmet());
+// Configure CSP to allow Cloudinary images
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameSrc: ["'none'"],
+    },
+  },
+}));
 
 /*
 // Force HTTPS in production
