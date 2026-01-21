@@ -108,7 +108,8 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static(frontendPath));
   
   // Handle React Router (SPA) - serve index.html for all non-API routes
-  app.get('*', (req, res) => {
+  // Express 5 requires named parameter for wildcards: {*path} instead of *
+  app.get('{*path}', (req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
   });
 }
