@@ -11,6 +11,8 @@ const adminSchema = new Schema({
   // Account Locking
   loginAttempts: { type: Number, default: 0 },
   lockUntil: { type: Date },
+  // Token Versioning (for logout invalidation)
+  tokenVersion: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

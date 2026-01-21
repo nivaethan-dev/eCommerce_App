@@ -2,14 +2,15 @@ import jwt from 'jsonwebtoken';
 
 /**
  * Generate short-lived access token
+ * @param {number} tokenVersion - User's current token version (for logout invalidation)
  */
-export const generateAccessToken = (userId, role = 'customer') => {
+export const generateAccessToken = (userId, role = 'customer', tokenVersion = 0) => {
   const secret = role === 'admin' ? 
     process.env.ADMIN_JWT_SECRET : 
     process.env.CUSTOMER_JWT_SECRET;
     
   return jwt.sign(
-    { id: userId, role },
+    { id: userId, role, tokenVersion },
     secret,
     { expiresIn: '15m' }
   );
@@ -18,8 +19,9 @@ export const generateAccessToken = (userId, role = 'customer') => {
 /**
  * Generate long-lived refresh token
  * @param {string} loginTime - ISO timestamp of initial login (for absolute timeout)
+ * @param {number} tokenVersion - User's current token version (for logout invalidation)
  */
-export const generateRefreshToken = (userId, role = 'customer', loginTime = null) => {
+export const generateRefreshToken = (userId, role = 'customer', loginTime = null, tokenVersion = 0) => {
   const secret = role === 'admin' ? 
     process.env.ADMIN_REFRESH_JWT_SECRET : 
     process.env.CUSTOMER_REFRESH_JWT_SECRET;
@@ -28,7 +30,7 @@ export const generateRefreshToken = (userId, role = 'customer', loginTime = null
   const sessionStart = loginTime || new Date().toISOString();
     
   return jwt.sign(
-    { id: userId, role, type: 'refresh', loginTime: sessionStart },
+    { id: userId, role, type: 'refresh', loginTime: sessionStart, tokenVersion },
     secret,
     { expiresIn: '6h' }
   );

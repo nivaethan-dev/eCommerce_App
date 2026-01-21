@@ -35,6 +35,9 @@ const customerSchema = new Schema({
   loginAttempts: { type: Number, default: 0 },
   lockUntil: { type: Date },
 
+  // Token Versioning (for logout invalidation)
+  tokenVersion: { type: Number, default: 0 },
+
   cart: [cartItemSchema], // Cart items
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }

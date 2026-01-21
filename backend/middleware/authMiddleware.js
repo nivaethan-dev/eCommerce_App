@@ -28,6 +28,20 @@ export const authMiddleware = async (req, res, next) => {
       }
     }
 
+    // Validate token version against database (for logout invalidation)
+    const tokenVersion = decoded.tokenVersion ?? 0; // Treat missing as 0 for backward compatibility
+    const Model = userRole === 'admin' ? Admin : Customer;
+    const user = await Model.findById(decoded.id).select('tokenVersion');
+    
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    const dbTokenVersion = user.tokenVersion ?? 0;
+    if (tokenVersion !== dbTokenVersion) {
+      return res.status(401).json({ error: 'Token has been invalidated. Please login again.' });
+    }
+
     // Attach basic user info to request
     req.user = {
       id: decoded.id,
