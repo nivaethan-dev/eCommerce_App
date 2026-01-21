@@ -6,6 +6,7 @@ import { isUserError, getErrorStatusCode } from '../utils/cartErrors.js';
 import { CART_MESSAGES } from '../utils/cartMessages.js';
 import * as eventTriggers from '../eventTriggers/authenticationEvent.js';
 import { formatErrorResponse, isProduction, HTTP_STATUS } from '../utils/errorUtils.js';
+import { getClientIp } from '../utils/geoipUtils.js';
 
 // Register
 export const registerCustomer = async (req, res) => {
@@ -26,7 +27,7 @@ export const registerCustomer = async (req, res) => {
     const customer = await Customer.create({ name, email, phone, password: hashedPassword });
 
     // Trigger signup event (notification to customer + audit log for admins)
-    await eventTriggers.triggerCustomerSignup(customer._id, name, email, req.ip);
+    await eventTriggers.triggerCustomerSignup(customer._id, name, email, getClientIp(req));
 
     // Generate tokens & set cookies
     const accessToken = generateAccessToken(customer._id);

@@ -2,6 +2,7 @@ import { ProductService, getProducts } from '../services/productService.js';
 import * as productTriggers from '../eventTriggers/productEvent.js';
 import { PRODUCT_MESSAGES } from '../utils/productMessages.js';
 import { formatErrorResponse, isSafeMessage, isProduction } from '../utils/errorUtils.js';
+import { getClientIp } from '../utils/geoipUtils.js';
 
 // List of safe product-related error messages that can be shown to users
 const SAFE_PRODUCT_ERRORS = [
@@ -25,7 +26,7 @@ export const createProduct = async (req, res) => {
       product._id,
       product.title,
       req.user.id,
-      req.ip
+      getClientIp(req)
     );
 
     res.status(201).json({
@@ -90,7 +91,7 @@ export const updateProduct = async (req, res) => {
       oldData,
       updatedProduct.toObject(), // Send full new object for diff calculation
       req.user.id,
-      req.ip
+      getClientIp(req)
     );
 
     res.status(200).json({
@@ -136,7 +137,7 @@ export const deleteProduct = async (req, res) => {
       deletedData.title,
       deletedData, // Pass full snapshot of deleted data
       req.user.id,
-      req.ip
+      getClientIp(req)
     );
 
     res.status(200).json({

@@ -9,6 +9,7 @@ import {
 import { ORDER_MESSAGES, VALID_ORDER_STATUSES, formatOrderMessage } from '../utils/orderMessages.js';
 import * as orderTriggers from '../eventTriggers/orderEvent.js';
 import { isProduction, formatErrorResponse, AppError, HTTP_STATUS } from '../utils/errorUtils.js';
+import { getClientIp } from '../utils/geoipUtils.js';
 
 /**
  * Place order (simulated checkout)
@@ -33,7 +34,7 @@ export const placeOrder = async (req, res) => {
       order._id,
       customerId,
       order.totalAmount,
-      req.ip
+      getClientIp(req)
     );
 
     res.status(201).json({
@@ -155,7 +156,7 @@ export const updateOrder = async (req, res) => {
       order.customerId,
       oldStatus,
       status,
-      req.ip
+      getClientIp(req)
     );
 
     res.status(200).json({

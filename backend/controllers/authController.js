@@ -5,6 +5,7 @@ import { comparePasswords } from '../utils/securityUtils.js';
 import { generateAccessToken, generateRefreshToken, setAuthCookies } from '../utils/tokenUtils.js';
 import * as eventTriggers from '../eventTriggers/authenticationEvent.js';
 import { isProduction, formatErrorResponse } from '../utils/errorUtils.js';
+import { getClientIp } from '../utils/geoipUtils.js';
 
 const MAX_ATTEMPTS = 5;
 const LOCK_TIME = 15 * 60 * 1000; // 15 minutes
@@ -45,9 +46,10 @@ export const login = async (req, res) => {
       }
 
       const isMatch = await comparePasswords(password, customer.password);
+      const clientIp = getClientIp(req);
       if (!isMatch) {
-        await handleFailedLogin(customer, 'Customer', req.ip);
-        await eventTriggers.triggerLoginFailed(email, req.ip, 'Customer', customer._id);
+        await handleFailedLogin(customer, 'Customer', clientIp);
+        await eventTriggers.triggerLoginFailed(email, clientIp, 'Customer', customer._id);
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
       }
 
@@ -55,7 +57,7 @@ export const login = async (req, res) => {
       await resetLoginAttempts(customer);
 
       // Trigger customer login event
-      await eventTriggers.triggerCustomerLogin(customer._id, customer.name, req.ip);
+      await eventTriggers.triggerCustomerLogin(customer._id, customer.name, clientIp);
 
       // Generate tokens (include tokenVersion for logout invalidation)
       const tokenVersion = customer.tokenVersion ?? 0;
@@ -63,7 +65,7 @@ export const login = async (req, res) => {
       const refreshToken = generateRefreshToken(customer._id, 'customer', null, tokenVersion);
       setAuthCookies(res, accessToken, refreshToken);
 
-      console.log(`[Session] Customer login - User: ${customer._id}, Email: ${email}, IP: ${req.ip}, Session start: ${new Date().toISOString()}`);
+      console.log(`[Session] Customer login - User: ${customer._id}, Email: ${email}, IP: ${clientIp}, Session start: ${new Date().toISOString()}`);
 
       return res.status(200).json({
         success: true,
@@ -84,9 +86,10 @@ export const login = async (req, res) => {
       }
 
       const isMatch = await comparePasswords(password, admin.password);
+      const adminClientIp = getClientIp(req);
       if (!isMatch) {
-        await handleFailedLogin(admin, 'Admin', req.ip);
-        await eventTriggers.triggerLoginFailed(email, req.ip, 'Admin', admin._id);
+        await handleFailedLogin(admin, 'Admin', adminClientIp);
+        await eventTriggers.triggerLoginFailed(email, adminClientIp, 'Admin', admin._id);
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
       }
 
@@ -94,7 +97,7 @@ export const login = async (req, res) => {
       await resetLoginAttempts(admin);
 
       // Trigger admin login event
-      await eventTriggers.triggerAdminLogin(admin._id, admin.name, req.ip);
+      await eventTriggers.triggerAdminLogin(admin._id, admin.name, adminClientIp);
 
       // Generate tokens (include tokenVersion for logout invalidation)
       const tokenVersion = admin.tokenVersion ?? 0;
@@ -102,7 +105,7 @@ export const login = async (req, res) => {
       const refreshToken = generateRefreshToken(admin._id, 'admin', null, tokenVersion);
       setAuthCookies(res, accessToken, refreshToken);
 
-      console.log(`[Session] Admin login - User: ${admin._id}, Email: ${email}, IP: ${req.ip}, Session start: ${new Date().toISOString()}`);
+      console.log(`[Session] Admin login - User: ${admin._id}, Email: ${email}, IP: ${adminClientIp}, Session start: ${new Date().toISOString()}`);
 
       return res.status(200).json({
         success: true,
@@ -111,7 +114,7 @@ export const login = async (req, res) => {
     }
 
     // If not found in either collection
-    await eventTriggers.triggerLoginFailed(email, req.ip);
+    await eventTriggers.triggerLoginFailed(email, getClientIp(req));
     return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
   } catch (error) {
