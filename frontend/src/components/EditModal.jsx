@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import Button from './Button';
 
-// Backend base URL (server defaults to PORT=3000 if not set)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// Backend base URL (set via VITE_API_URL environment variable)
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 const EditModal = ({ 
   isOpen, 
