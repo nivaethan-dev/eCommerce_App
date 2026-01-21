@@ -1,5 +1,7 @@
 import express from 'express';
 import helmet from 'helmet';
+import path from 'path';
+import { fileURLToPath } from 'url';
 // import urlRoutes from './routes/urlRoutes.js';
 import customerRoutes from './routes/customerRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -10,6 +12,10 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import mongoSanitize from 'mongo-sanitize';
+
+// ES Module __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import {
   formatErrorResponse,
   sanitizeErrorForLogging,
@@ -84,13 +90,28 @@ app.use('/api/audit-logs', auditLogRoutes);
 app.use('/api/notifications', notificationRoutes);
 //app.use('/api/urls', urlRoutes);
 
-// 404 handler for undefined routes
-app.use((req, res, next) => {
+// 404 handler for undefined API routes
+app.use('/api', (req, res) => {
   res.status(404).json({
     success: false,
-    error: 'Resource not found'
+    error: 'API endpoint not found'
   });
 });
+
+// =============================================================================
+// PRODUCTION: Serve Frontend (Same-Origin Deployment)
+// =============================================================================
+if (process.env.NODE_ENV === 'production') {
+  const frontendPath = path.join(__dirname, '../frontend/dist');
+  
+  // Serve static files from frontend build
+  app.use(express.static(frontendPath));
+  
+  // Handle React Router (SPA) - serve index.html for all non-API routes
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+}
 
 // Centralized Error Handling middleware
 // Catches all errors and returns safe responses
