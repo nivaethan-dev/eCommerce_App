@@ -1,4 +1,5 @@
 import { URLService } from '../services/urlService.js';
+import { isProduction, HTTP_STATUS } from '../utils/errorUtils.js';
 
 // Default configuration
 const DEFAULT_URL_CONFIG = {
@@ -46,9 +47,12 @@ export const urlValidationMiddleware = (customConfig = {}) => {
       req.validatedUrl = result;
       next();
     } catch (error) {
-      console.error('URL middleware error:', error);
-      return res.status(500).json({
-        error: 'Internal server error',
+      if (!isProduction()) {
+        console.error('URL middleware error:', error);
+      }
+      // URL validation failures are client errors (400 Bad Request)
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        error: 'URL validation failed',
         code: 'URL_VALIDATION_FAILED',
       });
     }

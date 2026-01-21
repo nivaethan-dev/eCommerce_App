@@ -4,6 +4,7 @@ import Admin from '../models/Admin.js';
 import { comparePasswords } from '../utils/securityUtils.js';
 import { generateAccessToken, generateRefreshToken, setAuthCookies } from '../utils/tokenUtils.js';
 import * as eventTriggers from '../eventTriggers/authenticationEvent.js';
+import { isProduction, formatErrorResponse } from '../utils/errorUtils.js';
 
 const MAX_ATTEMPTS = 5;
 const LOCK_TIME = 15 * 60 * 1000; // 15 minutes
@@ -114,11 +115,12 @@ export const login = async (req, res) => {
     return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
   } catch (error) {
-    console.error('Login error:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Internal server error'
-    });
+    if (!isProduction()) {
+      console.error('Login error:', error);
+    }
+    // Use formatErrorResponse for proper status code mapping
+    const { statusCode, response } = formatErrorResponse(error);
+    return res.status(statusCode).json(response);
   }
 };
 
@@ -166,10 +168,9 @@ export const logout = async (req, res) => {
       message: 'Logged out successfully'
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: 'Error during logout'
-    });
+    // Use formatErrorResponse for proper status code mapping
+    const { statusCode, response } = formatErrorResponse(error);
+    return res.status(statusCode).json(response);
   }
 };
 

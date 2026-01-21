@@ -1,5 +1,6 @@
 import express from 'express';
 import { urlValidationMiddleware, quickUrlValidation } from '../middleware/urlValidation.js';
+import { formatErrorResponse } from '../utils/errorUtils.js';
 
 const router = express.Router();
 
@@ -19,10 +20,9 @@ router.post('/submit-url',
         data: validatedUrl
       });
     } catch (error) {
-      res.status(500).json({
-        error: "Internal server error",
-        code: "SERVER_ERROR"
-      });
+      // Use formatErrorResponse for proper status code mapping
+      const { statusCode, response } = formatErrorResponse(error);
+      res.status(statusCode).json(response);
     }
   }
 );

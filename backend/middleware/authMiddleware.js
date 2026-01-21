@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import Customer from '../models/Customer.js';
 import Admin from '../models/Admin.js';
 import dotenv from 'dotenv';
+import { isProduction } from '../utils/errorUtils.js';
 dotenv.config();
 
 export const authMiddleware = async (req, res, next) => {
@@ -50,7 +51,9 @@ export const authMiddleware = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.error('Auth middleware error:', err);
+    if (!isProduction()) {
+      console.error('Auth middleware error:', err);
+    }
     return res.status(401).json({ error: 'Authentication failed' });
   }
 };

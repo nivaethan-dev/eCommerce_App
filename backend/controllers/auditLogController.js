@@ -1,5 +1,6 @@
 import * as auditService from '../services/auditLogService.js';
 import AuditLog from '../models/AuditLog.js';
+import { formatErrorResponse } from '../utils/errorUtils.js';
 
 export const getAuditLogs = async (req, res) => {
   try {
@@ -45,7 +46,8 @@ export const getAuditLogs = async (req, res) => {
       pageSize: limit
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const { statusCode, response } = formatErrorResponse(error);
+    res.status(statusCode).json(response);
   }
 };
 
@@ -54,7 +56,8 @@ export const getAuditLogById = async (req, res) => {
     const log = await auditService.getAuditLogs({ _id: req.params.id });
     res.json(log[0] || null);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const { statusCode, response } = formatErrorResponse(error);
+    res.status(statusCode).json(response);
   }
 };
 
@@ -74,7 +77,8 @@ export const getAuditStats = async (req, res) => {
     const stats = await auditService.getAuditStats(dateRange);
     res.json(stats);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const { statusCode, response } = formatErrorResponse(error);
+    res.status(statusCode).json(response);
   }
 };
 
@@ -83,6 +87,7 @@ export const getDistinctFilterValues = async (req, res) => {
     const filterValues = await auditService.getDistinctFilterValues();
     res.json(filterValues);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const { statusCode, response } = formatErrorResponse(error);
+    res.status(statusCode).json(response);
   }
 };

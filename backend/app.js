@@ -9,6 +9,12 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import mongoSanitize from 'mongo-sanitize';
+import {
+  formatErrorResponse,
+  sanitizeErrorForLogging,
+  isProduction,
+  isOperationalError
+} from './utils/errorUtils.js';
 
 const app = express();
 
@@ -36,6 +42,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Handle JSON parsing errors (malformed request body)
+// Must be after express.json() to catch SyntaxError from body-parser
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid JSON in request body'
+    });
+  }
+  next(err);
+});
+
 // Sanitize data to prevent NoSQL injection (Express 5 compatible)
 // Note: In Express 5, req.query and req.params are read-only getters
 // We only sanitize req.body here. Query/params are validated in controllers.
@@ -61,10 +79,43 @@ app.use('/api/audit-logs', auditLogRoutes);
 app.use('/api/notifications', notificationRoutes);
 //app.use('/api/urls', urlRoutes);
 
+// 404 handler for undefined routes
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    error: 'Resource not found'
+  });
+});
+
 // Centralized Error Handling middleware
+// Catches all errors and returns safe responses
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({ error: 'Internal server error' });
+  // Log error details for debugging (server-side only)
+  const logEntry = sanitizeErrorForLogging(err, req);
+  
+  // In production, use structured logging; in dev, show full details
+  if (isProduction()) {
+    // Production: log structured entry without exposing to client
+    console.error('[ERROR]', JSON.stringify(logEntry));
+  } else {
+    // Development: show full error for debugging
+    console.error('[ERROR]', err);
+  }
+  
+  // Log non-operational errors with higher severity (potential bugs)
+  if (!isOperationalError(err)) {
+    console.error('[CRITICAL] Non-operational error detected:', err.stack || err);
+  }
+  
+  // Get safe response based on error type and environment
+  const { statusCode, response } = formatErrorResponse(err);
+  
+  // Prevent sending response if headers already sent
+  if (res.headersSent) {
+    return next(err);
+  }
+  
+  res.status(statusCode).json(response);
 });
 
 export default app;
