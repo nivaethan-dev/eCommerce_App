@@ -11,7 +11,7 @@ export const loginLimiter = rateLimit({
     },
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    skipSuccessfulRequests: false, // Count successful attempts too
+    skipSuccessfulRequests: true, // Only count failed attempts (don't penalize successful logins)
     // Trust the first proxy (Render, Heroku, Nginx, etc.)
     // This reads the leftmost IP from X-Forwarded-For header
     validate: { trustProxy: false } // Disable the validation error
