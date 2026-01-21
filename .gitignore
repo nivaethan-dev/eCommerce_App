@@ -47,4 +47,5 @@ backend/uploads/
 *.local
 .cache/
 
+docs
 

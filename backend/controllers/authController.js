@@ -4,6 +4,7 @@ import Admin from '../models/Admin.js';
 import { comparePasswords } from '../utils/securityUtils.js';
 import { generateAccessToken, generateRefreshToken, setAuthCookies } from '../utils/tokenUtils.js';
 import * as eventTriggers from '../eventTriggers/authenticationEvent.js';
+import { isProduction, formatErrorResponse } from '../utils/errorUtils.js';
 
 const MAX_ATTEMPTS = 5;
 const LOCK_TIME = 15 * 60 * 1000; // 15 minutes
@@ -56,9 +57,10 @@ export const login = async (req, res) => {
       // Trigger customer login event
       await eventTriggers.triggerCustomerLogin(customer._id, customer.name, req.ip);
 
-      // Generate tokens
-      const accessToken = generateAccessToken(customer._id, 'customer');
-      const refreshToken = generateRefreshToken(customer._id, 'customer');
+      // Generate tokens (include tokenVersion for logout invalidation)
+      const tokenVersion = customer.tokenVersion ?? 0;
+      const accessToken = generateAccessToken(customer._id, 'customer', tokenVersion);
+      const refreshToken = generateRefreshToken(customer._id, 'customer', null, tokenVersion);
       setAuthCookies(res, accessToken, refreshToken);
 
       console.log(`[Session] Customer login - User: ${customer._id}, Email: ${email}, IP: ${req.ip}, Session start: ${new Date().toISOString()}`);
@@ -94,8 +96,10 @@ export const login = async (req, res) => {
       // Trigger admin login event
       await eventTriggers.triggerAdminLogin(admin._id, admin.name, req.ip);
 
-      const accessToken = generateAccessToken(admin._id, 'admin');
-      const refreshToken = generateRefreshToken(admin._id, 'admin');
+      // Generate tokens (include tokenVersion for logout invalidation)
+      const tokenVersion = admin.tokenVersion ?? 0;
+      const accessToken = generateAccessToken(admin._id, 'admin', tokenVersion);
+      const refreshToken = generateRefreshToken(admin._id, 'admin', null, tokenVersion);
       setAuthCookies(res, accessToken, refreshToken);
 
       console.log(`[Session] Admin login - User: ${admin._id}, Email: ${email}, IP: ${req.ip}, Session start: ${new Date().toISOString()}`);
@@ -111,11 +115,12 @@ export const login = async (req, res) => {
     return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
   } catch (error) {
-    console.error('Login error:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Internal server error'
-    });
+    if (!isProduction()) {
+      console.error('Login error:', error);
+    }
+    // Use formatErrorResponse for proper status code mapping
+    const { statusCode, response } = formatErrorResponse(error);
+    return res.status(statusCode).json(response);
   }
 };
 
@@ -129,6 +134,31 @@ export const logout = async (req, res) => {
       sameSite: 'strict'
     };
 
+    // Increment tokenVersion to invalidate all existing tokens
+    // Get user info from the token (if available)
+    const token = req.headers.authorization?.split(' ')[1] || req.cookies.token;
+    if (token) {
+      try {
+        // Try to decode and invalidate tokens
+        let decoded;
+        let Model;
+        
+        try {
+          decoded = jwt.verify(token, process.env.CUSTOMER_JWT_SECRET);
+          Model = Customer;
+        } catch (err) {
+          decoded = jwt.verify(token, process.env.ADMIN_JWT_SECRET);
+          Model = Admin;
+        }
+
+        // Increment tokenVersion to invalidate all tokens for this user
+        await Model.findByIdAndUpdate(decoded.id, { $inc: { tokenVersion: 1 } });
+      } catch (err) {
+        // Token might be expired/invalid, but still clear cookies
+        console.log('Token verification failed during logout, clearing cookies anyway');
+      }
+    }
+
     // Clear auth cookies with matching options
     res.clearCookie('token', cookieOptions);
     res.clearCookie('refreshToken', cookieOptions);
@@ -138,10 +168,9 @@ export const logout = async (req, res) => {
       message: 'Logged out successfully'
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: 'Error during logout'
-    });
+    // Use formatErrorResponse for proper status code mapping
+    const { statusCode, response } = formatErrorResponse(error);
+    return res.status(statusCode).json(response);
   }
 };
 
@@ -186,9 +215,10 @@ export const refreshToken = async (req, res) => {
       });
     }
 
-    // Generate NEW tokens (preserve original loginTime for absolute timeout)
-    const newAccessToken = generateAccessToken(decoded.id, userRole);
-    const newRefreshToken = generateRefreshToken(decoded.id, userRole, decoded.loginTime);
+    // Generate NEW tokens (preserve original loginTime and tokenVersion for absolute timeout)
+    const tokenVersion = decoded.tokenVersion ?? 0;
+    const newAccessToken = generateAccessToken(decoded.id, userRole, tokenVersion);
+    const newRefreshToken = generateRefreshToken(decoded.id, userRole, decoded.loginTime, tokenVersion);
 
     // Set BOTH new tokens
     setAuthCookies(res, newAccessToken, newRefreshToken);

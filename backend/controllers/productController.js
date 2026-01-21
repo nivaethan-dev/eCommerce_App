@@ -1,6 +1,20 @@
 import { ProductService, getProducts } from '../services/productService.js';
 import * as productTriggers from '../eventTriggers/productEvent.js';
 import { PRODUCT_MESSAGES } from '../utils/productMessages.js';
+import { formatErrorResponse, isSafeMessage, isProduction } from '../utils/errorUtils.js';
+
+// List of safe product-related error messages that can be shown to users
+const SAFE_PRODUCT_ERRORS = [
+  PRODUCT_MESSAGES.PRODUCT_NOT_FOUND,
+  PRODUCT_MESSAGES.DUPLICATE_PRODUCT,
+  PRODUCT_MESSAGES.IMAGE_REQUIRED,
+  PRODUCT_MESSAGES.ALL_FIELDS_REQUIRED,
+  PRODUCT_MESSAGES.STOCK_NUMERIC,
+  PRODUCT_MESSAGES.PRICE_NUMERIC,
+  PRODUCT_MESSAGES.TITLE_LENGTH,
+  PRODUCT_MESSAGES.DESCRIPTION_LENGTH,
+  PRODUCT_MESSAGES.CATEGORY_INVALID
+];
 
 export const createProduct = async (req, res) => {
   try {
@@ -28,27 +42,26 @@ export const createProduct = async (req, res) => {
       });
     }
 
-    // Handle validation errors
+    // Handle Mongoose validation errors
     if (error.name === 'ValidationError') {
-      return res.status(400).json({
-        success: false,
-        error: Object.values(error.errors).map(err => err.message)
-      });
+      const { statusCode, response } = formatErrorResponse(error);
+      return res.status(statusCode).json(response);
     }
 
-    // Handle custom validation errors from service
-    if (error.message) {
+    // Handle known safe product error messages from service
+    if (error.message && isSafeMessage(error.message, SAFE_PRODUCT_ERRORS)) {
       return res.status(400).json({
         success: false,
         error: error.message
       });
     }
 
-    console.error('Product creation error:', error);
-    res.status(500).json({
-      success: false,
-      error: PRODUCT_MESSAGES.CREATE_FAILED
-    });
+    // For unknown errors, use safe error handling
+    if (!isProduction()) {
+      console.error('Product creation error:', error);
+    }
+    const { statusCode, response } = formatErrorResponse(error);
+    res.status(statusCode).json(response);
   }
 };
 
@@ -56,11 +69,13 @@ export const updateProduct = async (req, res) => {
   try {
     const { productId } = req.params;
     
-    // Debug logging
-    console.log('Update Product Request:');
-    console.log('Product ID:', productId);
-    console.log('Request Body:', req.body);
-    console.log('File:', req.file ? { filename: req.file.filename, cloudinaryUrl: req.file.cloudinaryUrl } : 'No file');
+    // Debug logging (only in development)
+    if (!isProduction()) {
+      console.log('Update Product Request:');
+      console.log('Product ID:', productId);
+      console.log('Request Body:', req.body);
+      console.log('File:', req.file ? { filename: req.file.filename, cloudinaryUrl: req.file.cloudinaryUrl } : 'No file');
+    }
     
     const { updatedProduct, oldData } = await ProductService.updateProduct(productId, req.body, req.file);
 
@@ -91,11 +106,22 @@ export const updateProduct = async (req, res) => {
       });
     }
 
-    console.error('Update product error:', error);
+    // Handle known safe error: Product not found
     if (error.message === PRODUCT_MESSAGES.PRODUCT_NOT_FOUND) {
       return res.status(404).json({ success: false, error: error.message });
     }
-    res.status(400).json({ success: false, error: error.message || PRODUCT_MESSAGES.UPDATE_FAILED });
+
+    // Handle other known safe product errors
+    if (error.message && isSafeMessage(error.message, SAFE_PRODUCT_ERRORS)) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
+
+    // For unknown errors, use safe error handling
+    if (!isProduction()) {
+      console.error('Update product error:', error);
+    }
+    const { statusCode, response } = formatErrorResponse(error);
+    res.status(statusCode).json(response);
   }
 };
 
@@ -119,11 +145,17 @@ export const deleteProduct = async (req, res) => {
       data: { _id: productId }
     });
   } catch (error) {
-    console.error('Delete product error:', error);
+    // Handle known safe error: Product not found
     if (error.message === PRODUCT_MESSAGES.PRODUCT_NOT_FOUND) {
       return res.status(404).json({ success: false, error: error.message });
     }
-    res.status(500).json({ success: false, error: error.message || PRODUCT_MESSAGES.DELETE_FAILED });
+
+    // For unknown errors, use safe error handling
+    if (!isProduction()) {
+      console.error('Delete product error:', error);
+    }
+    const { statusCode, response } = formatErrorResponse(error);
+    res.status(statusCode).json(response);
   }
 };
 
@@ -137,10 +169,14 @@ export const fetchProductById = async (req, res) => {
       data: product
     });
   } catch (error) {
+    // Handle known safe error: Product not found
     if (error.message === PRODUCT_MESSAGES.PRODUCT_NOT_FOUND) {
       return res.status(404).json({ success: false, error: error.message });
     }
-    res.status(500).json({ success: false, error: error.message });
+    
+    // For unknown errors, use safe error handling
+    const { statusCode, response } = formatErrorResponse(error);
+    res.status(statusCode).json(response);
   }
 };
 
@@ -162,7 +198,8 @@ export const fetchProducts = async (req, res) => {
       totalPages
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    const { statusCode, response } = formatErrorResponse(error);
+    res.status(statusCode).json(response);
   }
 };
 
@@ -172,6 +209,7 @@ export const fetchProductCategories = async (req, res) => {
     const categories = ProductService.getValidCategories();
     res.status(200).json({ success: true, categories });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    const { statusCode, response } = formatErrorResponse(error);
+    res.status(statusCode).json(response);
   }
 };

@@ -8,6 +8,7 @@ import {
 } from '../services/orderService.js';
 import { ORDER_MESSAGES, VALID_ORDER_STATUSES, formatOrderMessage } from '../utils/orderMessages.js';
 import * as orderTriggers from '../eventTriggers/orderEvent.js';
+import { isProduction, formatErrorResponse, AppError, HTTP_STATUS } from '../utils/errorUtils.js';
 
 /**
  * Place order (simulated checkout)
@@ -41,29 +42,30 @@ export const placeOrder = async (req, res) => {
       order: order
     });
   } catch (error) {
-    console.error('Place order error:', error);
+    if (!isProduction()) {
+      console.error('Place order error:', error);
+    }
 
-    // Handle specific error cases - check for known order error messages
-    const knownErrors = [
+    // Handle specific error cases - check for known order error messages (400 Bad Request)
+    const knownBadRequestErrors = [
       ORDER_MESSAGES.CART_EMPTY,
       ORDER_MESSAGES.NO_VALID_ITEMS,
       ORDER_MESSAGES.CUSTOMER_NOT_FOUND
     ];
 
-    const isKnownError = knownErrors.some(msg => error.message === msg) ||
+    const isKnownBadRequest = knownBadRequestErrors.some(msg => error.message === msg) ||
       error.message.includes(ORDER_MESSAGES.INSUFFICIENT_STOCK.split(':')[0]);
 
-    if (isKnownError) {
-      return res.status(400).json({
+    if (isKnownBadRequest) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         error: error.message
       });
     }
 
-    res.status(500).json({
-      success: false,
-      error: ORDER_MESSAGES.PLACE_ORDER_FAILED
-    });
+    // Use formatErrorResponse for proper status code mapping
+    const { statusCode, response } = formatErrorResponse(error);
+    res.status(statusCode).json(response);
   }
 };
 
@@ -83,11 +85,12 @@ export const getOrders = async (req, res) => {
       count: orders.length
     });
   } catch (error) {
-    console.error('Get customer orders error:', error);
-    res.status(500).json({
-      success: false,
-      error: ORDER_MESSAGES.GET_ORDERS_FAILED
-    });
+    if (!isProduction()) {
+      console.error('Get customer orders error:', error);
+    }
+    // Use formatErrorResponse for proper status code mapping
+    const { statusCode, response } = formatErrorResponse(error);
+    res.status(statusCode).json(response);
   }
 };
 
@@ -121,11 +124,12 @@ export const listAllOrders = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('List all orders error:', error);
-    res.status(500).json({
-      success: false,
-      error: ORDER_MESSAGES.GET_ORDERS_FAILED
-    });
+    if (!isProduction()) {
+      console.error('List all orders error:', error);
+    }
+    // Use formatErrorResponse for proper status code mapping
+    const { statusCode, response } = formatErrorResponse(error);
+    res.status(statusCode).json(response);
   }
 };
 
@@ -160,18 +164,20 @@ export const updateOrder = async (req, res) => {
       order: order
     });
   } catch (error) {
-    console.error('Update order status error:', error);
+    if (!isProduction()) {
+      console.error('Update order status error:', error);
+    }
 
+    // Handle known safe error: Order not found (404)
     if (error.message === ORDER_MESSAGES.ORDER_NOT_FOUND) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         error: error.message
       });
     }
 
-    res.status(500).json({
-      success: false,
-      error: ORDER_MESSAGES.UPDATE_ORDER_STATUS_FAILED
-    });
+    // Use formatErrorResponse for proper status code mapping
+    const { statusCode, response } = formatErrorResponse(error);
+    res.status(statusCode).json(response);
   }
 };

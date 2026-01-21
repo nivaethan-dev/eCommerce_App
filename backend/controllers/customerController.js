@@ -5,6 +5,7 @@ import { getCustomers, addToCart as addToCartService, removeFromCart as removeFr
 import { isUserError, getErrorStatusCode } from '../utils/cartErrors.js';
 import { CART_MESSAGES } from '../utils/cartMessages.js';
 import * as eventTriggers from '../eventTriggers/authenticationEvent.js';
+import { formatErrorResponse, isProduction, HTTP_STATUS } from '../utils/errorUtils.js';
 
 // Register
 export const registerCustomer = async (req, res) => {
@@ -12,10 +13,10 @@ export const registerCustomer = async (req, res) => {
     // Validation handled by middleware - data is already sanitized
     const { name, email, phone, password } = req.body;
 
-    // Check if customer exists
+    // Check if customer exists (409 Conflict for duplicate)
     const existingCustomer = await Customer.findOne({ $or: [{ email }, { phone }] });
     if (existingCustomer) {
-      return res.status(400).json({ success: false, error: 'Customer already exists' });
+      return res.status(HTTP_STATUS.CONFLICT).json({ success: false, error: 'Customer already exists' });
     }
 
     // Hash password
@@ -34,8 +35,21 @@ export const registerCustomer = async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Customer registered' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, error: 'Registration failed' });
+    if (!isProduction()) {
+      console.error('Registration error:', err);
+    }
+    
+    // Handle MongoDB duplicate key error (409 Conflict)
+    if (err.code === 11000) {
+      return res.status(HTTP_STATUS.CONFLICT).json({ 
+        success: false, 
+        error: 'Customer already exists' 
+      });
+    }
+    
+    // Use formatErrorResponse for proper status code mapping
+    const { statusCode, response } = formatErrorResponse(err);
+    res.status(statusCode).json(response);
   }
 };
 
@@ -53,7 +67,9 @@ export const addCartItem = async (req, res) => {
       summary: cartData.summary
     });
   } catch (err) {
-    console.error('Add to cart error:', err);
+    if (!isProduction()) {
+      console.error('Add to cart error:', err);
+    }
     
     const statusCode = getErrorStatusCode(err);
     const isUserFacing = isUserError(err);
@@ -76,7 +92,9 @@ export const getCart = async (req, res) => {
       summary: cartData.summary
     });
   } catch (err) {
-    console.error('Get cart error:', err);
+    if (!isProduction()) {
+      console.error('Get cart error:', err);
+    }
     
     const statusCode = getErrorStatusCode(err);
     const isUserFacing = isUserError(err);
@@ -103,7 +121,9 @@ export const updateCartItem = async (req, res) => {
       summary: result.summary
     });
   } catch (err) {
-    console.error('Update cart item error:', err);
+    if (!isProduction()) {
+      console.error('Update cart item error:', err);
+    }
     
     const statusCode = getErrorStatusCode(err);
     const isUserFacing = isUserError(err);
@@ -129,7 +149,9 @@ export const removeCartItem = async (req, res) => {
       summary: cartData.summary
     });
   } catch (err) {
-    console.error('Remove from cart error:', err);
+    if (!isProduction()) {
+      console.error('Remove from cart error:', err);
+    }
     
     const statusCode = getErrorStatusCode(err);
     const isUserFacing = isUserError(err);
@@ -147,6 +169,7 @@ export const fetchCustomers = async (req, res) => {
     const customers = await getCustomers(req.user.role, req.user.id, req.query);
     res.status(200).json({ success: true, customers });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    const { statusCode, response } = formatErrorResponse(error);
+    res.status(statusCode).json(response);
   }
 };
