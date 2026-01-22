@@ -25,7 +25,16 @@ import {
 
 const app = express();
 
-// Trust proxy (required for correct IP behind load balancers/Render/Heroku/etc)
+// =============================================================================
+// TRUST PROXY CONFIGURATION (CRITICAL FOR PRODUCTION)
+// =============================================================================
+// When behind reverse proxies (Render, Heroku, Nginx, Cloudflare), Express must
+// trust the X-Forwarded-For header to correctly identify client IPs.
+// Without this, all requests appear to come from the proxy's IP, which:
+// 1. Breaks rate limiting (everyone gets blocked or no one does)
+// 2. Breaks IP-based security measures
+// 3. Makes audit logs and geo-blocking useless
+// Setting 'true' trusts the first proxy in the chain
 app.set('trust proxy', true);
 
 // Security headers (Helmet 8.1.0 - no known vulnerabilities)
@@ -116,10 +125,10 @@ app.use('/api', (req, res) => {
 // =============================================================================
 if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, '../frontend/dist');
-  
+
   // Serve static files from frontend build
   app.use(express.static(frontendPath));
-  
+
   // Handle React Router (SPA) - serve index.html for all non-API routes
   // Express 5 requires named parameter for wildcards: {*path} instead of *
   app.get('{*path}', (req, res) => {
@@ -132,7 +141,7 @@ if (process.env.NODE_ENV === 'production') {
 app.use((err, req, res, next) => {
   // Log error details for debugging (server-side only)
   const logEntry = sanitizeErrorForLogging(err, req);
-  
+
   // In production, use structured logging; in dev, show full details
   if (isProduction()) {
     // Production: log structured entry without exposing to client
@@ -141,20 +150,20 @@ app.use((err, req, res, next) => {
     // Development: show full error for debugging
     console.error('[ERROR]', err);
   }
-  
+
   // Log non-operational errors with higher severity (potential bugs)
   if (!isOperationalError(err)) {
     console.error('[CRITICAL] Non-operational error detected:', err.stack || err);
   }
-  
+
   // Get safe response based on error type and environment
   const { statusCode, response } = formatErrorResponse(err);
-  
+
   // Prevent sending response if headers already sent
   if (res.headersSent) {
     return next(err);
   }
-  
+
   res.status(statusCode).json(response);
 });
 

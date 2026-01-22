@@ -6,9 +6,7 @@ import { generateAccessToken, generateRefreshToken, setAuthCookies } from '../ut
 import * as eventTriggers from '../eventTriggers/authenticationEvent.js';
 import { isProduction, formatErrorResponse } from '../utils/errorUtils.js';
 import { getClientIp } from '../utils/geoipUtils.js';
-
-const MAX_ATTEMPTS = 5;
-const LOCK_TIME = 15 * 60 * 1000; // 15 minutes
+import { MAX_ATTEMPTS, LOCK_TIME } from '../config/rateLimitConfig.js';
 
 const handleFailedLogin = async (user, userType, ipAddress) => {
   user.loginAttempts += 1;
@@ -145,7 +143,7 @@ export const logout = async (req, res) => {
         // Try to decode and invalidate tokens
         let decoded;
         let Model;
-        
+
         try {
           decoded = jwt.verify(token, process.env.CUSTOMER_JWT_SECRET);
           Model = Customer;

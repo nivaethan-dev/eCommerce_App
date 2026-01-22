@@ -1,54 +1,123 @@
 import rateLimit from 'express-rate-limit';
+import {
+    LOGIN_MAX_ATTEMPTS,
+    LOGIN_LOCK_TIME,
+    REGISTER_MAX_ATTEMPTS,
+    REGISTER_LOCK_TIME,
+    REFRESH_TOKEN_MAX_ATTEMPTS,
+    REFRESH_TOKEN_WINDOW,
+    ORDER_MAX_ATTEMPTS,
+    ORDER_WINDOW,
+    CART_MAX_ATTEMPTS,
+    CART_WINDOW,
+    CART_MODIFY_MAX_ATTEMPTS,
+    CART_MODIFY_WINDOW,
+    PRODUCT_SEARCH_MAX_ATTEMPTS,
+    PRODUCT_SEARCH_WINDOW,
+    PRODUCT_CREATE_MAX_ATTEMPTS,
+    PRODUCT_CREATE_WINDOW,
+    PRODUCT_MODIFY_MAX_ATTEMPTS,
+    PRODUCT_MODIFY_WINDOW,
+    PRODUCT_READ_MAX_ATTEMPTS,
+    PRODUCT_READ_WINDOW,
+    ADMIN_READ_MAX_ATTEMPTS,
+    ADMIN_READ_WINDOW,
+    NOTIFICATION_MAX_ATTEMPTS,
+    NOTIFICATION_WINDOW
+} from '../config/rateLimitConfig.js';
 
-// Login rate limiter
+// =============================================================================
+// CUSTOM KEY GENERATORS FOR ENHANCED SECURITY
+// =============================================================================
+
+/**
+ * Generate key based on IP + email for authentication endpoints
+ * Prevents attackers from bypassing rate limits via IP rotation
+ * Security: Protects against distributed brute-force attacks
+ */
+const ipPlusEmailKey = (req) => {
+    const email = req.body?.email || 'unknown';
+    return `${req.ip}:${email}`;
+};
+
+/**
+ * Generate key based on IP + user ID for authenticated endpoints
+ * Useful for user-specific rate limiting
+ */
+const ipPlusUserKey = (req) => {
+    const userId = req.user?.id || 'anonymous';
+    return `${req.ip}:${userId}`;
+};
+
+// =============================================================================
+// AUTHENTICATION RATE LIMITERS
+// =============================================================================
+
+/**
+ * Login rate limiter
+ * Uses IP + email combination to prevent distributed brute-force attacks
+ * Attackers cannot bypass by rotating IPs for the same email
+ */
 export const loginLimiter = rateLimit({
-    windowMs: 120 * 60 * 1000, // 2 hours
-    max: 5, // 5 attempts per window (PRODUCTION)
-    // max: 100, // TEMPORARY - Uncomment for testing to allow 100 attempts
+    windowMs: LOGIN_LOCK_TIME,
+    max: LOGIN_MAX_ATTEMPTS,
     message: {
         success: false,
-        error: 'Too many login attempts. Please try again later'
+        error: 'Too many login attempts. Please try again later.'
     },
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    skipSuccessfulRequests: true, // Only count failed attempts (don't penalize successful logins)
-    // Trust the first proxy (Render, Heroku, Nginx, etc.)
-    // This reads the leftmost IP from X-Forwarded-For header
-    validate: { trustProxy: false } // Disable the validation error
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true, // Only count failed login attempts
+    keyGenerator: ipPlusEmailKey, // IP + email for better security
+    validate: { keyGeneratorIpFallback: false }, // Suppress IPv6 validation warning for custom key
 });
 
-// Registration rate limiter
+/**
+ * Registration rate limiter
+ * Limits registration attempts per IP + email
+ */
 export const registerLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3, // 3 total registration attempts per hour
+    windowMs: REGISTER_LOCK_TIME,
+    max: REGISTER_MAX_ATTEMPTS,
     message: {
         success: false,
-        error: 'Maximum registration limit reached. Please try again after 1 hour'
+        error: 'Maximum registration limit reached. Please try again later'
     },
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    skipSuccessfulRequests: false, // Count ALL attempts, including successful ones
-    validate: { trustProxy: false } // Disable the validation error
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false, // Count all attempts
+    keyGenerator: ipPlusEmailKey, // IP + email for better security
+    validate: { keyGeneratorIpFallback: false }, // Suppress IPv6 validation warning for custom key
 });
 
-// Refresh token rate limiter
+/**
+ * Refresh token rate limiter
+ * Prevents token refresh abuse
+ * Uses IP + user combination since this is authenticated
+ */
 export const refreshTokenLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 5, // 5 requests per minute
+    windowMs: REFRESH_TOKEN_WINDOW,
+    max: REFRESH_TOKEN_MAX_ATTEMPTS,
     message: {
         success: false,
         error: 'Too many refresh requests. Please try again in a moment'
     },
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    skipSuccessfulRequests: false, // Count all attempts
-    validate: { trustProxy: false } // Disable the validation error
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false,
+    // IP-based is fine here since authenticated users are already validated
 });
 
-// Order rate limiter - prevents order flooding
+// =============================================================================
+// SHOPPING & ORDER RATE LIMITERS
+// =============================================================================
+
+/**
+ * Order rate limiter - prevents order flooding
+ */
 export const orderLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 5, // 5 orders per hour (strict)
+    windowMs: ORDER_WINDOW,
+    max: ORDER_MAX_ATTEMPTS,
     message: {
         success: false,
         error: 'Order limit reached. Please try again later'
@@ -56,13 +125,14 @@ export const orderLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: false,
-    validate: { trustProxy: false }
 });
 
-// Cart rate limiter - prevents cart bombing
+/**
+ * Cart rate limiter - prevents cart bombing
+ */
 export const cartLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 10, // 10 cart additions per minute (strict)
+    windowMs: CART_WINDOW,
+    max: CART_MAX_ATTEMPTS,
     message: {
         success: false,
         error: 'Too many cart requests. Please slow down'
@@ -70,69 +140,14 @@ export const cartLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: false,
-    validate: { trustProxy: false }
 });
 
-// Search/product listing rate limiter - prevents scraping
-export const searchLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 60, // 60 requests per minute (strict)
-    message: {
-        success: false,
-        error: 'Too many requests. Please try again in a moment'
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-    skipSuccessfulRequests: false,
-    validate: { trustProxy: false }
-});
-
-// Product create rate limiter - prevents bulk creation
-export const productCreateLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 5, // 5 products per minute (strict)
-    message: {
-        success: false,
-        error: 'Product creation limit reached. Please slow down'
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-    skipSuccessfulRequests: false,
-    validate: { trustProxy: false }
-});
-
-// Product modify rate limiter - prevents mass update/delete
-export const productModifyLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 10, // 10 update/delete operations per minute
-    message: {
-        success: false,
-        error: 'Too many product modifications. Please slow down'
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-    skipSuccessfulRequests: false,
-    validate: { trustProxy: false }
-});
-
-// Product read rate limiter - single product fetch, categories
-export const productReadLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 60, // 60 reads per minute
-    message: {
-        success: false,
-        error: 'Too many product requests. Please slow down'
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-    skipSuccessfulRequests: false,
-    validate: { trustProxy: false }
-});
-
-// Cart modify rate limiter - update/delete cart items
+/**
+ * Cart modify rate limiter - update/delete cart items
+ */
 export const cartModifyLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 30, // 30 cart modifications per minute
+    windowMs: CART_MODIFY_WINDOW,
+    max: CART_MODIFY_MAX_ATTEMPTS,
     message: {
         success: false,
         error: 'Too many cart modifications. Please slow down'
@@ -140,13 +155,82 @@ export const cartModifyLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: false,
-    validate: { trustProxy: false }
 });
 
-// Admin read rate limiter - list customers, orders, audit logs
+// =============================================================================
+// PRODUCT RATE LIMITERS
+// =============================================================================
+
+/**
+ * Search/product listing rate limiter - prevents scraping
+ */
+export const searchLimiter = rateLimit({
+    windowMs: PRODUCT_SEARCH_WINDOW,
+    max: PRODUCT_SEARCH_MAX_ATTEMPTS,
+    message: {
+        success: false,
+        error: 'Too many requests. Please try again in a moment'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false,
+});
+
+/**
+ * Product create rate limiter - prevents bulk creation
+ */
+export const productCreateLimiter = rateLimit({
+    windowMs: PRODUCT_CREATE_WINDOW,
+    max: PRODUCT_CREATE_MAX_ATTEMPTS,
+    message: {
+        success: false,
+        error: 'Product creation limit reached. Please slow down'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false,
+});
+
+/**
+ * Product modify rate limiter - prevents mass update/delete
+ */
+export const productModifyLimiter = rateLimit({
+    windowMs: PRODUCT_MODIFY_WINDOW,
+    max: PRODUCT_MODIFY_MAX_ATTEMPTS,
+    message: {
+        success: false,
+        error: 'Too many product modifications. Please slow down'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false,
+});
+
+/**
+ * Product read rate limiter - single product fetch, categories
+ */
+export const productReadLimiter = rateLimit({
+    windowMs: PRODUCT_READ_WINDOW,
+    max: PRODUCT_READ_MAX_ATTEMPTS,
+    message: {
+        success: false,
+        error: 'Too many product requests. Please slow down'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false,
+});
+
+// =============================================================================
+// ADMIN RATE LIMITERS
+// =============================================================================
+
+/**
+ * Admin read rate limiter - list customers, orders, audit logs
+ */
 export const adminReadLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 30, // 30 admin read operations per minute
+    windowMs: ADMIN_READ_WINDOW,
+    max: ADMIN_READ_MAX_ATTEMPTS,
     message: {
         success: false,
         error: 'Too many requests. Please slow down'
@@ -154,13 +238,18 @@ export const adminReadLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: false,
-    validate: { trustProxy: false }
 });
 
-// Notification rate limiter - all notification operations
+// =============================================================================
+// NOTIFICATION RATE LIMITERS
+// =============================================================================
+
+/**
+ * Notification rate limiter - all notification operations
+ */
 export const notificationLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 60, // 60 notification operations per minute
+    windowMs: NOTIFICATION_WINDOW,
+    max: NOTIFICATION_MAX_ATTEMPTS,
     message: {
         success: false,
         error: 'Too many notification requests. Please slow down'
@@ -168,5 +257,4 @@ export const notificationLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: false,
-    validate: { trustProxy: false }
 });
