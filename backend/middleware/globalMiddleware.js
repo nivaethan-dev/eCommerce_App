@@ -60,37 +60,48 @@ export const globalMiddleware = (req, res, next) => {
             return req.clientInfo;
         }
 
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const fetchWithTimeout = async (url) => {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (response.ok) return await response.json();
+            } catch (e) { }
+            return null;
+        };
 
-            // Fetch from ipapi.co (Free tier)
-            const response = await fetch(`https://ipapi.co/${ip}/json/`, {
-                signal: controller.signal,
-                headers: { 'User-Agent': 'CloudCart-App' } // Good practice for API stability
-            });
-            clearTimeout(timeoutId);
-
-            if (response.ok) {
-                const data = await response.json();
-
-                // Only update if we got valid data back (prevents overwriting infra headers with error messages)
-                if (!data.error) {
-                    req.clientInfo = {
-                        ...req.clientInfo,
-                        country: data.country_name || req.clientInfo.country,
-                        city: data.city || req.clientInfo.city,
-                        region: data.region || req.clientInfo.region,
-                        timezone: data.timezone || "N/A",
-                        isp: data.org || "Unknown",
-                        detailed: true
-                    };
-                }
-            }
-        } catch (e) {
-            // Silently fail detailed lookup to keep request alive
-            req.clientInfo.detailed = true;
+        // Attempt 1: freeipapi.com (Reliable, higher limits)
+        let data = await fetchWithTimeout(`https://freeipapi.com/api/json/${ip}`);
+        if (data && data.cityName) {
+            req.clientInfo = {
+                ...req.clientInfo,
+                country: data.countryName || req.clientInfo.country,
+                city: data.cityName || "Unknown",
+                region: data.regionName || "Unknown",
+                timezone: data.timeZone || "N/A",
+                detailed: true
+            };
+            return req.clientInfo;
         }
+
+        // Attempt 2: ipapi.co (Fallback)
+        data = await fetchWithTimeout(`https://ipapi.co/${ip}/json/`);
+        if (data && !data.error) {
+            req.clientInfo = {
+                ...req.clientInfo,
+                country: data.country_name || req.clientInfo.country,
+                city: data.city || "Unknown",
+                region: data.region || "Unknown",
+                timezone: data.timezone || "N/A",
+                isp: data.org || "Unknown",
+                detailed: true
+            };
+            return req.clientInfo;
+        }
+
+        // Final fallback: Mark as detailed to prevent retry loops
+        req.clientInfo.detailed = true;
         return req.clientInfo;
     };
 

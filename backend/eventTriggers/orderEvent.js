@@ -9,7 +9,7 @@ import Admin from '../models/Admin.js';
 // Customer Places Order - Notify customer, notify all admins, and log as NEW_ORDER
 export const triggerOrderPlaced = async (orderId, customerId, totalAmount, clientInfo) => {
     try {
-        const { ip: ipAddress, country, city, region } = clientInfo || {};
+        const { ip: ipAddress, country, city, region, timezone } = clientInfo || {};
 
         // 1. Create notification for customer (ORDER_PLACED)
         await notificationService.createNotification(
@@ -41,7 +41,7 @@ export const triggerOrderPlaced = async (orderId, customerId, totalAmount, clien
         }
 
         // 3. Create audit log - Admin only views NEW_ORDER action
-        const geolocation = { country, city, region };
+        const geolocation = { country, city, region, timezone };
         await auditService.createAuditLog({
             userId: customerId,
             userType: 'Customer',
@@ -67,7 +67,7 @@ export const triggerOrderPlaced = async (orderId, customerId, totalAmount, clien
 // Order Status Updated - Notify customer and log
 export const triggerOrderStatusUpdate = async (orderId, customerId, oldStatus, newStatus, clientInfo) => {
     try {
-        const { ip: ipAddress, country, city, region } = clientInfo || {};
+        const { ip: ipAddress, country, city, region, timezone } = clientInfo || {};
 
         // Create notification for customer
         await notificationService.createNotification(
@@ -83,7 +83,7 @@ export const triggerOrderStatusUpdate = async (orderId, customerId, oldStatus, n
         );
 
         // Create audit log
-        const geolocation = { country, city, region };
+        const geolocation = { country, city, region, timezone };
         await auditService.createAuditLog({
             userId: customerId,
             userType: 'Customer',

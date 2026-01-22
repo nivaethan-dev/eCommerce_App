@@ -8,7 +8,7 @@ import Admin from '../models/Admin.js';
 
 export const triggerCustomerSignup = async (customerId, customerName, customerEmail, clientInfo) => {
   try {
-    const { ip: ipAddress, country, city, region } = clientInfo || {};
+    const { ip: ipAddress, country, city, region, timezone } = clientInfo || {};
 
     // 1. Create welcome notification for the customer
     await notificationService.createNotification(
@@ -24,7 +24,7 @@ export const triggerCustomerSignup = async (customerId, customerName, customerEm
     );
 
     // 2. Create audit log for admin review
-    const geolocation = { country, city, region };
+    const geolocation = { country, city, region, timezone };
     await auditService.createAuditLog({
       userId: customerId,
       userType: 'Customer',
@@ -49,7 +49,7 @@ export const triggerCustomerSignup = async (customerId, customerName, customerEm
 
 export const triggerCustomerLogin = async (customerId, customerName, clientInfo) => {
   try {
-    const { ip: ipAddress, country, city, region } = clientInfo || {};
+    const { ip: ipAddress, country, city, region, timezone } = clientInfo || {};
 
     // 1. Create notification for customer ONLY
     await notificationService.createNotification(
@@ -65,7 +65,7 @@ export const triggerCustomerLogin = async (customerId, customerName, clientInfo)
     );
 
     // 2. Create audit log for admin review
-    const geolocation = { country, city, region };
+    const geolocation = { country, city, region, timezone };
     await auditService.createAuditLog({
       userId: customerId,
       userType: 'Customer',
@@ -85,7 +85,7 @@ export const triggerCustomerLogin = async (customerId, customerName, clientInfo)
 
 export const triggerAdminLogin = async (adminId, adminName, clientInfo) => {
   try {
-    const { ip: ipAddress, country, city, region } = clientInfo || {};
+    const { ip: ipAddress, country, city, region, timezone } = clientInfo || {};
 
     // Create notification
     await notificationService.createNotification(
@@ -101,7 +101,7 @@ export const triggerAdminLogin = async (adminId, adminName, clientInfo) => {
     );
 
     // Create audit log
-    const geolocation = { country, city, region };
+    const geolocation = { country, city, region, timezone };
     await auditService.createAuditLog({
       userId: adminId,
       userType: 'Admin',
@@ -121,10 +121,10 @@ export const triggerAdminLogin = async (adminId, adminName, clientInfo) => {
 
 export const triggerLoginFailed = async (email, clientInfo, userType = 'Customer', userId = null) => {
   try {
-    const { ip: ipAddress, country, city, region } = clientInfo || {};
+    const { ip: ipAddress, country, city, region, timezone } = clientInfo || {};
 
     // Only audit log for failed attempts (no notification)
-    const geolocation = { country, city, region };
+    const geolocation = { country, city, region, timezone };
     await auditService.createAuditLog({
       userId: userId,
       userType: userType,
@@ -145,10 +145,10 @@ export const triggerLoginFailed = async (email, clientInfo, userType = 'Customer
 
 export const triggerAccountLocked = async (userId, userType, email, clientInfo) => {
   try {
-    const { ip: ipAddress, country, city, region } = clientInfo || {};
+    const { ip: ipAddress, country, city, region, timezone } = clientInfo || {};
 
     // 1. Audit Log (Always First)
-    const geolocation = { country, city, region };
+    const geolocation = { country, city, region, timezone };
     await auditService.createAuditLog({
       userId,
       userType,

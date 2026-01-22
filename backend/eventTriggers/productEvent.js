@@ -25,7 +25,7 @@ const notifyAllAdmins = async (title, message, type, metadata, priority = 'mediu
 // Admin Creates Product
 export const triggerProductCreated = async (productId, productName, adminId, clientInfo) => {
     try {
-        const { ip: ipAddress, country, city, region } = clientInfo || {};
+        const { ip: ipAddress, country, city, region, timezone } = clientInfo || {};
 
         // 1. Notify all admins
         await notifyAllAdmins(
@@ -37,7 +37,7 @@ export const triggerProductCreated = async (productId, productName, adminId, cli
         );
 
         // 2. Create audit log
-        const geolocation = { country, city, region };
+        const geolocation = { country, city, region, timezone };
         await auditService.createAuditLog({
             userId: adminId,
             userType: 'Admin',
@@ -63,7 +63,7 @@ export const triggerProductCreated = async (productId, productName, adminId, cli
 // Admin Updates Product
 export const triggerProductUpdated = async (productId, productName, oldData, newData, adminId, clientInfo) => {
     try {
-        const { ip: ipAddress, country, city, region } = clientInfo || {};
+        const { ip: ipAddress, country, city, region, timezone } = clientInfo || {};
 
         // Calculate diffs for notification
         const changes = {};
@@ -95,7 +95,7 @@ export const triggerProductUpdated = async (productId, productName, oldData, new
         );
 
         // 2. Create audit log
-        const geolocation = { country, city, region };
+        const geolocation = { country, city, region, timezone };
         await auditService.createAuditLog({
             userId: adminId,
             userType: 'Admin',
@@ -125,7 +125,7 @@ export const triggerProductUpdated = async (productId, productName, oldData, new
 // Admin Deletes Product
 export const triggerProductDeleted = async (productId, productName, oldProductData, adminId, clientInfo) => {
     try {
-        const { ip: ipAddress, country, city, region } = clientInfo || {};
+        const { ip: ipAddress, country, city, region, timezone } = clientInfo || {};
 
         const { price, stock } = oldProductData || {};
         const details = `(Price: ${price}, Stock: ${stock})`;
@@ -140,7 +140,7 @@ export const triggerProductDeleted = async (productId, productName, oldProductDa
         );
 
         // 2. Create audit log
-        const geolocation = { country, city, region };
+        const geolocation = { country, city, region, timezone };
         await auditService.createAuditLog({
             userId: adminId,
             userType: 'Admin',
