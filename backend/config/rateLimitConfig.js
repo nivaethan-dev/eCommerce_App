@@ -62,7 +62,7 @@ export const GLOBAL_WINDOW_MS = getSecureEnvInt(
 );
 
 export const GLOBAL_MAX_REQUESTS = getSecureEnvInt(
-    'GLOBAL_MAX_REQUESTS',
+    'GLOBAL_MAX_ATTEMPTS',
     1000,
     'Global max requests per minute'
 );

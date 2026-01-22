@@ -1,6 +1,8 @@
 import * as notificationService from '../services/notificationService.js';
 import * as auditService from '../services/auditLogService.js';
 import Admin from '../models/Admin.js';
+import { LOCK_TIME } from '../config/rateLimitConfig.js';
+
 
 // ============================================
 // SIGNUP TRIGGERS
@@ -146,6 +148,7 @@ export const triggerLoginFailed = async (email, clientInfo, userType = 'Customer
 export const triggerAccountLocked = async (userId, userType, email, clientInfo) => {
   try {
     const { ip: ipAddress, country, city, region, timezone } = clientInfo || {};
+    const lockMinutes = Math.round(LOCK_TIME / 60000);
 
     // 1. Audit Log (Always First)
     const geolocation = { country, city, region, timezone };
@@ -160,7 +163,7 @@ export const triggerAccountLocked = async (userId, userType, email, clientInfo) 
       ipAddress,
       geolocation,
       status: 'failure',
-      changes: { email, message: 'Account locked for 15 minutes due to multiple failed attempts' }
+      changes: { email, message: `Account locked for ${lockMinutes} minutes due to multiple failed attempts` }
     });
 
     // 2. Notify ALL Admins about the lockout (Security Alert)

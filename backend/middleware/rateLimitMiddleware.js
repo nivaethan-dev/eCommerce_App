@@ -1,4 +1,5 @@
 import rateLimit from 'express-rate-limit';
+import { normalizeEmail } from '../validation/sanitizers.js';
 import {
     LOGIN_MAX_ATTEMPTS,
     LOGIN_LOCK_TIME,
@@ -34,9 +35,13 @@ import {
  * Generate key based on IP + email for authentication endpoints
  * Prevents attackers from bypassing rate limits via IP rotation
  * Security: Protects against distributed brute-force attacks
+ * 
+ * NOTE: We normalize the email to match the database lookup, 
+ * preventing bypass via capitalization differences.
  */
 const ipPlusEmailKey = (req) => {
-    const email = req.body?.email || 'unknown';
+    const rawEmail = req.body?.email || 'unknown';
+    const email = normalizeEmail(rawEmail);
     return `${req.ip}:${email}`;
 };
 
