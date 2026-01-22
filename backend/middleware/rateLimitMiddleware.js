@@ -32,12 +32,8 @@ import {
 // =============================================================================
 
 /**
- * Generate key based on IP + email for authentication endpoints
- * Prevents attackers from bypassing rate limits via IP rotation
- * Security: Protects against distributed brute-force attacks
- * 
- * NOTE: We normalize the email to match the database lookup, 
- * preventing bypass via capitalization differences.
+ * Generate key based on IP + email
+ * Used for specific account-targeted protection
  */
 const ipPlusEmailKey = (req) => {
     const rawEmail = req.body?.email || 'unknown';
@@ -47,7 +43,6 @@ const ipPlusEmailKey = (req) => {
 
 /**
  * Generate key based on IP + user ID for authenticated endpoints
- * Useful for user-specific rate limiting
  */
 const ipPlusUserKey = (req) => {
     const userId = req.user?.id || 'anonymous';
@@ -60,45 +55,45 @@ const ipPlusUserKey = (req) => {
 
 /**
  * Login rate limiter
- * Uses IP + email combination to prevent distributed brute-force attacks
- * Attackers cannot bypass by rotating IPs for the same email
+ * CRITICAL FIX: Changed to IP-based only to prevent an attacker from trying 
+ * thousands of accounts from a single IP. This implements the "IP Block" 
+ * behavior requested by the user.
+ * 
+ * Account-side protection is still handled by the database lockout logic.
  */
 export const loginLimiter = rateLimit({
     windowMs: LOGIN_LOCK_TIME,
     max: LOGIN_MAX_ATTEMPTS,
     message: {
         success: false,
-        error: 'Too many login attempts. Please try again later.'
+        error: 'Too many login attempts from this IP. Please try again later.'
     },
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: true, // Only count failed login attempts
-    keyGenerator: ipPlusEmailKey, // IP + email for better security
-    validate: { keyGeneratorIpFallback: false }, // Suppress IPv6 validation warning for custom key
+    keyGenerator: (req) => req.ip, // STRICT IP BLOCKING
 });
 
 /**
  * Registration rate limiter
- * Limits registration attempts per IP + email
+ * Limits registration attempts per IP to prevent spam/bot registrations
  */
 export const registerLimiter = rateLimit({
     windowMs: REGISTER_LOCK_TIME,
     max: REGISTER_MAX_ATTEMPTS,
     message: {
         success: false,
-        error: 'Maximum registration limit reached. Please try again later'
+        error: 'Registration limit reached. Please try again later.'
     },
     standardHeaders: true,
     legacyHeaders: false,
-    skipSuccessfulRequests: false, // Count all attempts
-    keyGenerator: ipPlusEmailKey, // IP + email for better security
-    validate: { keyGeneratorIpFallback: false }, // Suppress IPv6 validation warning for custom key
+    skipSuccessfulRequests: false,
+    keyGenerator: (req) => req.ip, // STRICT IP BLOCKING
 });
 
 /**
  * Refresh token rate limiter
  * Prevents token refresh abuse
- * Uses IP + user combination since this is authenticated
  */
 export const refreshTokenLimiter = rateLimit({
     windowMs: REFRESH_TOKEN_WINDOW,
@@ -110,7 +105,6 @@ export const refreshTokenLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: false,
-    // IP-based is fine here since authenticated users are already validated
 });
 
 // =============================================================================
