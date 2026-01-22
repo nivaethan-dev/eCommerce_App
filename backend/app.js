@@ -26,9 +26,6 @@ const globalLimiter = rateLimit({
   }
 });
 
-// Apply to ALL requests
-app.use(globalLimiter);
-
 // ES Module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -118,6 +115,17 @@ const serveLocalUploads = (process.env.SERVE_LOCAL_UPLOADS ?? 'true') === 'true'
 if (serveLocalUploads) {
   app.use('/uploads', express.static('uploads'));
 }
+
+// =============================================================================
+// GLOBAL SECURITY & CONTEXT
+// =============================================================================
+
+// 1. Identification: Assign Request ID and detect proxy headers
+import { globalMiddleware } from './middleware/globalMiddleware.js';
+app.use(globalMiddleware);
+
+// 2. Security: Apply Global Rate Limit early
+app.use(globalLimiter);
 
 // Routes
 app.use('/api/customers', customerRoutes); // customer-specific
