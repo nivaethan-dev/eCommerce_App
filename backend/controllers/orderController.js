@@ -28,12 +28,15 @@ export const placeOrder = async (req, res) => {
       order = await createOrderFromCart(customerId);
     }
 
+    // Ensure we have detailed geo info for order audit logs
+    const clientInfo = await req.getDetailedGeo();
+
     // Trigger order placed event (customer & admin notifications + audit log)
     await orderTriggers.triggerOrderPlaced(
       order._id,
       customerId,
       order.totalAmount,
-      req.clientInfo
+      clientInfo
     );
 
     res.status(201).json({

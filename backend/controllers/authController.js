@@ -30,6 +30,9 @@ export const login = async (req, res) => {
     // Validation handled by middleware - data is already sanitized
     const { email, password } = req.body;
 
+    // Ensure we have detailed geo info for security audit logs
+    const clientInfo = await req.getDetailedGeo();
+
     // Try finding the user in Customer collection
     const customer = await Customer.findOne({ email });
     if (customer) {
@@ -43,7 +46,6 @@ export const login = async (req, res) => {
       }
 
       const isMatch = await comparePasswords(password, customer.password);
-      const clientInfo = req.clientInfo;
       if (!isMatch) {
         await handleFailedLogin(customer, 'Customer', clientInfo);
         await eventTriggers.triggerLoginFailed(email, clientInfo, 'Customer', customer._id);
@@ -83,10 +85,9 @@ export const login = async (req, res) => {
       }
 
       const isMatch = await comparePasswords(password, admin.password);
-      const adminClientInfo = req.clientInfo;
       if (!isMatch) {
-        await handleFailedLogin(admin, 'Admin', adminClientInfo);
-        await eventTriggers.triggerLoginFailed(email, adminClientInfo, 'Admin', admin._id);
+        await handleFailedLogin(admin, 'Admin', clientInfo);
+        await eventTriggers.triggerLoginFailed(email, clientInfo, 'Admin', admin._id);
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
       }
 
@@ -94,7 +95,7 @@ export const login = async (req, res) => {
       await resetLoginAttempts(admin);
 
       // Trigger admin login event
-      await eventTriggers.triggerAdminLogin(admin._id, admin.name, adminClientInfo);
+      await eventTriggers.triggerAdminLogin(admin._id, admin.name, clientInfo);
 
       // Generate tokens (include tokenVersion for logout invalidation)
       const tokenVersion = admin.tokenVersion ?? 0;
@@ -102,7 +103,7 @@ export const login = async (req, res) => {
       const refreshToken = generateRefreshToken(admin._id, 'admin', null, tokenVersion);
       setAuthCookies(res, accessToken, refreshToken);
 
-      console.log(`[Session] Admin login - User: ${admin._id}, Email: ${email}, IP: ${adminClientInfo.ip}, Session start: ${new Date().toISOString()}`);
+      console.log(`[Session] Admin login - User: ${admin._id}, Email: ${email}, IP: ${clientInfo.ip}, Session start: ${new Date().toISOString()}`);
 
       return res.status(200).json({
         success: true,
@@ -111,7 +112,7 @@ export const login = async (req, res) => {
     }
 
     // If not found in either collection
-    await eventTriggers.triggerLoginFailed(email, req.clientInfo);
+    await eventTriggers.triggerLoginFailed(email, clientInfo);
     return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
   } catch (error) {

@@ -95,11 +95,9 @@ export const globalMiddleware = (req, res, next) => {
     };
 
     /**
-     * 5. AUTO-POPULATE for API Routes
+     * 5. Manual Populate for API Routes (Removed auto-populate to save rate limits)
+     * Controllers will now call req.getDetailedGeo() only for critical events.
      */
-    if (req.path.startsWith('/api')) {
-        req.getDetailedGeo().catch(() => { });
-    }
 
     next();
 };

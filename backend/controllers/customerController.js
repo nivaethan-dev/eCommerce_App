@@ -22,11 +22,14 @@ export const registerCustomer = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Ensure we have detailed geo info for signup audit logs
+    const clientInfo = await req.getDetailedGeo();
+
     // Create customer
     const customer = await Customer.create({ name, email, phone, password: hashedPassword });
 
     // Trigger signup event (notification to customer + audit log for admins)
-    await eventTriggers.triggerCustomerSignup(customer._id, name, email, req.clientInfo);
+    await eventTriggers.triggerCustomerSignup(customer._id, name, email, clientInfo);
 
     // Generate tokens & set cookies
     const accessToken = generateAccessToken(customer._id);
