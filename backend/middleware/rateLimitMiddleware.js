@@ -2,12 +2,12 @@ import rateLimit from 'express-rate-limit';
 
 // Login rate limiter
 export const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    windowMs: 120 * 60 * 1000, // 2 hours
     max: 5, // 5 attempts per window (PRODUCTION)
     // max: 100, // TEMPORARY - Uncomment for testing to allow 100 attempts
     message: {
         success: false,
-        error: 'Too many login attempts. Please try again after 15 minutes'
+        error: 'Too many login attempts. Please try again later'
     },
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
