@@ -164,9 +164,16 @@ const AuditLogsTable = ({ logs = [], onRowClick, loading = false }) => {
                 </td>
                 <td style={{ padding: '1rem', color: '#666', fontSize: '0.875rem' }}>
                   {log.geolocation ? (
-                    <span>
-                      {log.geolocation.city || '?'}, {log.geolocation.country || '?'}
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ fontWeight: '500', color: '#333' }}>
+                        {log.geolocation.city || '?'}, {log.geolocation.country || '?'}
+                      </span>
+                      {log.geolocation.timezone && (
+                        <span style={{ fontSize: '0.75rem', color: '#999' }}>
+                          ⏰ {log.geolocation.timezone}
+                        </span>
+                      )}
+                    </div>
                   ) : 'N/A'}
                 </td>
                 <td style={{ padding: '1rem' }}>

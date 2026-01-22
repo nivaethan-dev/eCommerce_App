@@ -31,6 +31,7 @@ export const globalMiddleware = (req, res, next) => {
         country: req.headers['cf-ipcountry'] || req.headers['x-appengine-country'] || "Unknown",
         city: req.headers['x-geoip-city'] || "Unknown",
         region: req.headers['x-geoip-region'] || "Unknown",
+        timezone: "N/A",
         detailed: false
     };
 
@@ -71,21 +72,36 @@ export const globalMiddleware = (req, res, next) => {
             return null;
         };
 
-        // Attempt 1: freeipapi.com (Reliable, higher limits)
+        // Attempt 1: freeipapi.com (High reliability)
         let data = await fetchWithTimeout(`https://freeipapi.com/api/json/${ip}`);
-        if (data && data.cityName) {
+        if (data && (data.cityName || data.city)) {
             req.clientInfo = {
                 ...req.clientInfo,
                 country: data.countryName || req.clientInfo.country,
-                city: data.cityName || "Unknown",
-                region: data.regionName || "Unknown",
-                timezone: data.timeZone || "N/A",
+                city: data.cityName || data.city || "Unknown",
+                region: data.regionName || data.region || "Unknown",
+                timezone: data.timeZone || data.timezone || "N/A",
                 detailed: true
             };
             return req.clientInfo;
         }
 
-        // Attempt 2: ipapi.co (Fallback)
+        // Attempt 2: ip-api.com (Tertiary - very reliable)
+        data = await fetchWithTimeout(`http://ip-api.com/json/${ip}`);
+        if (data && data.status === 'success') {
+            req.clientInfo = {
+                ...req.clientInfo,
+                country: data.country || req.clientInfo.country,
+                city: data.city || "Unknown",
+                region: data.regionName || data.region || "Unknown",
+                timezone: data.timezone || "N/A",
+                isp: data.isp || "Unknown",
+                detailed: true
+            };
+            return req.clientInfo;
+        }
+
+        // Attempt 3: ipapi.co (Fallback)
         data = await fetchWithTimeout(`https://ipapi.co/${ip}/json/`);
         if (data && !data.error) {
             req.clientInfo = {
@@ -93,7 +109,7 @@ export const globalMiddleware = (req, res, next) => {
                 country: data.country_name || req.clientInfo.country,
                 city: data.city || "Unknown",
                 region: data.region || "Unknown",
-                timezone: data.timezone || "N/A",
+                timezone: data.timezone || data.timeZone || "N/A",
                 isp: data.org || "Unknown",
                 detailed: true
             };
