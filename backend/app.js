@@ -12,6 +12,22 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import mongoSanitize from 'mongo-sanitize';
+import rateLimit from 'express-rate-limit';
+import { GLOBAL_WINDOW_MS, GLOBAL_MAX_REQUESTS } from './config/rateLimitConfig.js';
+
+const globalLimiter = rateLimit({
+  windowMs: GLOBAL_WINDOW_MS,
+  max: GLOBAL_MAX_REQUESTS,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Too many requests, please slow down'
+  }
+});
+
+// Apply to ALL requests
+app.use(globalLimiter);
 
 // ES Module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -35,7 +51,7 @@ const app = express();
 // 2. Breaks IP-based security measures
 // 3. Makes audit logs and geo-blocking useless
 // Setting 'true' trusts the first proxy in the chain
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
 // Security headers (Helmet 8.1.0 - no known vulnerabilities)
 // Configure CSP to allow Cloudinary images

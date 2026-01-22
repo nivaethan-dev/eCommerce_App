@@ -50,6 +50,23 @@ function getSecureEnvInt(envVarName, defaultValue, description) {
     return parsed;
 }
 
+
+// =============================================================================
+// GLOBAL RATE LIMITS
+// =============================================================================
+
+export const GLOBAL_WINDOW_MS = getSecureEnvInt(
+    'GLOBAL_WINDOW_MS',
+    60 * 1000, // 1 minute
+    'Global rate limit window (ms)'
+);
+
+export const GLOBAL_MAX_REQUESTS = getSecureEnvInt(
+    'GLOBAL_MAX_REQUESTS',
+    1000,
+    'Global max requests per minute'
+);
+
 // =============================================================================
 // AUTHENTICATION RATE LIMITS
 // =============================================================================
