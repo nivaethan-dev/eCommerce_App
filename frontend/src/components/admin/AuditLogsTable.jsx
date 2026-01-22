@@ -107,6 +107,9 @@ const AuditLogsTable = ({ logs = [], onRowClick, loading = false }) => {
               IP Address
             </th>
             <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#333' }}>
+              Location
+            </th>
+            <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#333' }}>
               Method
             </th>
           </tr>
@@ -158,6 +161,13 @@ const AuditLogsTable = ({ logs = [], onRowClick, loading = false }) => {
                 </td>
                 <td style={{ padding: '1rem', color: '#666', fontSize: '0.875rem' }}>
                   {log.ipAddress || 'N/A'}
+                </td>
+                <td style={{ padding: '1rem', color: '#666', fontSize: '0.875rem' }}>
+                  {log.geolocation ? (
+                    <span>
+                      {log.geolocation.city || '?'}, {log.geolocation.country || '?'}
+                    </span>
+                  ) : 'N/A'}
                 </td>
                 <td style={{ padding: '1rem' }}>
                   <span style={{

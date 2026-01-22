@@ -6,7 +6,7 @@ export const getAuditLogs = async (req, res) => {
   try {
     // Validation handled by middleware - query params are sanitized
     const query = req.validatedQuery || req.query;
-    
+
     const page = query.page || 1;
     const limit = query.limit || 20;
 
@@ -16,6 +16,7 @@ export const getAuditLogs = async (req, res) => {
     if (query.userType) filters.userType = query.userType;
     if (query.resource) filters.resource = query.resource;
     if (query.status) filters.status = query.status;
+    if (query.country) filters['geolocation.country'] = query.country;
 
     // Handle date range filtering
     if (query.startDate || query.endDate) {
@@ -33,7 +34,7 @@ export const getAuditLogs = async (req, res) => {
 
     // Get logs with pagination
     const logs = await auditService.getAuditLogs(filters, { page, limit });
-    
+
     // Get total count for pagination
     const total = await AuditLog.countDocuments(filters);
     const totalPages = Math.ceil(total / limit);
@@ -65,7 +66,7 @@ export const getAuditStats = async (req, res) => {
   try {
     // Validation handled by middleware - query params are sanitized
     const query = req.validatedQuery || req.query;
-    
+
     const dateRange = {};
     if (query.startDate) {
       dateRange.startDate = query.startDate;

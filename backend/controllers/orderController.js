@@ -9,7 +9,6 @@ import {
 import { ORDER_MESSAGES, VALID_ORDER_STATUSES, formatOrderMessage } from '../utils/orderMessages.js';
 import * as orderTriggers from '../eventTriggers/orderEvent.js';
 import { isProduction, formatErrorResponse, AppError, HTTP_STATUS } from '../utils/errorUtils.js';
-import { getClientIp } from '../utils/geoipUtils.js';
 
 /**
  * Place order (simulated checkout)
@@ -34,7 +33,7 @@ export const placeOrder = async (req, res) => {
       order._id,
       customerId,
       order.totalAmount,
-      getClientIp(req)
+      req.clientInfo
     );
 
     res.status(201).json({
@@ -104,7 +103,7 @@ export const listAllOrders = async (req, res) => {
     // Validation handled by middleware - query params are sanitized
     // Use validatedQuery if available, otherwise fall back to req.query
     const query = req.validatedQuery || req.query;
-    
+
     const options = {
       status: query.status || undefined,
       limit: query.limit || 50,
@@ -156,7 +155,7 @@ export const updateOrder = async (req, res) => {
       order.customerId,
       oldStatus,
       status,
-      getClientIp(req)
+      req.clientInfo
     );
 
     res.status(200).json({

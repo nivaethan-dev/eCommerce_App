@@ -2,7 +2,6 @@ import { ProductService, getProducts } from '../services/productService.js';
 import * as productTriggers from '../eventTriggers/productEvent.js';
 import { PRODUCT_MESSAGES } from '../utils/productMessages.js';
 import { formatErrorResponse, isSafeMessage, isProduction } from '../utils/errorUtils.js';
-import { getClientIp } from '../utils/geoipUtils.js';
 
 // List of safe product-related error messages that can be shown to users
 const SAFE_PRODUCT_ERRORS = [
@@ -26,7 +25,7 @@ export const createProduct = async (req, res) => {
       product._id,
       product.title,
       req.user.id,
-      getClientIp(req)
+      req.clientInfo
     );
 
     res.status(201).json({
@@ -69,7 +68,7 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const { productId } = req.params;
-    
+
     // Debug logging (only in development)
     if (!isProduction()) {
       console.log('Update Product Request:');
@@ -77,7 +76,7 @@ export const updateProduct = async (req, res) => {
       console.log('Request Body:', req.body);
       console.log('File:', req.file ? { filename: req.file.filename, cloudinaryUrl: req.file.cloudinaryUrl } : 'No file');
     }
-    
+
     const { updatedProduct, oldData } = await ProductService.updateProduct(productId, req.body, req.file);
 
     // Trigger product updated event (audit log + admin notification)
@@ -91,7 +90,7 @@ export const updateProduct = async (req, res) => {
       oldData,
       updatedProduct.toObject(), // Send full new object for diff calculation
       req.user.id,
-      getClientIp(req)
+      req.clientInfo
     );
 
     res.status(200).json({
@@ -137,7 +136,7 @@ export const deleteProduct = async (req, res) => {
       deletedData.title,
       deletedData, // Pass full snapshot of deleted data
       req.user.id,
-      getClientIp(req)
+      req.clientInfo
     );
 
     res.status(200).json({
@@ -174,7 +173,7 @@ export const fetchProductById = async (req, res) => {
     if (error.message === PRODUCT_MESSAGES.PRODUCT_NOT_FOUND) {
       return res.status(404).json({ success: false, error: error.message });
     }
-    
+
     // For unknown errors, use safe error handling
     const { statusCode, response } = formatErrorResponse(error);
     res.status(statusCode).json(response);

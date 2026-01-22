@@ -1,14 +1,15 @@
 import * as notificationService from '../services/notificationService.js';
 import * as auditService from '../services/auditLogService.js';
-import { getGeolocation } from '../utils/geoipUtils.js';
 import Admin from '../models/Admin.js';
 
 // ============================================
 // SIGNUP TRIGGERS
 // ============================================
 
-export const triggerCustomerSignup = async (customerId, customerName, customerEmail, ipAddress) => {
+export const triggerCustomerSignup = async (customerId, customerName, customerEmail, clientInfo) => {
   try {
+    const { ip: ipAddress, country, city, region } = clientInfo || {};
+
     // 1. Create welcome notification for the customer
     await notificationService.createNotification(
       customerId,
@@ -23,7 +24,7 @@ export const triggerCustomerSignup = async (customerId, customerName, customerEm
     );
 
     // 2. Create audit log for admin review
-    const geolocation = getGeolocation(ipAddress);
+    const geolocation = { country, city, region };
     await auditService.createAuditLog({
       userId: customerId,
       userType: 'Customer',
@@ -46,8 +47,10 @@ export const triggerCustomerSignup = async (customerId, customerName, customerEm
 // LOGIN TRIGGERS
 // ============================================
 
-export const triggerCustomerLogin = async (customerId, customerName, ipAddress) => {
+export const triggerCustomerLogin = async (customerId, customerName, clientInfo) => {
   try {
+    const { ip: ipAddress, country, city, region } = clientInfo || {};
+
     // 1. Create notification for customer ONLY
     await notificationService.createNotification(
       customerId,
@@ -62,7 +65,7 @@ export const triggerCustomerLogin = async (customerId, customerName, ipAddress) 
     );
 
     // 2. Create audit log for admin review
-    const geolocation = getGeolocation(ipAddress);
+    const geolocation = { country, city, region };
     await auditService.createAuditLog({
       userId: customerId,
       userType: 'Customer',
@@ -80,8 +83,10 @@ export const triggerCustomerLogin = async (customerId, customerName, ipAddress) 
   }
 };
 
-export const triggerAdminLogin = async (adminId, adminName, ipAddress) => {
+export const triggerAdminLogin = async (adminId, adminName, clientInfo) => {
   try {
+    const { ip: ipAddress, country, city, region } = clientInfo || {};
+
     // Create notification
     await notificationService.createNotification(
       adminId,
@@ -96,7 +101,7 @@ export const triggerAdminLogin = async (adminId, adminName, ipAddress) => {
     );
 
     // Create audit log
-    const geolocation = getGeolocation(ipAddress);
+    const geolocation = { country, city, region };
     await auditService.createAuditLog({
       userId: adminId,
       userType: 'Admin',
@@ -114,10 +119,12 @@ export const triggerAdminLogin = async (adminId, adminName, ipAddress) => {
   }
 };
 
-export const triggerLoginFailed = async (email, ipAddress, userType = 'Customer', userId = null) => {
+export const triggerLoginFailed = async (email, clientInfo, userType = 'Customer', userId = null) => {
   try {
+    const { ip: ipAddress, country, city, region } = clientInfo || {};
+
     // Only audit log for failed attempts (no notification)
-    const geolocation = getGeolocation(ipAddress);
+    const geolocation = { country, city, region };
     await auditService.createAuditLog({
       userId: userId,
       userType: userType,
@@ -136,10 +143,12 @@ export const triggerLoginFailed = async (email, ipAddress, userType = 'Customer'
   }
 };
 
-export const triggerAccountLocked = async (userId, userType, email, ipAddress) => {
+export const triggerAccountLocked = async (userId, userType, email, clientInfo) => {
   try {
+    const { ip: ipAddress, country, city, region } = clientInfo || {};
+
     // 1. Audit Log (Always First)
-    const geolocation = getGeolocation(ipAddress);
+    const geolocation = { country, city, region };
     await auditService.createAuditLog({
       userId,
       userType,
@@ -163,9 +172,9 @@ export const triggerAccountLocked = async (userId, userType, email, ipAddress) =
         {
           type: 'security_alert',
           title: 'Security Alert: Account Locked',
-          message: `Account ${email} (${userType}) has been locked due to excessive failed login attempts. IP: ${ipAddress}`,
+          message: `Account ${email} (${userType}) has been locked due to excessive failed login attempts. IP: ${ipAddress} (${city || 'Unknown'}, ${country || 'Unknown'})`,
           priority: 'high',
-          metadata: { affectedUserId: userId, affectedUserType: userType, email, ipAddress }
+          metadata: { affectedUserId: userId, affectedUserType: userType, email, ipAddress, location: `${city}, ${country}` }
         }
       );
     }

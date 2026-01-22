@@ -17,7 +17,8 @@ const AdminAuditLogs = () => {
     resource: '',
     status: '',
     startDate: '',
-    endDate: ''
+    endDate: '',
+    country: ''
   });
   const [page, setPage] = useState(1);
   const [logs, setLogs] = useState([]);
@@ -47,6 +48,7 @@ const AdminAuditLogs = () => {
     if (currentFilters.status) params.append('status', currentFilters.status);
     if (currentFilters.startDate) params.append('startDate', currentFilters.startDate);
     if (currentFilters.endDate) params.append('endDate', currentFilters.endDate);
+    if (currentFilters.country) params.append('country', currentFilters.country);
 
     return params.toString();
   };
@@ -94,7 +96,7 @@ const AdminAuditLogs = () => {
   const fetchStats = async () => {
     try {
       setStatsLoading(true);
-      
+
       // Build date range for stats
       const params = new URLSearchParams();
       if (filters.startDate) params.append('startDate', filters.startDate);
@@ -123,7 +125,7 @@ const AdminAuditLogs = () => {
     setFilters(newFilters);
     setPage(1);
     fetchLogs(1, newFilters);
-    
+
     // Refresh stats with new date range if dates changed
     if (newFilters.startDate !== filters.startDate || newFilters.endDate !== filters.endDate) {
       fetchStats();
@@ -138,7 +140,8 @@ const AdminAuditLogs = () => {
       resource: '',
       status: '',
       startDate: '',
-      endDate: ''
+      endDate: '',
+      country: ''
     };
     setFilters(emptyFilters);
     setPage(1);
@@ -170,7 +173,7 @@ const AdminAuditLogs = () => {
     <div>
       <ToastStack toasts={toasts} onDismiss={dismiss} />
 
-      <PageHeader 
+      <PageHeader
         title="Audit Logs"
         description="View and monitor system activity logs"
       />

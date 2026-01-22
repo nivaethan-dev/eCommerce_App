@@ -6,7 +6,6 @@ import { isUserError, getErrorStatusCode } from '../utils/cartErrors.js';
 import { CART_MESSAGES } from '../utils/cartMessages.js';
 import * as eventTriggers from '../eventTriggers/authenticationEvent.js';
 import { formatErrorResponse, isProduction, HTTP_STATUS } from '../utils/errorUtils.js';
-import { getClientIp } from '../utils/geoipUtils.js';
 
 // Register
 export const registerCustomer = async (req, res) => {
@@ -27,7 +26,7 @@ export const registerCustomer = async (req, res) => {
     const customer = await Customer.create({ name, email, phone, password: hashedPassword });
 
     // Trigger signup event (notification to customer + audit log for admins)
-    await eventTriggers.triggerCustomerSignup(customer._id, name, email, getClientIp(req));
+    await eventTriggers.triggerCustomerSignup(customer._id, name, email, req.clientInfo);
 
     // Generate tokens & set cookies
     const accessToken = generateAccessToken(customer._id);
@@ -39,15 +38,15 @@ export const registerCustomer = async (req, res) => {
     if (!isProduction()) {
       console.error('Registration error:', err);
     }
-    
+
     // Handle MongoDB duplicate key error (409 Conflict)
     if (err.code === 11000) {
-      return res.status(HTTP_STATUS.CONFLICT).json({ 
-        success: false, 
-        error: 'Customer already exists' 
+      return res.status(HTTP_STATUS.CONFLICT).json({
+        success: false,
+        error: 'Customer already exists'
       });
     }
-    
+
     // Use formatErrorResponse for proper status code mapping
     const { statusCode, response } = formatErrorResponse(err);
     res.status(statusCode).json(response);
@@ -61,8 +60,8 @@ export const addCartItem = async (req, res) => {
     const { productId, quantity } = req.body;
 
     const cartData = await addToCartService(req.user.id, productId, quantity);
-    res.status(201).json({ 
-      success: true, 
+    res.status(201).json({
+      success: true,
       message: CART_MESSAGES.ITEM_ADDED,
       cart: cartData.items,
       summary: cartData.summary
@@ -71,10 +70,10 @@ export const addCartItem = async (req, res) => {
     if (!isProduction()) {
       console.error('Add to cart error:', err);
     }
-    
+
     const statusCode = getErrorStatusCode(err);
     const isUserFacing = isUserError(err);
-    
+
     return res.status(statusCode).json({
       success: false,
       error: isUserFacing ? err.message : CART_MESSAGES.ADD_TO_CART_FAILED
@@ -86,8 +85,8 @@ export const addCartItem = async (req, res) => {
 export const getCart = async (req, res) => {
   try {
     const cartData = await getCartService(req.user.id);
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       message: CART_MESSAGES.CART_RETRIEVED,
       cart: cartData.items,
       summary: cartData.summary
@@ -96,10 +95,10 @@ export const getCart = async (req, res) => {
     if (!isProduction()) {
       console.error('Get cart error:', err);
     }
-    
+
     const statusCode = getErrorStatusCode(err);
     const isUserFacing = isUserError(err);
-    
+
     return res.status(statusCode).json({
       success: false,
       error: isUserFacing ? err.message : CART_MESSAGES.GET_CART_FAILED
@@ -115,8 +114,8 @@ export const updateCartItem = async (req, res) => {
     const { quantity } = req.body;
 
     const result = await updateCartItemService(req.user.id, productId, quantity);
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       message: result.wasRemoved ? CART_MESSAGES.ITEM_REMOVED : CART_MESSAGES.ITEM_UPDATED,
       cart: result.items,
       summary: result.summary
@@ -125,10 +124,10 @@ export const updateCartItem = async (req, res) => {
     if (!isProduction()) {
       console.error('Update cart item error:', err);
     }
-    
+
     const statusCode = getErrorStatusCode(err);
     const isUserFacing = isUserError(err);
-    
+
     return res.status(statusCode).json({
       success: false,
       error: isUserFacing ? err.message : CART_MESSAGES.UPDATE_CART_FAILED
@@ -143,8 +142,8 @@ export const removeCartItem = async (req, res) => {
     const { productId } = req.params;
 
     const cartData = await removeFromCartService(req.user.id, productId);
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       message: CART_MESSAGES.ITEM_REMOVED,
       cart: cartData.items,
       summary: cartData.summary
@@ -153,10 +152,10 @@ export const removeCartItem = async (req, res) => {
     if (!isProduction()) {
       console.error('Remove from cart error:', err);
     }
-    
+
     const statusCode = getErrorStatusCode(err);
     const isUserFacing = isUserError(err);
-    
+
     return res.status(statusCode).json({
       success: false,
       error: isUserFacing ? err.message : CART_MESSAGES.REMOVE_FROM_CART_FAILED

@@ -1,6 +1,5 @@
 import * as notificationService from '../services/notificationService.js';
 import * as auditService from '../services/auditLogService.js';
-import { getGeolocation } from '../utils/geoipUtils.js';
 import Admin from '../models/Admin.js';
 
 // Helper to notify all admins
@@ -24,8 +23,10 @@ const notifyAllAdmins = async (title, message, type, metadata, priority = 'mediu
 // ============================================
 
 // Admin Creates Product
-export const triggerProductCreated = async (productId, productName, adminId, ipAddress) => {
+export const triggerProductCreated = async (productId, productName, adminId, clientInfo) => {
     try {
+        const { ip: ipAddress, country, city, region } = clientInfo || {};
+
         // 1. Notify all admins
         await notifyAllAdmins(
             'New Product Added',
@@ -36,7 +37,7 @@ export const triggerProductCreated = async (productId, productName, adminId, ipA
         );
 
         // 2. Create audit log
-        const geolocation = getGeolocation(ipAddress);
+        const geolocation = { country, city, region };
         await auditService.createAuditLog({
             userId: adminId,
             userType: 'Admin',
@@ -60,8 +61,10 @@ export const triggerProductCreated = async (productId, productName, adminId, ipA
 // ============================================
 
 // Admin Updates Product
-export const triggerProductUpdated = async (productId, productName, oldData, newData, adminId, ipAddress) => {
+export const triggerProductUpdated = async (productId, productName, oldData, newData, adminId, clientInfo) => {
     try {
+        const { ip: ipAddress, country, city, region } = clientInfo || {};
+
         // Calculate diffs for notification
         const changes = {};
         const diffs = [];
@@ -92,7 +95,7 @@ export const triggerProductUpdated = async (productId, productName, oldData, new
         );
 
         // 2. Create audit log
-        const geolocation = getGeolocation(ipAddress);
+        const geolocation = { country, city, region };
         await auditService.createAuditLog({
             userId: adminId,
             userType: 'Admin',
@@ -120,8 +123,10 @@ export const triggerProductUpdated = async (productId, productName, oldData, new
 // ============================================
 
 // Admin Deletes Product
-export const triggerProductDeleted = async (productId, productName, oldProductData, adminId, ipAddress) => {
+export const triggerProductDeleted = async (productId, productName, oldProductData, adminId, clientInfo) => {
     try {
+        const { ip: ipAddress, country, city, region } = clientInfo || {};
+
         const { price, stock } = oldProductData || {};
         const details = `(Price: ${price}, Stock: ${stock})`;
 
@@ -135,7 +140,7 @@ export const triggerProductDeleted = async (productId, productName, oldProductDa
         );
 
         // 2. Create audit log
-        const geolocation = getGeolocation(ipAddress);
+        const geolocation = { country, city, region };
         await auditService.createAuditLog({
             userId: adminId,
             userType: 'Admin',

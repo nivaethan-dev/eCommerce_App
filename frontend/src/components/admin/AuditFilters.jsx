@@ -7,7 +7,8 @@ const AuditFilters = ({ filters, onFilterChange, onClearFilters }) => {
     actions: [],
     resources: [],
     userTypes: [],
-    statuses: []
+    statuses: [],
+    countries: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +22,8 @@ const AuditFilters = ({ filters, onFilterChange, onClearFilters }) => {
           actions: values.actions || [],
           resources: values.resources || [],
           userTypes: values.userTypes || [],
-          statuses: values.statuses || []
+          statuses: values.statuses || [],
+          countries: values.countries || []
         });
       } catch (error) {
         console.error('Failed to fetch filter values:', error);
@@ -30,7 +32,8 @@ const AuditFilters = ({ filters, onFilterChange, onClearFilters }) => {
           actions: ['CREATE', 'UPDATE', 'DELETE', 'READ', 'LOGIN', 'LOGOUT'],
           resources: ['Product', 'Order', 'Customer', 'Admin', 'Notification'],
           userTypes: ['Admin', 'Customer'],
-          statuses: ['success', 'failure']
+          statuses: ['success', 'failure'],
+          countries: []
         });
       } finally {
         setLoading(false);
@@ -44,7 +47,7 @@ const AuditFilters = ({ filters, onFilterChange, onClearFilters }) => {
     onFilterChange({ ...filters, [field]: value });
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => 
+  const hasActiveFilters = Object.values(filters).some(value =>
     value !== '' && value !== null && value !== undefined
   );
 
@@ -218,6 +221,40 @@ const AuditFilters = ({ filters, onFilterChange, onClearFilters }) => {
             <option value="">All Status</option>
             {filterOptions.statuses.map(status => (
               <option key={status} value={status}>{status}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Country Filter */}
+        <div>
+          <label style={{
+            display: 'block',
+            fontSize: '0.875rem',
+            fontWeight: '500',
+            color: '#666',
+            marginBottom: '0.5rem'
+          }}>
+            Country
+          </label>
+          <select
+            value={filters.country || ''}
+            onChange={(e) => handleInputChange('country', e.target.value)}
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              borderRadius: '8px',
+              border: '1px solid #e0e0e0',
+              fontSize: '0.875rem',
+              color: '#333',
+              background: 'white',
+              cursor: loading ? 'wait' : 'pointer',
+              opacity: loading ? 0.6 : 1
+            }}
+          >
+            <option value="">All Countries</option>
+            {filterOptions.countries.map(country => (
+              <option key={country} value={country}>{country}</option>
             ))}
           </select>
         </div>

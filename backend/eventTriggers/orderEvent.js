@@ -1,6 +1,5 @@
 import * as notificationService from '../services/notificationService.js';
 import * as auditService from '../services/auditLogService.js';
-import { getGeolocation } from '../utils/geoipUtils.js';
 import Admin from '../models/Admin.js';
 
 // ============================================
@@ -8,8 +7,10 @@ import Admin from '../models/Admin.js';
 // ============================================
 
 // Customer Places Order - Notify customer, notify all admins, and log as NEW_ORDER
-export const triggerOrderPlaced = async (orderId, customerId, totalAmount, ipAddress) => {
+export const triggerOrderPlaced = async (orderId, customerId, totalAmount, clientInfo) => {
     try {
+        const { ip: ipAddress, country, city, region } = clientInfo || {};
+
         // 1. Create notification for customer (ORDER_PLACED)
         await notificationService.createNotification(
             customerId,
@@ -40,7 +41,7 @@ export const triggerOrderPlaced = async (orderId, customerId, totalAmount, ipAdd
         }
 
         // 3. Create audit log - Admin only views NEW_ORDER action
-        const geolocation = getGeolocation(ipAddress);
+        const geolocation = { country, city, region };
         await auditService.createAuditLog({
             userId: customerId,
             userType: 'Customer',
@@ -64,8 +65,10 @@ export const triggerOrderPlaced = async (orderId, customerId, totalAmount, ipAdd
 // ============================================
 
 // Order Status Updated - Notify customer and log
-export const triggerOrderStatusUpdate = async (orderId, customerId, oldStatus, newStatus, ipAddress) => {
+export const triggerOrderStatusUpdate = async (orderId, customerId, oldStatus, newStatus, clientInfo) => {
     try {
+        const { ip: ipAddress, country, city, region } = clientInfo || {};
+
         // Create notification for customer
         await notificationService.createNotification(
             customerId,
@@ -80,7 +83,7 @@ export const triggerOrderStatusUpdate = async (orderId, customerId, oldStatus, n
         );
 
         // Create audit log
-        const geolocation = getGeolocation(ipAddress);
+        const geolocation = { country, city, region };
         await auditService.createAuditLog({
             userId: customerId,
             userType: 'Customer',

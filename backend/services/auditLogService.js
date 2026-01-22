@@ -110,21 +110,25 @@ export const getDistinctFilterValues = async () => {
   try {
     // Get distinct actions
     const actions = await AuditLog.distinct('action');
-    
+
     // Get distinct resources
     const resources = await AuditLog.distinct('resource');
-    
+
     // Get distinct user types
     const userTypes = await AuditLog.distinct('userType');
-    
+
     // Get distinct statuses
     const statuses = await AuditLog.distinct('status');
+
+    // Get distinct countries from geolocation
+    const countries = await AuditLog.distinct('geolocation.country');
 
     return {
       actions: actions.filter(a => a).sort(), // Filter out null/undefined and sort
       resources: resources.filter(r => r).sort(),
       userTypes: userTypes.filter(u => u).sort(),
-      statuses: statuses.filter(s => s).sort()
+      statuses: statuses.filter(s => s).sort(),
+      countries: countries.filter(c => c).sort()
     };
   } catch (error) {
     throw new Error(`Failed to get distinct filter values: ${error.message}`);
