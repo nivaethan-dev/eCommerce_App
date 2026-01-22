@@ -36,7 +36,7 @@
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
     "fast-geoip": "^1.1.88",
-    "file-type": "^21.0.0",
+    "file-type": "^21.2.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongo-sanitize": "^1.1.0",
